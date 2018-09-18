@@ -24,7 +24,7 @@ from flask_login import current_user, logout_user, login_required, login_user
 
 from flask import url_for, redirect, request
 
-from flask_oauthlib.client import OAuth
+from authlib.flask.client import OAuth
 
 from airflow import models, configuration
 from airflow.utils.db import provide_session
@@ -86,16 +86,15 @@ class GoogleAuthBackend(object):
 
         self.login_manager.init_app(self.flask_app)
 
-        self.google_oauth = OAuth(self.flask_app).remote_app(
+        self.google_oauth = OAuth(self.flask_app).register(
             'google',
-            consumer_key=get_config_param('client_id'),
-            consumer_secret=get_config_param('client_secret'),
+            client_id=get_config_param('client_id'),
+            client_secret=get_config_param('client_secret'),
             request_token_params={'scope': [
                 'https://www.googleapis.com/auth/userinfo.profile',
                 'https://www.googleapis.com/auth/userinfo.email']},
-            base_url='https://www.google.com/accounts/',
+            api_base_url='https://www.google.com/accounts/',
             request_token_url=None,
-            access_token_method='POST',
             access_token_url='https://accounts.google.com/o/oauth2/token',
             authorize_url='https://accounts.google.com/o/oauth2/auth')
 
@@ -107,7 +106,7 @@ class GoogleAuthBackend(object):
 
     def login(self, request):
         log.debug('Redirecting user to Google login')
-        return self.google_oauth.authorize(callback=url_for(
+        return self.google_oauth.authorize_redirect(callback=url_for(
             'google_oauth_callback',
             _external=True,
             _scheme='https'),

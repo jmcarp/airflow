@@ -191,7 +191,8 @@ gcp_api = [
     'PyOpenSSL',
     'pandas-gbq'
 ]
-github_enterprise = ['Flask-OAuthlib>=0.9.1']
+github_enterprise = ['authlib>=0.9']
+google_auth = ['authlib>=0.9']
 hdfs = ['snakebite>=2.7.8']
 hive = [
     'hmsclient>=0.1.0',
@@ -358,6 +359,7 @@ def do_setup():
             'emr': emr,
             'gcp_api': gcp_api,
             'github_enterprise': github_enterprise,
+            'google_auth': google_auth,
             'hdfs': hdfs,
             'hive': hive,
             'jdbc': jdbc,

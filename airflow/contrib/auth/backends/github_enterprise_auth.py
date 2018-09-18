@@ -22,7 +22,7 @@ from flask_login import current_user, logout_user, login_required, login_user
 
 from flask import url_for, redirect, request
 
-from flask_oauthlib.client import OAuth
+from authlib.flask.client import OAuth
 
 from airflow import models, configuration
 from airflow.configuration import AirflowConfigException
@@ -98,13 +98,12 @@ class GHEAuthBackend(object):
 
         self.ghe_oauth = OAuth(self.flask_app).remote_app(
             'ghe',
-            consumer_key=get_config_param('client_id'),
-            consumer_secret=get_config_param('client_secret'),
+            client_id=get_config_param('client_id'),
+            client_secret=get_config_param('client_secret'),
             # need read:org to get team member list
             request_token_params={'scope': 'user:email,read:org'},
-            base_url=self.ghe_host,
+            api_base_url=self.ghe_host,
             request_token_url=None,
-            access_token_method='POST',
             access_token_url=''.join(['https://',
                                       self.ghe_host,
                                       '/login/oauth/access_token']),
@@ -120,7 +119,7 @@ class GHEAuthBackend(object):
 
     def login(self, request):
         log.debug('Redirecting user to GHE login')
-        return self.ghe_oauth.authorize(callback=url_for(
+        return self.ghe_oauth.authorize_redirect(callback=url_for(
             'ghe_oauth_callback',
             _external=True),
             state=request.args.get('next') or request.referrer or None)
