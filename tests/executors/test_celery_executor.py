@@ -16,13 +16,20 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+import os
 import sys
 import unittest
 import mock
-from celery.contrib.testing.worker import start_worker
 
-from airflow.executors.celery_executor import CeleryExecutor
+from celery import Celery
+from celery.contrib.testing.worker import start_worker
+from kombu.asynchronous import set_event_loop
+from parameterized import parameterized
+
 from airflow.executors.celery_executor import app
+from airflow.executors.celery_executor import CeleryExecutor
+from airflow.executors.celery_executor import execute_command
+from airflow.executors.celery_executor import celery_configuration
 from airflow.executors.celery_executor import CELERY_FETCH_ERR_MSG_HEADER
 from airflow.utils.state import State
 
@@ -33,13 +40,34 @@ configuration.load_test_config()
 import celery.contrib.testing.tasks  # noqa: F401
 
 
+def _prepare_test_bodies():
+    return [
+        (url, )
+        for url in os.environ['CELERY_BROKER_INTEGRATION_URLS'].split(',')
+    ]
+
+
 class CeleryExecutorTest(unittest.TestCase):
+
     @unittest.skipIf('sqlite' in configuration.conf.get('core', 'sql_alchemy_conn'),
                      "sqlite is configured with SequentialExecutor")
-    def test_celery_integration(self):
+    @parameterized.expand(_prepare_test_bodies())
+    def test_celery_integration(self, broker_url):
+        test_config = dict(celery_configuration)
+        test_config.update({'broker_url': broker_url})
+        test_app = Celery(
+            broker_url,
+            config_source=test_config)
+        test_execute_command = test_app.task(execute_command.__wrapped__)
+        patch_execute_command = mock.patch(
+            'airflow.executors.celery_executor.execute_command',
+            test_execute_command)
+
         executor = CeleryExecutor()
         executor.start()
-        with start_worker(app=app, logfile=sys.stdout, loglevel='debug'):
+        worker = start_worker(app=test_app, logfile=sys.stdout, loglevel='debug')
+
+        with worker, patch_execute_command:
 
             success_command = ['true', 'some_parameter']
             fail_command = ['false', 'some_parameter']
@@ -63,6 +91,9 @@ class CeleryExecutorTest(unittest.TestCase):
 
         self.assertNotIn('success', executor.last_state)
         self.assertNotIn('fail', executor.last_state)
+
+        # Clear event loop to tear down each celery instance
+        set_event_loop(None)
 
     def test_exception_propagation(self):
         @app.task

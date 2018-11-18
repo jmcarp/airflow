@@ -89,7 +89,7 @@ if [ -f "${AIRFLOW_DB}" ]; then
 fi
 
 echo "Starting the unit tests with the following nose arguments: "$nose_args
-nosetests $nose_args tests.executors.test_celery_executor:CeleryExecutorTest.test_celery_integration
+nosetests $nose_args tests.executors.test_celery_executor:CeleryExecutorTest
 
 # To run individual tests:
 # nosetests tests.core:CoreTest.test_scheduler_job
