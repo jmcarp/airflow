@@ -33,7 +33,7 @@ fi
 sudo minikube status
 if [[ $? = 0 ]]; then
   sudo minikube delete
-  sudo rm -rf HOME/.kube $HOME/.minikube
+  sudo rm -rf $HOME/.kube $HOME/.minikube
 fi
 
 sudo chown -R travis.travis .

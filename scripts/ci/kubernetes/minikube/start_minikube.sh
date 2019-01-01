@@ -105,8 +105,14 @@ echo "your path is ${PATH}"
 
 _MINIKUBE="sudo -E PATH=$PATH minikube"
 
+if ! docker network inspect minikube > /dev/null; then
+  docker network create minikube
+fi
+
 $_MINIKUBE config set bootstrapper localkube
-$_MINIKUBE start --kubernetes-version=${_KUBERNETES_VERSION} --vm-driver=${_VM_DRIVER}
+$_MINIKUBE start \
+  --kubernetes-version=${_KUBERNETES_VERSION} --vm-driver=${_VM_DRIVER} \
+  --docker-opt network=minikube
 $_MINIKUBE update-context
 
 # Wait for Kubernetes to be up and ready.
