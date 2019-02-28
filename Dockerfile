@@ -45,7 +45,7 @@ RUN set -euxo pipefail \
     && if [ -n "${BUILD_DEPS}" ]; then apt install -y $BUILD_DEPS; fi \
     && if [ -n "${PYTHON_DEPS}" ]; then pip install --no-cache-dir ${PYTHON_DEPS}; fi \
     && pip install --no-cache-dir --upgrade pip==19.0.1 \
-    && pip install --no-cache-dir --no-use-pep517 -e .[$AIRFLOW_DEPS] \
+    && pip install --no-cache-dir -e .[$AIRFLOW_DEPS] \
     && apt purge --auto-remove -yqq $BUILD_DEPS \
     && apt autoremove -yqq --purge \
     && apt clean
