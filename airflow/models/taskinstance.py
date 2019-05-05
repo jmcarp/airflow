@@ -36,7 +36,7 @@ from airflow import configuration, settings
 from airflow.exceptions import (
     AirflowException, AirflowTaskTimeout, AirflowSkipException, AirflowRescheduleException
 )
-from airflow.models.base import Base, ID_LEN
+from airflow.models.base import Base, ID_LEN, ID_COLLATION
 from airflow.models.log import Log
 from airflow.models.pool import Pool
 from airflow.models.taskfail import TaskFail
@@ -124,7 +124,7 @@ class TaskInstance(Base, LoggingMixin):
     __tablename__ = "task_instance"
 
     task_id = Column(String(ID_LEN), primary_key=True)
-    dag_id = Column(String(ID_LEN), primary_key=True)
+    dag_id = Column(String(ID_LEN, collation=ID_COLLATION), primary_key=True)
     execution_date = Column(UtcDateTime, primary_key=True)
     start_date = Column(UtcDateTime)
     end_date = Column(UtcDateTime)

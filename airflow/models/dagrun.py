@@ -26,7 +26,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import synonym
 
 from airflow.exceptions import AirflowException
-from airflow.models.base import Base, ID_LEN
+from airflow.models.base import Base, ID_LEN, ID_COLLATION
 from airflow.stats import Stats
 from airflow.ti_deps.dep_context import DepContext
 from airflow.utils import timezone
@@ -47,7 +47,7 @@ class DagRun(Base, LoggingMixin):
     ID_FORMAT_PREFIX = ID_PREFIX + '{0}'
 
     id = Column(Integer, primary_key=True)
-    dag_id = Column(String(ID_LEN))
+    dag_id = Column(String(ID_LEN, collation=ID_COLLATION))
     execution_date = Column(UtcDateTime, default=timezone.utcnow)
     start_date = Column(UtcDateTime, default=timezone.utcnow)
     end_date = Column(UtcDateTime)

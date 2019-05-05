@@ -33,3 +33,4 @@ metadata = (
 Base = declarative_base(metadata=metadata)  # type: Any
 
 ID_LEN = 250
+ID_COLLATION = "binary"
