@@ -285,16 +285,14 @@ devel = [
     'jira',
     'mongomock',
     'moto==1.3.5',
-    'nose',
-    'nose-ignore-docstring==0.2',
-    'nose-timer',
     'parameterized',
     'paramiko',
     'pylint~=2.3.1',  # Ensure the same version as in .travis.yml
     'pysftp',
+    'pytest',
+    'pytest-cov',
     'pywinrm',
     'qds-sdk>=1.9.6',
-    'rednose',
     'requests_mock'
 ]
 

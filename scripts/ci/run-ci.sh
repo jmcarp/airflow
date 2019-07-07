@@ -23,7 +23,7 @@ set -x
 DIRNAME=$(cd "$(dirname "$0")"; pwd)
 AIRFLOW_ROOT="$DIRNAME/../.."
 
-nose_args=$@
+test_args=$@
 # Fix file permissions
 sudo chown -R airflow.airflow . $HOME/.cache $HOME/.wheelhouse/ $HOME/.cache/pip
 if [ -d $HOME/.minikube ]; then
@@ -37,7 +37,7 @@ cd $AIRFLOW_ROOT && pip3 --version && tox --version
 
 if [ -z "$KUBERNETES_VERSION" ];
 then
-  tox -e $TOX_ENV $nose_args
+  tox -e $TOX_ENV $test_args
 else
   # This script runs inside a container, the path of the kubernetes certificate
   # is /home/travis/.minikube/client.crt but the user in the container is `airflow`
@@ -46,15 +46,8 @@ else
   fi
   sudo ln -s /home/airflow/.minikube /home/travis/.minikube
 
-  tox -e $TOX_ENV -- tests.minikube \
-                     --with-coverage \
-                     --cover-erase \
-                     --cover-html \
-                     --cover-package=airflow \
-                     --cover-html-dir=airflow/www/static/coverage \
-                     --with-ignore-docstrings \
-                     --rednose \
-                     --with-timer \
-                     -v \
-                     --logging-level=DEBUG
+  tox -e $TOX_ENV -- tests/minikube \
+                     --cov=airflow \
+                     --cov-report html:airflow/www/static/coverage \
+                     --verbose
 fi

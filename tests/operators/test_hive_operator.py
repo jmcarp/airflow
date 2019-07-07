@@ -22,7 +22,7 @@ import os
 import unittest
 
 from unittest import mock
-import nose
+import pytest
 
 from airflow import DAG, configuration, operators
 from airflow.models import TaskInstance
@@ -274,7 +274,6 @@ if 'AIRFLOW_RUNALL_TESTS' in os.environ:
             self.assertEqual(t[1], "table")
             self.assertEqual(t[2], "part1=this.can.be.an.issue/part2=this_should_be_ok")
 
-        @nose.tools.raises(airflow.exceptions.AirflowSensorTimeout)
         def test_named_hive_partition_sensor_times_out_on_nonexistent_partition(self):
             t = operators.sensors.NamedHivePartitionSensor(
                 task_id='hive_partition_check',
@@ -285,8 +284,9 @@ if 'AIRFLOW_RUNALL_TESTS' in os.environ:
                 poke_interval=0.1,
                 timeout=1,
                 dag=self.dag)
-            t.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE,
-                  ignore_ti_state=True)
+            with pytest.raises(airflow.exceptions.AirflowSensorTimeout):
+                t.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE,
+                      ignore_ti_state=True)
 
         def test_hive_partition_sensor(self):
             t = operators.sensors.HivePartitionSensor(
