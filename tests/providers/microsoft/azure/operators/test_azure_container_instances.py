@@ -27,6 +27,7 @@ from airflow.exceptions import AirflowException
 from airflow.providers.microsoft.azure.operators.azure_container_instances import (
     AzureContainerInstancesOperator,
 )
+import pytest
 
 
 def make_mock_cg(container_state, events=None):
@@ -69,23 +70,23 @@ class TestACIOperator(unittest.TestCase):
                                               task_id='task')
         aci.execute(None)
 
-        self.assertEqual(aci_mock.return_value.create_or_update.call_count, 1)
+        assert aci_mock.return_value.create_or_update.call_count == 1
         (called_rg, called_cn, called_cg), _ = \
             aci_mock.return_value.create_or_update.call_args
 
-        self.assertEqual(called_rg, 'resource-group')
-        self.assertEqual(called_cn, 'container-name')
+        assert called_rg == 'resource-group'
+        assert called_cn == 'container-name'
 
-        self.assertEqual(called_cg.location, 'region')
-        self.assertEqual(called_cg.image_registry_credentials, None)
-        self.assertEqual(called_cg.restart_policy, 'Never')
-        self.assertEqual(called_cg.os_type, 'Linux')
+        assert called_cg.location == 'region'
+        assert called_cg.image_registry_credentials == None
+        assert called_cg.restart_policy == 'Never'
+        assert called_cg.os_type == 'Linux'
 
         called_cg_container = called_cg.containers[0]
-        self.assertEqual(called_cg_container.name, 'container-name')
-        self.assertEqual(called_cg_container.image, 'container-image')
+        assert called_cg_container.name == 'container-name'
+        assert called_cg_container.image == 'container-image'
 
-        self.assertEqual(aci_mock.return_value.delete.call_count, 1)
+        assert aci_mock.return_value.delete.call_count == 1
 
     @mock.patch("airflow.providers.microsoft.azure.operators."
                 "azure_container_instances.AzureContainerInstanceHook")
@@ -103,10 +104,10 @@ class TestACIOperator(unittest.TestCase):
                                               image='container-image',
                                               region='region',
                                               task_id='task')
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             aci.execute(None)
 
-        self.assertEqual(aci_mock.return_value.delete.call_count, 1)
+        assert aci_mock.return_value.delete.call_count == 1
 
     @mock.patch("airflow.providers.microsoft.azure.operators."
                 "azure_container_instances.AzureContainerInstanceHook")
@@ -128,24 +129,24 @@ class TestACIOperator(unittest.TestCase):
                                               tags=tags)
         aci.execute(None)
 
-        self.assertEqual(aci_mock.return_value.create_or_update.call_count, 1)
+        assert aci_mock.return_value.create_or_update.call_count == 1
         (called_rg, called_cn, called_cg), _ = \
             aci_mock.return_value.create_or_update.call_args
 
-        self.assertEqual(called_rg, 'resource-group')
-        self.assertEqual(called_cn, 'container-name')
+        assert called_rg == 'resource-group'
+        assert called_cn == 'container-name'
 
-        self.assertEqual(called_cg.location, 'region')
-        self.assertEqual(called_cg.image_registry_credentials, None)
-        self.assertEqual(called_cg.restart_policy, 'Never')
-        self.assertEqual(called_cg.os_type, 'Linux')
-        self.assertEqual(called_cg.tags, tags)
+        assert called_cg.location == 'region'
+        assert called_cg.image_registry_credentials == None
+        assert called_cg.restart_policy == 'Never'
+        assert called_cg.os_type == 'Linux'
+        assert called_cg.tags == tags
 
         called_cg_container = called_cg.containers[0]
-        self.assertEqual(called_cg_container.name, 'container-name')
-        self.assertEqual(called_cg_container.image, 'container-image')
+        assert called_cg_container.name == 'container-name'
+        assert called_cg_container.image == 'container-image'
 
-        self.assertEqual(aci_mock.return_value.delete.call_count, 1)
+        assert aci_mock.return_value.delete.call_count == 1
 
     @mock.patch("airflow.providers.microsoft.azure.operators."
                 "azure_container_instances.AzureContainerInstanceHook")
@@ -170,11 +171,11 @@ class TestACIOperator(unittest.TestCase):
                                               task_id='task')
         aci.execute(None)
 
-        self.assertEqual(aci_mock.return_value.create_or_update.call_count, 1)
-        self.assertEqual(aci_mock.return_value.get_state.call_count, 2)
-        self.assertEqual(aci_mock.return_value.get_logs.call_count, 2)
+        assert aci_mock.return_value.create_or_update.call_count == 1
+        assert aci_mock.return_value.get_state.call_count == 2
+        assert aci_mock.return_value.get_logs.call_count == 2
 
-        self.assertEqual(aci_mock.return_value.delete.call_count, 1)
+        assert aci_mock.return_value.delete.call_count == 1
 
     def test_name_checker(self):
         valid_names = ['test-dash', 'name-with-length---63' * 3]
@@ -184,12 +185,12 @@ class TestACIOperator(unittest.TestCase):
                          'name-ending-with-dash-',
                          '-name-starting-with-dash']
         for name in invalid_names:
-            with self.assertRaises(AirflowException):
+            with pytest.raises(AirflowException):
                 AzureContainerInstancesOperator._check_name(name)
 
         for name in valid_names:
             checked_name = AzureContainerInstancesOperator._check_name(name)
-            self.assertEqual(checked_name, name)
+            assert checked_name == name
 
 
 if __name__ == '__main__':

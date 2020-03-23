@@ -25,6 +25,7 @@ import mock
 from airflow.exceptions import AirflowException
 from airflow.models import DAG
 from airflow.providers.apache.druid.operators.druid_check import DruidCheckOperator
+import pytest
 
 
 class TestDruidCheckOperator(unittest.TestCase):
@@ -63,5 +64,5 @@ class TestDruidCheckOperator(unittest.TestCase):
 
         operator = self.__construct_operator(sql)
 
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             operator.execute()

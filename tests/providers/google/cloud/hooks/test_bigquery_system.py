@@ -34,24 +34,24 @@ class BigQueryDataframeResultsSystemTest(unittest.TestCase):
     def test_output_is_dataframe_with_valid_query(self):
         import pandas as pd
         df = self.instance.get_pandas_df('select 1')
-        self.assertIsInstance(df, pd.DataFrame)
+        assert isinstance(df, pd.DataFrame)
 
     def test_throws_exception_with_invalid_query(self):
-        with self.assertRaises(Exception) as context:
+        with pytest.raises(Exception) as context:
             self.instance.get_pandas_df('from `1`')
-        self.assertIn('Reason: ', str(context.exception), "")
+        assert 'Reason: ' in str(context.exception), ""
 
     def test_succeeds_with_explicit_legacy_query(self):
         df = self.instance.get_pandas_df('select 1', dialect='legacy')
-        self.assertEqual(df.iloc(0)[0][0], 1)
+        assert df.iloc(0)[0][0] == 1
 
     def test_succeeds_with_explicit_std_query(self):
         df = self.instance.get_pandas_df(
             'select * except(b) from (select 1 a, 2 b)', dialect='standard')
-        self.assertEqual(df.iloc(0)[0][0], 1)
+        assert df.iloc(0)[0][0] == 1
 
     def test_throws_exception_with_incompatible_syntax(self):
-        with self.assertRaises(Exception) as context:
+        with pytest.raises(Exception) as context:
             self.instance.get_pandas_df(
                 'select * except(b) from (select 1 a, 2 b)', dialect='legacy')
-        self.assertIn('Reason: ', str(context.exception), "")
+        assert 'Reason: ' in str(context.exception), ""

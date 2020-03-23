@@ -30,7 +30,7 @@ class TestSecret(unittest.TestCase):
 
     def test_to_env_secret(self):
         secret = Secret('env', 'name', 'secret', 'key')
-        self.assertEqual(secret.to_env_secret(), k8s.V1EnvVar(
+        assert secret.to_env_secret() == k8s.V1EnvVar(
             name='NAME',
             value_from=k8s.V1EnvVarSource(
                 secret_key_ref=k8s.V1SecretKeySelector(
@@ -38,19 +38,19 @@ class TestSecret(unittest.TestCase):
                     key='key'
                 )
             )
-        ))
+        )
 
     def test_to_env_from_secret(self):
         secret = Secret('env', None, 'secret')
-        self.assertEqual(secret.to_env_from_secret(), k8s.V1EnvFromSource(
+        assert secret.to_env_from_secret() == k8s.V1EnvFromSource(
             secret_ref=k8s.V1SecretEnvSource(name='secret')
-        ))
+        )
 
     @mock.patch('uuid.uuid4')
     def test_to_volume_secret(self, mock_uuid):
         mock_uuid.return_value = '0'
         secret = Secret('volume', '/etc/foo', 'secret_b')
-        self.assertEqual(secret.to_volume_secret(), (
+        assert secret.to_volume_secret() == (
             k8s.V1Volume(
                 name='secretvol0',
                 secret=k8s.V1SecretVolumeSource(
@@ -62,7 +62,7 @@ class TestSecret(unittest.TestCase):
                 name='secretvol0',
                 read_only=True
             )
-        ))
+        )
 
     @mock.patch('uuid.uuid4')
     def test_attach_to_pod(self, mock_uuid):
@@ -81,7 +81,7 @@ class TestSecret(unittest.TestCase):
         k8s_client = ApiClient()
         result = append_to_pod(pod, secrets)
         result = k8s_client.sanitize_for_serialization(result)
-        self.assertEqual(result, {
+        assert result == {
             'apiVersion': 'v1',
             'kind': 'Pod',
             'metadata': {'name': 'base-' + static_uuid.hex},
@@ -114,4 +114,4 @@ class TestSecret(unittest.TestCase):
                     'secret': {'secretName': 'secret_b'}
                 }]
             }
-        })
+        }

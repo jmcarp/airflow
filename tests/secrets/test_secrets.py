@@ -48,8 +48,8 @@ class TestSecrets(unittest.TestCase):
         backends = initialize_secrets_backends()
         backend_classes = [backend.__class__.__name__ for backend in backends]
 
-        self.assertEqual(3, len(backends))
-        self.assertIn('AwsSsmSecretsBackend', backend_classes)
+        assert 3 == len(backends)
+        assert 'AwsSsmSecretsBackend' in backend_classes
 
     @conf_vars({
         ("secrets", "backend"): "airflow.providers.amazon.aws.secrets.ssm.AwsSsmSecretsBackend",
@@ -64,14 +64,14 @@ class TestSecrets(unittest.TestCase):
 
         backends = ensure_secrets_loaded()
         backend_classes = [backend.__class__.__name__ for backend in backends]
-        self.assertIn('AwsSsmSecretsBackend', backend_classes)
+        assert 'AwsSsmSecretsBackend' in backend_classes
 
         uri = get_connections(conn_id="test_mysql")
 
         # Assert that AwsSsmSecretsBackend.get_conn_uri was called
         mock_get_uri.assert_called_once_with(conn_id='test_mysql')
 
-        self.assertEqual('mysql://airflow:airflow@host:5432/airflow', uri[0].get_uri())
+        assert 'mysql://airflow:airflow@host:5432/airflow' == uri[0].get_uri()
 
 
 if __name__ == "__main__":

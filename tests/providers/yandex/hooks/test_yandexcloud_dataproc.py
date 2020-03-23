@@ -89,7 +89,7 @@ class TestYandexCloudDataprocHook(unittest.TestCase):
             cluster_image_version=CLUSTER_IMAGE_VERSION,
             service_account_id=SERVICE_ACCOUNT_ID,
         )
-        self.assertTrue(create_operation_mock.called)
+        assert create_operation_mock.called
 
     @patch('yandexcloud.SDK.create_operation_and_get_result')
     def test_delete_dataproc_cluster_mocked(self, create_operation_mock):
@@ -97,7 +97,7 @@ class TestYandexCloudDataprocHook(unittest.TestCase):
         self.hook.client.delete_cluster(
             'my_cluster_id'
         )
-        self.assertTrue(create_operation_mock.called)
+        assert create_operation_mock.called
 
     @patch('yandexcloud.SDK.create_operation_and_get_result')
     def test_create_hive_job_hook(self, create_operation_mock):
@@ -111,7 +111,7 @@ class TestYandexCloudDataprocHook(unittest.TestCase):
             query='SELECT 1;',
             script_variables=None,
         )
-        self.assertTrue(create_operation_mock.called)
+        assert create_operation_mock.called
 
     @patch('yandexcloud.SDK.create_operation_and_get_result')
     def test_create_mapreduce_job_hook(self, create_operation_mock):
@@ -139,7 +139,7 @@ class TestYandexCloudDataprocHook(unittest.TestCase):
                 'mapreduce.job.maps': '6'
             }
         )
-        self.assertTrue(create_operation_mock.called)
+        assert create_operation_mock.called
 
     @patch('yandexcloud.SDK.create_operation_and_get_result')
     def test_create_spark_job_hook(self, create_operation_mock):
@@ -164,7 +164,7 @@ class TestYandexCloudDataprocHook(unittest.TestCase):
             name='Spark job',
             properties={'spark.submit.deployMode': 'cluster'}
         )
-        self.assertTrue(create_operation_mock.called)
+        assert create_operation_mock.called
 
     @patch('yandexcloud.SDK.create_operation_and_get_result')
     def test_create_pyspark_job_hook(self, create_operation_mock):
@@ -188,4 +188,4 @@ class TestYandexCloudDataprocHook(unittest.TestCase):
             properties={'spark.submit.deployMode': 'cluster'},
             python_file_uris=['s3a://some-in-bucket/jobs/sources/pyspark-001/geonames.py']
         )
-        self.assertTrue(create_operation_mock.called)
+        assert create_operation_mock.called

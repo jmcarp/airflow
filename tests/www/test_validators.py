@@ -20,6 +20,7 @@ import unittest
 from unittest import mock
 
 from airflow.www import validators
+import pytest
 
 
 class TestGreaterEqualThan(unittest.TestCase):
@@ -45,50 +46,39 @@ class TestGreaterEqualThan(unittest.TestCase):
         return validator(self.form_mock, self.form_field_mock)
 
     def test_field_not_found(self):
-        self.assertRaisesRegex(
-            validators.ValidationError,
-            "^Invalid field name 'some'.$",
-            self._validate,
-            fieldname='some',
-        )
+        with pytest.raises(validators.ValidationError, match="^Invalid field name 'some'.$"):
+            self._validate(fieldname='some',)
 
     def test_form_field_is_none(self):
         self.form_field_mock.data = None
 
-        self.assertIsNone(self._validate())
+        assert self._validate() is None
 
     def test_other_field_is_none(self):
         self.other_field_mock.data = None
 
-        self.assertIsNone(self._validate())
+        assert self._validate() is None
 
     def test_both_fields_are_none(self):
         self.form_field_mock.data = None
         self.other_field_mock.data = None
 
-        self.assertIsNone(self._validate())
+        assert self._validate() is None
 
     def test_validation_pass(self):
-        self.assertIsNone(self._validate())
+        assert self._validate() is None
 
     def test_validation_raises(self):
         self.form_field_mock.data = '2017-05-04'
 
-        self.assertRaisesRegex(
-            validators.ValidationError,
-            "^Field must be greater than or equal to other field.$",
-            self._validate,
-        )
+        with pytest.raises(validators.ValidationError, match="^Field must be greater than or equal to other field.$"):
+            self._validate()
 
     def test_validation_raises_custom_message(self):
         self.form_field_mock.data = '2017-05-04'
 
-        self.assertRaisesRegex(
-            validators.ValidationError,
-            "^This field must be greater than or equal to MyField.$",
-            self._validate,
-            message="This field must be greater than or equal to MyField.",
-        )
+        with pytest.raises(validators.ValidationError, match="^This field must be greater than or equal to MyField.$"):
+            self._validate(message="This field must be greater than or equal to MyField.",)
 
 
 class TestValidJson(unittest.TestCase):
@@ -108,29 +98,22 @@ class TestValidJson(unittest.TestCase):
     def test_form_field_is_none(self):
         self.form_field_mock.data = None
 
-        self.assertIsNone(self._validate())
+        assert self._validate() is None
 
     def test_validation_pass(self):
-        self.assertIsNone(self._validate())
+        assert self._validate() is None
 
     def test_validation_raises_default_message(self):
         self.form_field_mock.data = '2017-05-04'
 
-        self.assertRaisesRegex(
-            validators.ValidationError,
-            "JSON Validation Error:.*",
-            self._validate,
-        )
+        with pytest.raises(validators.ValidationError, match="JSON Validation Error:.*"):
+            self._validate()
 
     def test_validation_raises_custom_message(self):
         self.form_field_mock.data = '2017-05-04'
 
-        self.assertRaisesRegex(
-            validators.ValidationError,
-            "Invalid JSON",
-            self._validate,
-            message="Invalid JSON: {}",
-        )
+        with pytest.raises(validators.ValidationError, match="Invalid JSON"):
+            self._validate(message="Invalid JSON: {}",)
 
 
 if __name__ == '__main__':

@@ -50,7 +50,7 @@ class TestOrderSetup(unittest.TestCase):
 
         src = main_dependent.strip(',').split(',')
         alphabetical = sorted(src)
-        self.assertListEqual(alphabetical, src)
+        assert alphabetical == src
 
     def test_sub_dependent_group(self):
         """
@@ -70,7 +70,7 @@ class TestOrderSetup(unittest.TestCase):
 
             src = [pattern_dependent_version.sub('', p) for p in dependent]
             alphabetical = sorted(src)
-            self.assertListEqual(alphabetical, src)
+            assert alphabetical == src
 
     def test_alias_dependent_group(self):
         """
@@ -82,7 +82,7 @@ class TestOrderSetup(unittest.TestCase):
         for dependent in dependents:
             src = dependent.split(' + ')
             alphabetical = sorted(src)
-            self.assertListEqual(alphabetical, src)
+            assert alphabetical == src
 
     def test_devel_all(self):
         """
@@ -95,7 +95,7 @@ class TestOrderSetup(unittest.TestCase):
 
         src = pattern_new_line.sub(' ', dependent).split(' + ')
         alphabetical = sorted(src)
-        self.assertListEqual(alphabetical, src)
+        assert alphabetical == src
 
     def test_install_and_setup_requires(self):
         """
@@ -113,7 +113,7 @@ class TestOrderSetup(unittest.TestCase):
 
             src = [pattern_dependent_version.sub('', p) for p in dependent]
             alphabetical = sorted(src)
-            self.assertListEqual(alphabetical, src)
+            assert alphabetical == src
 
     def test_extras_require(self):
         """
@@ -126,7 +126,7 @@ class TestOrderSetup(unittest.TestCase):
         pattern_dependent = re.compile('\'(.*?)\'')
         src = pattern_dependent.findall(extras_requires)
         alphabetical = sorted(src)
-        self.assertListEqual(alphabetical, src)
+        assert alphabetical == src
 
 
 if __name__ == '__main__':

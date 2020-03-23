@@ -31,6 +31,7 @@ from airflow.models.baseoperator import chain, cross_downstream
 from airflow.operators.dummy_operator import DummyOperator
 from tests.models import DEFAULT_DATE
 from tests.test_utils.mock_operators import MockNamedTuple, MockOperator
+import pytest
 
 
 class ClassWithCustomAttributes:
@@ -138,7 +139,7 @@ class TestBaseOperator(unittest.TestCase):
             task = DummyOperator(task_id="op1")
 
         result = task.render_template(content, context)
-        self.assertEqual(result, expected_output)
+        assert result == expected_output
 
     def test_render_template_fields(self):
         """Verify if operator attributes are correctly templated."""
@@ -146,13 +147,13 @@ class TestBaseOperator(unittest.TestCase):
             task = MockOperator(task_id="op1", arg1="{{ foo }}", arg2="{{ bar }}")
 
         # Assert nothing is templated yet
-        self.assertEqual(task.arg1, "{{ foo }}")
-        self.assertEqual(task.arg2, "{{ bar }}")
+        assert task.arg1 == "{{ foo }}"
+        assert task.arg2 == "{{ bar }}"
 
         # Trigger templating and verify if attributes are templated correctly
         task.render_template_fields(context={"foo": "footemplated", "bar": "bartemplated"})
-        self.assertEqual(task.arg1, "footemplated")
-        self.assertEqual(task.arg2, "bartemplated")
+        assert task.arg1 == "footemplated"
+        assert task.arg2 == "bartemplated"
 
     @parameterized.expand(
         [
@@ -172,7 +173,7 @@ class TestBaseOperator(unittest.TestCase):
             task = DummyOperator(task_id="op1")
 
         result = task.render_template(content, context)
-        self.assertEqual(result, expected_output)
+        assert result == expected_output
 
     @parameterized.expand([(object(),), (uuid.uuid4(),)])
     def test_render_template_fields_no_change(self, content):
@@ -181,14 +182,14 @@ class TestBaseOperator(unittest.TestCase):
             task = DummyOperator(task_id="op1")
 
         result = task.render_template(content, {"foo": "bar"})
-        self.assertEqual(content, result)
+        assert content == result
 
     def test_render_template_field_undefined_strict(self):
         """Test render_template with template_undefined configured."""
         with DAG("test-dag", start_date=DEFAULT_DATE, template_undefined=jinja2.StrictUndefined):
             task = DummyOperator(task_id="op1")
 
-        with self.assertRaises(jinja2.UndefinedError):
+        with pytest.raises(jinja2.UndefinedError):
             task.render_template("{{ foo }}", {})
 
     def test_nested_template_fields_declared_must_exist(self):
@@ -196,18 +197,18 @@ class TestBaseOperator(unittest.TestCase):
         with DAG("test-dag", start_date=DEFAULT_DATE):
             task = DummyOperator(task_id="op1")
 
-        with self.assertRaises(AttributeError) as e:
+        with pytest.raises(AttributeError) as e:
             task.render_template(ClassWithCustomAttributes(template_fields=["missing_field"]), {})
 
-        self.assertEqual("'ClassWithCustomAttributes' object has no attribute 'missing_field'",
-                         str(e.exception))
+        assert "'ClassWithCustomAttributes' object has no attribute 'missing_field'" == \
+                         str(e.exception)
 
     def test_jinja_invalid_expression_is_just_propagated(self):
         """Test render_template propagates Jinja invalid expression errors."""
         with DAG("test-dag", start_date=DEFAULT_DATE):
             task = DummyOperator(task_id="op1")
 
-        with self.assertRaises(jinja2.exceptions.TemplateSyntaxError):
+        with pytest.raises(jinja2.exceptions.TemplateSyntaxError):
             task.render_template("{{ invalid expression }}", {})
 
     @mock.patch("jinja2.Environment", autospec=True)
@@ -217,7 +218,7 @@ class TestBaseOperator(unittest.TestCase):
             task = MockOperator(task_id="op1", arg1="{{ foo }}", arg2="{{ bar }}")
 
         task.render_template_fields(context={"foo": "whatever", "bar": "whatever"})
-        self.assertEqual(mock_jinja_env.call_count, 1)
+        assert mock_jinja_env.call_count == 1
 
     def test_set_jinja_env_additional_option(self):
         """Test render_template given various input types."""
@@ -227,7 +228,7 @@ class TestBaseOperator(unittest.TestCase):
             task = DummyOperator(task_id="op1")
 
         result = task.render_template("{{ foo }}\n\n", {"foo": "bar"})
-        self.assertEqual(result, "bar\n\n")
+        assert result == "bar\n\n"
 
     def test_override_jinja_env_option(self):
         """Test render_template given various input types."""
@@ -237,16 +238,16 @@ class TestBaseOperator(unittest.TestCase):
             task = DummyOperator(task_id="op1")
 
         result = task.render_template("{{ foo }}", {"foo": "bar"})
-        self.assertEqual(result, "bar")
+        assert result == "bar"
 
     def test_default_resources(self):
         task = DummyOperator(task_id="default-resources")
-        self.assertIsNone(task.resources)
+        assert task.resources is None
 
     def test_custom_resources(self):
         task = DummyOperator(task_id="custom-resources", resources={"cpus": 1, "ram": 1024})
-        self.assertEqual(task.resources.cpus.qty, 1)
-        self.assertEqual(task.resources.ram.qty, 1024)
+        assert task.resources.cpus.qty == 1
+        assert task.resources.ram.qty == 1024
 
     def test_default_email_on_actions(self):
         test_task = DummyOperator(task_id='test_default_email_on_actions')
@@ -283,21 +284,21 @@ class TestBaseOperatorMethods(unittest.TestCase):
         chain(op1, [op2, op3], [op4, op5], op6)
 
         self.assertCountEqual([op2, op3], op1.get_direct_relatives(upstream=False))
-        self.assertEqual([op4], op2.get_direct_relatives(upstream=False))
-        self.assertEqual([op5], op3.get_direct_relatives(upstream=False))
+        assert [op4] == op2.get_direct_relatives(upstream=False)
+        assert [op5] == op3.get_direct_relatives(upstream=False)
         self.assertCountEqual([op4, op5], op6.get_direct_relatives(upstream=True))
 
     def test_chain_not_support_type(self):
         dag = DAG(dag_id='test_chain', start_date=datetime.now())
         [op1, op2] = [DummyOperator(task_id='t{i}'.format(i=i), dag=dag) for i in range(1, 3)]
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             # noinspection PyTypeChecker
             chain([op1, op2], 1)
 
     def test_chain_different_length_iterable(self):
         dag = DAG(dag_id='test_chain', start_date=datetime.now())
         [op1, op2, op3, op4, op5] = [DummyOperator(task_id='t{i}'.format(i=i), dag=dag) for i in range(1, 6)]
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             chain([op1, op2], [op3, op4, op5])
 
     def test_lineage_composition(self):
@@ -316,34 +317,34 @@ class TestBaseOperatorMethods(unittest.TestCase):
         # note: operator precedence still applies
         inlet > task1 | (task2 > outlet)
 
-        self.assertEqual(task1.get_inlet_defs(), [inlet])
-        self.assertEqual(task2.get_inlet_defs(), [task1.task_id])
-        self.assertEqual(task2.get_outlet_defs(), [outlet])
+        assert task1.get_inlet_defs() == [inlet]
+        assert task2.get_inlet_defs() == [task1.task_id]
+        assert task2.get_outlet_defs() == [outlet]
 
         fail = ClassWithCustomAttributes()
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             fail > task1
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             task1 > fail
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             fail | task1
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             task1 | fail
 
         task3 = DummyOperator(task_id="op3", dag=dag)
         extra = File(url="extra")
         [inlet, extra] > task3
 
-        self.assertEqual(task3.get_inlet_defs(), [inlet, extra])
+        assert task3.get_inlet_defs() == [inlet, extra]
 
         task1.supports_lineage = False
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             task1 | task3
 
-        self.assertEqual(task2.supports_lineage, False)
+        assert task2.supports_lineage == False
         task2 | task3
-        self.assertEqual(len(task3.get_inlet_defs()), 3)
+        assert len(task3.get_inlet_defs()) == 3
 
         task4 = DummyOperator(task_id="op4", dag=dag)
         task4 > [inlet, outlet, extra]
-        self.assertEqual(task4.get_outlet_defs(), [inlet, outlet, extra])
+        assert task4.get_outlet_defs() == [inlet, outlet, extra]

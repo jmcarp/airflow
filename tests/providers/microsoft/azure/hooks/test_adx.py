@@ -28,6 +28,7 @@ from airflow.models import Connection
 from airflow.providers.microsoft.azure.hooks.adx import AzureDataExplorerHook
 from airflow.utils import db
 from airflow.utils.session import create_session
+import pytest
 
 ADX_TEST_CONN_ID = 'adx_test_connection_id'
 
@@ -47,10 +48,10 @@ class TestAzureDataExplorerHook(unittest.TestCase):
                        password='client secret',
                        host='https://help.kusto.windows.net',
                        extra=json.dumps({})))
-        with self.assertRaises(AirflowException) as e:
+        with pytest.raises(AirflowException) as e:
             AzureDataExplorerHook(azure_data_explorer_conn_id=ADX_TEST_CONN_ID)
-            self.assertIn('missing required parameter: `auth_method`',
-                          str(e.exception))
+            assert 'missing required parameter: `auth_method`' in \
+                          str(e.exception)
 
     def test_conn_unknown_method(self):
         db.merge_conn(
@@ -60,10 +61,10 @@ class TestAzureDataExplorerHook(unittest.TestCase):
                        password='client secret',
                        host='https://help.kusto.windows.net',
                        extra=json.dumps({'auth_method': 'AAD_OTHER'})))
-        with self.assertRaises(AirflowException) as e:
+        with pytest.raises(AirflowException) as e:
             AzureDataExplorerHook(azure_data_explorer_conn_id=ADX_TEST_CONN_ID)
-        self.assertIn('Unknown authentication method: AAD_OTHER',
-                      str(e.exception))
+        assert 'Unknown authentication method: AAD_OTHER' in \
+                      str(e.exception)
 
     def test_conn_missing_cluster(self):
         db.merge_conn(
@@ -72,9 +73,9 @@ class TestAzureDataExplorerHook(unittest.TestCase):
                        login='client_id',
                        password='client secret',
                        extra=json.dumps({})))
-        with self.assertRaises(AirflowException) as e:
+        with pytest.raises(AirflowException) as e:
             AzureDataExplorerHook(azure_data_explorer_conn_id=ADX_TEST_CONN_ID)
-        self.assertIn('Host connection option is required', str(e.exception))
+        assert 'Host connection option is required' in str(e.exception)
 
     @mock.patch.object(KustoClient, '__init__')
     def test_conn_method_aad_creds(self, mock_init):

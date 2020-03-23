@@ -132,8 +132,8 @@ class TestStackdriverLoggingHandlerTask(unittest.TestCase):
                     'labels.execution_date="2016-01-01T00:00:00+00:00"',
             page_token=None
         )
-        self.assertEqual(['MSG1\nMSG2'], logs)
-        self.assertEqual([{'end_of_log': True}], metadata)
+        assert ['MSG1\nMSG2'] == logs
+        assert [{'end_of_log': True}] == metadata
 
     @mock.patch(  # type: ignore
         'airflow.utils.log.stackdriver_task_handler.gcp_logging.Client',
@@ -151,8 +151,8 @@ class TestStackdriverLoggingHandlerTask(unittest.TestCase):
                     'labels.execution_date="2016-01-01T00:00:00+00:00"',
             page_token=None
         )
-        self.assertEqual(['MSG1\nMSG2'], logs)
-        self.assertEqual([{'end_of_log': True}], metadata)
+        assert ['MSG1\nMSG2'] == logs
+        assert [{'end_of_log': True}] == metadata
 
     @mock.patch(
         'airflow.utils.log.stackdriver_task_handler.gcp_logging.Client',
@@ -171,8 +171,8 @@ class TestStackdriverLoggingHandlerTask(unittest.TestCase):
                     'labels.try_number="3"',
             page_token=None
         )
-        self.assertEqual(['MSG1\nMSG2'], logs)
-        self.assertEqual([{'end_of_log': True}], metadata)
+        assert ['MSG1\nMSG2'] == logs
+        assert [{'end_of_log': True}] == metadata
 
     @mock.patch('airflow.utils.log.stackdriver_task_handler.gcp_logging.Client')
     def test_should_read_logs_with_pagination(self, mock_client):
@@ -184,16 +184,16 @@ class TestStackdriverLoggingHandlerTask(unittest.TestCase):
         mock_client.return_value.list_entries.assert_called_once_with(
             filter_=mock.ANY, page_token=None
         )
-        self.assertEqual(['MSG1\nMSG2'], logs)
-        self.assertEqual([{'end_of_log': False, 'next_page_token': 'TOKEN1'}], metadata1)
+        assert ['MSG1\nMSG2'] == logs
+        assert [{'end_of_log': False, 'next_page_token': 'TOKEN1'}] == metadata1
 
         mock_client.return_value.list_entries.return_value.next_page_token = None
         logs, metadata2 = self.stackdriver_task_handler.read(self.ti, 3, metadata1[0])
         mock_client.return_value.list_entries.assert_called_with(
             filter_=mock.ANY, page_token="TOKEN1"
         )
-        self.assertEqual(['MSG3\nMSG4'], logs)
-        self.assertEqual([{'end_of_log': True}], metadata2)
+        assert ['MSG3\nMSG4'] == logs
+        assert [{'end_of_log': True}] == metadata2
 
     @mock.patch('airflow.utils.log.stackdriver_task_handler.gcp_logging.Client')
     def test_should_read_logs_with_download(self, mock_client):
@@ -204,8 +204,8 @@ class TestStackdriverLoggingHandlerTask(unittest.TestCase):
 
         logs, metadata1 = self.stackdriver_task_handler.read(self.ti, 3, {'download_logs': True})
 
-        self.assertEqual(['MSG1\nMSG2\nMSG3\nMSG4'], logs)
-        self.assertEqual([{'end_of_log': True}], metadata1)
+        assert ['MSG1\nMSG2\nMSG3\nMSG4'] == logs
+        assert [{'end_of_log': True}] == metadata1
 
     @mock.patch(
         'airflow.utils.log.stackdriver_task_handler.gcp_logging.Client',
@@ -242,8 +242,8 @@ class TestStackdriverLoggingHandlerTask(unittest.TestCase):
                     'labels.execution_date="2016-01-01T00:00:00+00:00"',
             page_token=None
         )
-        self.assertEqual(['TEXT\nTEXT'], logs)
-        self.assertEqual([{'end_of_log': True}], metadata)
+        assert ['TEXT\nTEXT'] == logs
+        assert [{'end_of_log': True}] == metadata
 
 
 class TestStackdriverTaskHandlerAuthorization(unittest.TestCase):
@@ -257,7 +257,7 @@ class TestStackdriverTaskHandlerAuthorization(unittest.TestCase):
         client = stackdriver_task_handler._client
 
         mock_client.assert_called_once_with(credentials=None, client_info=mock.ANY)
-        self.assertEqual(mock_client.return_value, client)
+        assert mock_client.return_value == client
 
     @mock.patch("airflow.providers.google.cloud.hooks.base.CloudBaseHook")
     @mock.patch('airflow.utils.log.stackdriver_task_handler.gcp_logging.Client')
@@ -272,4 +272,4 @@ class TestStackdriverTaskHandlerAuthorization(unittest.TestCase):
             credentials=mock_hook.return_value._get_credentials.return_value,
             client_info=mock.ANY
         )
-        self.assertEqual(mock_client.return_value, client)
+        assert mock_client.return_value == client

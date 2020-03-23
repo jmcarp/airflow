@@ -27,6 +27,7 @@ from mock import patch
 
 from airflow.configuration import conf
 from tests.test_utils.config import conf_vars
+import pytest
 
 SETTINGS_FILE_VALID = """
 LOGGING_CONFIG = {
@@ -173,7 +174,7 @@ class TestLoggingSettings(unittest.TestCase):
         with settings_context(SETTINGS_FILE_INVALID):
             with patch.object(log, 'warning') as mock_info:
                 # Load config
-                with self.assertRaises(ValueError):
+                with pytest.raises(ValueError):
                     configure_logging()
 
                 mock_info.assert_called_once_with(
@@ -212,7 +213,7 @@ class TestLoggingSettings(unittest.TestCase):
     def test_loading_no_local_settings(self):
         with settings_context(SETTINGS_FILE_EMPTY):
             from airflow.logging_config import configure_logging
-            with self.assertRaises(ImportError):
+            with pytest.raises(ImportError):
                 configure_logging()
 
     # When the key is not available in the configuration
@@ -237,9 +238,9 @@ class TestLoggingSettings(unittest.TestCase):
     def test_1_9_config(self):
         from airflow.logging_config import configure_logging
         with conf_vars({('logging', 'task_log_reader'): 'file.task'}):
-            with self.assertWarnsRegex(DeprecationWarning, r'file.task'):
+            with pytest.warns(DeprecationWarning, match=r'file.task'):
                 configure_logging()
-            self.assertEqual(conf.get('logging', 'task_log_reader'), 'task')
+            assert conf.get('logging', 'task_log_reader') == 'task'
 
     def test_loading_remote_logging_with_wasb_handler(self):
         """Test if logging can be configured successfully for Azure Blob Storage"""
@@ -257,7 +258,7 @@ class TestLoggingSettings(unittest.TestCase):
             configure_logging()
 
         logger = logging.getLogger('airflow.task')
-        self.assertIsInstance(logger.handlers[0], WasbTaskHandler)
+        assert isinstance(logger.handlers[0], WasbTaskHandler)
 
 
 if __name__ == '__main__':

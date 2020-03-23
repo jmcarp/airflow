@@ -31,6 +31,7 @@ from airflow.cli.commands.webserver_command import get_num_ready_workers_running
 from airflow.models import DagBag
 from airflow.utils.cli import setup_locations
 from tests.test_utils.config import conf_vars
+import pytest
 
 
 class TestCLIGetNumReadyWorkersRunning(unittest.TestCase):
@@ -51,37 +52,36 @@ class TestCLIGetNumReadyWorkersRunning(unittest.TestCase):
         self.process.children.return_value = [self.child]
 
         with mock.patch('psutil.Process', return_value=self.process):
-            self.assertEqual(get_num_ready_workers_running(self.gunicorn_master_proc), 1)
+            assert get_num_ready_workers_running(self.gunicorn_master_proc) == 1
 
     def test_ready_prefix_on_cmdline_no_children(self):
         self.process.children.return_value = []
 
         with mock.patch('psutil.Process', return_value=self.process):
-            self.assertEqual(get_num_ready_workers_running(self.gunicorn_master_proc), 0)
+            assert get_num_ready_workers_running(self.gunicorn_master_proc) == 0
 
     def test_ready_prefix_on_cmdline_zombie(self):
         self.child.cmdline.return_value = []
         self.process.children.return_value = [self.child]
 
         with mock.patch('psutil.Process', return_value=self.process):
-            self.assertEqual(get_num_ready_workers_running(self.gunicorn_master_proc), 0)
+            assert get_num_ready_workers_running(self.gunicorn_master_proc) == 0
 
     def test_ready_prefix_on_cmdline_dead_process(self):
         self.child.cmdline.side_effect = psutil.NoSuchProcess(11347)
         self.process.children.return_value = [self.child]
 
         with mock.patch('psutil.Process', return_value=self.process):
-            self.assertEqual(get_num_ready_workers_running(self.gunicorn_master_proc), 0)
+            assert get_num_ready_workers_running(self.gunicorn_master_proc) == 0
 
     def test_cli_webserver_debug(self):
         env = os.environ.copy()
         proc = psutil.Popen(["airflow", "webserver", "--debug"], env=env)
         sleep(3)  # wait for webserver to start
         return_code = proc.poll()
-        self.assertEqual(
-            None,
-            return_code,
-            "webserver terminated with return code {} in debug mode".format(return_code))
+        assert None == \
+            return_code, \
+            "webserver terminated with return code {} in debug mode".format(return_code)
         proc.terminate()
         proc.wait()
 
@@ -99,8 +99,8 @@ class TestCliWebServer(unittest.TestCase):
         try:
             # Confirm that webserver hasn't been launched.
             # pgrep returns exit status 1 if no process matched.
-            self.assertEqual(1, subprocess.Popen(["pgrep", "--full", "--count", "airflow webserver"]).wait())
-            self.assertEqual(1, subprocess.Popen(["pgrep", "--count", "gunicorn"]).wait())
+            assert 1 == subprocess.Popen(["pgrep", "--full", "--count", "airflow webserver"]).wait()
+            assert 1 == subprocess.Popen(["pgrep", "--count", "gunicorn"]).wait()
         except:  # noqa: E722
             subprocess.Popen(["ps", "-ax"]).wait()
             raise
@@ -157,8 +157,8 @@ class TestCliWebServer(unittest.TestCase):
         self._wait_pidfile(pidfile_webserver)
 
         # Assert that gunicorn and its monitor are launched.
-        self.assertEqual(0, subprocess.Popen(["pgrep", "--full", "--count", "airflow webserver"]).wait())
-        self.assertEqual(0, subprocess.Popen(["pgrep", "--count", "gunicorn"]).wait())
+        assert 0 == subprocess.Popen(["pgrep", "--full", "--count", "airflow webserver"]).wait()
+        assert 0 == subprocess.Popen(["pgrep", "--count", "gunicorn"]).wait()
 
         # Terminate monitor process.
         proc = psutil.Process(pid_monitor)
@@ -171,6 +171,6 @@ class TestCliWebServer(unittest.TestCase):
         # Shorten timeout so that this test doesn't take too long time
         args = self.parser.parse_args(['webserver'])
         with conf_vars({('webserver', 'web_server_master_timeout'): '10'}):
-            with self.assertRaises(SystemExit) as e:
+            with pytest.raises(SystemExit) as e:
                 webserver_command.webserver(args)
-        self.assertEqual(e.exception.code, 1)
+        assert e.exception.code == 1

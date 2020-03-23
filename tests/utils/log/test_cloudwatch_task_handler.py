@@ -73,7 +73,7 @@ class TestCloudwatchTaskHandler(unittest.TestCase):
         self.cloudwatch_task_handler.handler = None
 
     def test_hook(self):
-        self.assertIsInstance(self.cloudwatch_task_handler.hook, AwsLogsHook)
+        assert isinstance(self.cloudwatch_task_handler.hook, AwsLogsHook)
 
     def test_hook_raises(self):
         handler = self.cloudwatch_task_handler
@@ -91,7 +91,7 @@ class TestCloudwatchTaskHandler(unittest.TestCase):
 
     def test_handler(self):
         self.cloudwatch_task_handler.set_context(self.ti)
-        self.assertIsInstance(self.cloudwatch_task_handler.handler, CloudWatchLogHandler)
+        assert isinstance(self.cloudwatch_task_handler.handler, CloudWatchLogHandler)
 
     def test_write(self):
         handler = self.cloudwatch_task_handler
@@ -126,10 +126,8 @@ class TestCloudwatchTaskHandler(unittest.TestCase):
 
         expected = '*** Reading remote log from Cloudwatch log_group: {} ' \
                    'log_stream: {}.\nFirst\nSecond\nThird\n'
-        self.assertEqual(
-            self.cloudwatch_task_handler.read(self.ti),
+        assert self.cloudwatch_task_handler.read(self.ti) == \
             ([expected.format(self.remote_log_group, self.remote_log_stream)], [{'end_of_log': True}])
-        )
 
     def test_read_wrong_log_stream(self):
         generate_log_events(
@@ -158,13 +156,11 @@ class TestCloudwatchTaskHandler(unittest.TestCase):
             self.remote_log_group,
             self.remote_log_stream
         )
-        self.assertEqual(
-            self.cloudwatch_task_handler.read(self.ti),
+        assert self.cloudwatch_task_handler.read(self.ti) == \
             ([msg_template.format(
                 self.remote_log_group,
                 self.remote_log_stream, error_msg)],
              [{'end_of_log': True}])
-        )
 
     def test_read_wrong_log_group(self):
         generate_log_events(
@@ -192,13 +188,11 @@ class TestCloudwatchTaskHandler(unittest.TestCase):
             self.remote_log_group,
             self.remote_log_stream
         )
-        self.assertEqual(
-            self.cloudwatch_task_handler.read(self.ti),
+        assert self.cloudwatch_task_handler.read(self.ti) == \
             ([msg_template.format(
                 self.remote_log_group,
                 self.remote_log_stream, error_msg)],
              [{'end_of_log': True}])
-        )
 
     def test_close_prevents_duplicate_calls(self):
         with mock.patch("watchtower.CloudWatchLogHandler.close") as mock_log_handler_close:

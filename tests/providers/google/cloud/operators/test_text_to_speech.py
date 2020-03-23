@@ -23,6 +23,7 @@ from parameterized import parameterized
 
 from airflow.exceptions import AirflowException
 from airflow.providers.google.cloud.operators.text_to_speech import CloudTextToSpeechSynthesizeOperator
+import pytest
 
 PROJECT_ID = "project-id"
 GCP_CONN_ID = "gcp-conn-id"
@@ -85,7 +86,7 @@ class TestGcpTextToSpeech(unittest.TestCase):
         mock_text_to_speech_hook,
         mock_gcp_hook,
     ):
-        with self.assertRaises(AirflowException) as e:
+        with pytest.raises(AirflowException) as e:
             CloudTextToSpeechSynthesizeOperator(
                 project_id="project-id",
                 input_data=input_data,
@@ -97,6 +98,6 @@ class TestGcpTextToSpeech(unittest.TestCase):
             ).execute(context={"task_instance": Mock()})
 
         err = e.exception
-        self.assertIn(missing_arg, str(err))
+        assert missing_arg in str(err)
         mock_text_to_speech_hook.assert_not_called()
         mock_gcp_hook.assert_not_called()

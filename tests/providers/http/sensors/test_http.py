@@ -27,6 +27,7 @@ from airflow.models.dag import DAG
 from airflow.providers.http.operators.http import SimpleHttpOperator
 from airflow.providers.http.sensors.http import HttpSensor
 from airflow.utils.timezone import datetime
+import pytest
 
 DEFAULT_DATE = datetime(2015, 1, 1)
 DEFAULT_DATE_ISO = DEFAULT_DATE.isoformat()
@@ -61,7 +62,7 @@ class TestHttpSensor(unittest.TestCase):
             response_check=resp_check,
             timeout=5,
             poke_interval=1)
-        with self.assertRaisesRegex(AirflowException, 'AirflowException raised here!'):
+        with pytest.raises(AirflowException, match='AirflowException raised here!'):
             task.execute(context={})
 
     @patch("airflow.providers.http.hooks.http.requests.Session.send")
@@ -90,8 +91,8 @@ class TestHttpSensor(unittest.TestCase):
             'https://www.httpbin.org',
             {}).prepare()
 
-        self.assertEqual(prep_request.url, received_request.url)
-        self.assertTrue(prep_request.method, received_request.method)
+        assert prep_request.url == received_request.url
+        assert prep_request.method, received_request.method
 
     @patch("airflow.providers.http.hooks.http.requests.Session.send")
     def test_poke_context(self, mock_session_send):
@@ -144,10 +145,10 @@ class TestHttpSensor(unittest.TestCase):
         )
 
         with mock.patch.object(task.hook.log, 'error') as mock_errors:
-            with self.assertRaises(AirflowSensorTimeout):
+            with pytest.raises(AirflowSensorTimeout):
                 task.execute(None)
 
-            self.assertTrue(mock_errors.called)
+            assert mock_errors.called
             calls = [
                 mock.call('HTTP error: %s', 'Not Found'),
                 mock.call('This endpoint doesnt exist'),

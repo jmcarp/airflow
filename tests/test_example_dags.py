@@ -41,8 +41,8 @@ class TestExampleDags(unittest.TestCase):
                     dag_folder=filepath,
                     include_examples=False,
                 )
-                self.assertEqual(0, len(dagbag.import_errors), f"import_errors={str(dagbag.import_errors)}")
-                self.assertGreaterEqual(len(dagbag.dag_ids), 1)
+                assert 0 == len(dagbag.import_errors), f"import_errors={str(dagbag.import_errors)}"
+                assert len(dagbag.dag_ids) >= 1
 
     def test_should_not_do_database_queries(self):
         example_dags = glob(f"{ROOT_FOLDER}/airflow/**/example_dags/example_*.py", recursive=True)

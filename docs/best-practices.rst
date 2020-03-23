@@ -144,9 +144,9 @@ Unit tests ensure that there is no incorrect code in your DAG. You can write uni
 
     def test_dag_loaded(self):
         dag = self.dagbag.get_dag(dag_id='hello_world')
-        self.assertDictEqual(self.dagbag.import_errors, {})
-        self.assertIsNotNone(dag)
-        self.assertEqual(len(dag.tasks), 1)
+        assert self.dagbag.import_errors == {}
+        assert dag is not None
+        assert len(dag.tasks) == 1
 
 **Unit test a DAG structure:**
 This is an example test want to verify the structure of a code-generated DAG against a dict object
@@ -156,12 +156,12 @@ This is an example test want to verify the structure of a code-generated DAG aga
  import unittest
  class testClass(unittest.TestCase):
      def assertDagDictEqual(self,source,dag):
-         self.assertEqual(dag.task_dict.keys(),source.keys())
+         assert dag.task_dict.keys() == source.keys()
          for task_id,downstream_list in source.items():
-             self.assertTrue(dag.has_task(task_id), msg="Missing task_id: {} in dag".format(task_id))
+             assert dag.has_task(task_id), "Missing task_id: {} in dag".format(task_id)
              task = dag.get_task(task_id)
-             self.assertEqual(task.downstream_task_ids, set(downstream_list),
-                              msg="unexpected downstream link in {}".format(task_id))
+             assert task.downstream_task_ids == set(downstream_list), 
+             self.assertEqual(task.downstream_task_ids, set(downstream_list), "unexpected downstream link in {}".format(task_id)
      def test_dag(self):
          self.assertDagDictEqual({
            "DummyInstruction_0": ["DummyInstruction_1"],
@@ -192,7 +192,7 @@ This is an example test want to verify the structure of a code-generated DAG aga
 
     def test_execute_no_trigger(self):
         self.ti.run(ignore_ti_state=True)
-        self.assertEqual(self.ti.state, State.SUCCESS)
+        assert self.ti.state == State.SUCCESS
         #Assert something related to tasks results
 
 Self-Checks

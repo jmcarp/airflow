@@ -28,13 +28,13 @@ class TestKubeResourceVersion(unittest.TestCase):
     def test_checkpoint_resource_version(self):
         session = settings.Session()
         KubeResourceVersion.checkpoint_resource_version('7', session)
-        self.assertEqual(KubeResourceVersion.get_current_resource_version(session), '7')
+        assert KubeResourceVersion.get_current_resource_version(session) == '7'
 
     def test_reset_resource_version(self):
         session = settings.Session()
         version = KubeResourceVersion.reset_resource_version(session)
-        self.assertEqual(version, '0')
-        self.assertEqual(KubeResourceVersion.get_current_resource_version(session), '0')
+        assert version == '0'
+        assert KubeResourceVersion.get_current_resource_version(session) == '0'
 
 
 class TestKubeWorkerIdentifier(unittest.TestCase):
@@ -47,10 +47,10 @@ class TestKubeWorkerIdentifier(unittest.TestCase):
         })
         mock_uuid.return_value = 'abcde'
         worker_uuid = KubeWorkerIdentifier.get_or_create_current_kube_worker_uuid(session)
-        self.assertEqual(worker_uuid, 'abcde')
+        assert worker_uuid == 'abcde'
 
     def test_get_or_create_exist(self):
         session = settings.Session()
         KubeWorkerIdentifier.checkpoint_kube_worker_uuid('fghij', session)
         worker_uuid = KubeWorkerIdentifier.get_or_create_current_kube_worker_uuid(session)
-        self.assertEqual(worker_uuid, 'fghij')
+        assert worker_uuid == 'fghij'

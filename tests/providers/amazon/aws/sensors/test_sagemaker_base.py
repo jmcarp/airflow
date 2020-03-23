@@ -20,6 +20,7 @@ import unittest
 
 from airflow.exceptions import AirflowException
 from airflow.providers.amazon.aws.sensors.sagemaker_base import SageMakerBaseSensor
+import pytest
 
 
 class TestSagemakerBaseSensor(unittest.TestCase):
@@ -71,7 +72,7 @@ class TestSagemakerBaseSensor(unittest.TestCase):
             aws_conn_id='aws_test'
         )
 
-        self.assertEqual(sensor.poke(None), False)
+        assert sensor.poke(None) == False
 
     def test_poke_with_not_implemented_method(self):
         class SageMakerBaseSensorSubclass(SageMakerBaseSensor):
@@ -87,7 +88,8 @@ class TestSagemakerBaseSensor(unittest.TestCase):
             aws_conn_id='aws_test'
         )
 
-        self.assertRaises(NotImplementedError, sensor.poke, None)
+        with pytest.raises(NotImplementedError):
+            sensor.poke(None)
 
     def test_poke_with_bad_response(self):
         class SageMakerBaseSensorSubclass(SageMakerBaseSensor):
@@ -112,7 +114,7 @@ class TestSagemakerBaseSensor(unittest.TestCase):
             aws_conn_id='aws_test'
         )
 
-        self.assertEqual(sensor.poke(None), False)
+        assert sensor.poke(None) == False
 
     def test_poke_with_job_failure(self):
         class SageMakerBaseSensorSubclass(SageMakerBaseSensor):
@@ -137,7 +139,8 @@ class TestSagemakerBaseSensor(unittest.TestCase):
             aws_conn_id='aws_test'
         )
 
-        self.assertRaises(AirflowException, sensor.poke, None)
+        with pytest.raises(AirflowException):
+            sensor.poke(None)
 
 
 if __name__ == '__main__':

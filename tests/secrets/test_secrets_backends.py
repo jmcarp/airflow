@@ -42,11 +42,11 @@ class TestBaseSecretsBackend(unittest.TestCase):
         env_secrets_backend = EnvironmentVariablesSecretsBackend()
         os.environ[sample_conn_1.var_name] = sample_conn_1.conn_uri
         conn_list = env_secrets_backend.get_connections(sample_conn_1.conn_id)
-        self.assertEqual(1, len(conn_list))
+        assert 1 == len(conn_list)
         conn = conn_list[0]
 
         # we could make this more precise by defining __eq__ method for Connection
-        self.assertEqual(sample_conn_1.host.lower(), conn.host)
+        assert sample_conn_1.host.lower() == conn.host
 
     def test_metastore_secrets_backend(self):
         sample_conn_2a = SampleConn("sample_2", "A")
@@ -58,9 +58,7 @@ class TestBaseSecretsBackend(unittest.TestCase):
         metastore_backend = MetastoreSecretsBackend()
         conn_list = metastore_backend.get_connections("sample_2")
         host_list = {x.host for x in conn_list}
-        self.assertEqual(
-            {sample_conn_2a.host.lower(), sample_conn_2b.host.lower()}, set(host_list)
-        )
+        assert {sample_conn_2a.host.lower(), sample_conn_2b.host.lower()} == set(host_list)
 
 
 if __name__ == "__main__":

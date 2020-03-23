@@ -43,7 +43,7 @@ class TestS3CopyObjectOperator(unittest.TestCase):
                             Fileobj=io.BytesIO(b"input"))
 
         # there should be nothing found before S3CopyObjectOperator is executed
-        self.assertFalse('Contents' in conn.list_objects(Bucket=self.dest_bucket,
+        assert not ('Contents' in conn.list_objects(Bucket=self.dest_bucket,
                                                          Prefix=self.dest_key))
 
         op = S3CopyObjectOperator(task_id="test_task_s3_copy_object",
@@ -56,9 +56,9 @@ class TestS3CopyObjectOperator(unittest.TestCase):
         objects_in_dest_bucket = conn.list_objects(Bucket=self.dest_bucket,
                                                    Prefix=self.dest_key)
         # there should be object found, and there should only be one object found
-        self.assertEqual(len(objects_in_dest_bucket['Contents']), 1)
+        assert len(objects_in_dest_bucket['Contents']) == 1
         # the object found should be consistent with dest_key specified earlier
-        self.assertEqual(objects_in_dest_bucket['Contents'][0]['Key'], self.dest_key)
+        assert objects_in_dest_bucket['Contents'][0]['Key'] == self.dest_key
 
     @mock_s3
     def test_s3_copy_object_arg_combination_2(self):
@@ -70,7 +70,7 @@ class TestS3CopyObjectOperator(unittest.TestCase):
                             Fileobj=io.BytesIO(b"input"))
 
         # there should be nothing found before S3CopyObjectOperator is executed
-        self.assertFalse('Contents' in conn.list_objects(Bucket=self.dest_bucket,
+        assert not ('Contents' in conn.list_objects(Bucket=self.dest_bucket,
                                                          Prefix=self.dest_key))
 
         source_key_s3_url = "s3://{}/{}".format(self.source_bucket, self.source_key)
@@ -83,6 +83,6 @@ class TestS3CopyObjectOperator(unittest.TestCase):
         objects_in_dest_bucket = conn.list_objects(Bucket=self.dest_bucket,
                                                    Prefix=self.dest_key)
         # there should be object found, and there should only be one object found
-        self.assertEqual(len(objects_in_dest_bucket['Contents']), 1)
+        assert len(objects_in_dest_bucket['Contents']) == 1
         # the object found should be consistent with dest_key specified earlier
-        self.assertEqual(objects_in_dest_bucket['Contents'][0]['Key'], self.dest_key)
+        assert objects_in_dest_bucket['Contents'][0]['Key'] == self.dest_key

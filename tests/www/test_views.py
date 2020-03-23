@@ -105,21 +105,21 @@ class TestBase(unittest.TestCase):
 
     def check_content_in_response(self, text, resp, resp_code=200):
         resp_html = resp.data.decode('utf-8')
-        self.assertEqual(resp_code, resp.status_code)
+        assert resp_code == resp.status_code
         if isinstance(text, list):
             for line in text:
-                self.assertIn(line, resp_html)
+                assert line in resp_html
         else:
-            self.assertIn(text, resp_html)
+            assert text in resp_html
 
     def check_content_not_in_response(self, text, resp, resp_code=200):
         resp_html = resp.data.decode('utf-8')
-        self.assertEqual(resp_code, resp.status_code)
+        assert resp_code == resp.status_code
         if isinstance(text, list):
             for line in text:
-                self.assertNotIn(line, resp_html)
+                assert line not in resp_html
         else:
-            self.assertNotIn(text, resp_html)
+            assert text not in resp_html
 
     def percent_encode(self, obj):
         return urllib.parse.quote_plus(str(obj))
@@ -190,9 +190,9 @@ class TestVariableModelView(TestBase):
             xss,
             follow_redirects=True,
         )
-        self.assertEqual(resp.status_code, 404)
-        self.assertNotIn("<img src='' onerror='alert(1);'>",
-                         resp.data.decode("utf-8"))
+        assert resp.status_code == 404
+        assert "<img src='' onerror='alert(1);'>" not in \
+                         resp.data.decode("utf-8")
 
     def test_import_variables_no_file(self):
         resp = self.client.post('/variable/varimport',
@@ -204,7 +204,7 @@ class TestVariableModelView(TestBase):
 
         with mock.patch('airflow.models.Variable.set') as set_mock:
             set_mock.side_effect = UnicodeEncodeError
-            self.assertEqual(self.session.query(models.Variable).count(), 0)
+            assert self.session.query(models.Variable).count() == 0
 
             try:
                 # python 3+
@@ -219,7 +219,7 @@ class TestVariableModelView(TestBase):
             self.check_content_in_response('1 variable(s) failed to be updated.', resp)
 
     def test_import_variables_success(self):
-        self.assertEqual(self.session.query(models.Variable).count(), 0)
+        assert self.session.query(models.Variable).count() == 0
 
         content = ('{"str_key": "str_value", "int_key": 60,'
                    '"list_key": [1, 2], "dict_key": {"k_a": 2, "k_b": 3}}')
@@ -311,17 +311,17 @@ class TestMountPoint(unittest.TestCase):
     def test_mount(self):
         # Test an endpoint that doesn't need auth!
         resp = self.client.get('/test/health')
-        self.assertEqual(resp.status_code, 200)
-        self.assertIn(b"healthy", resp.data)
+        assert resp.status_code == 200
+        assert b"healthy" in resp.data
 
     def test_not_found(self):
         resp = self.client.get('/', follow_redirects=True)
-        self.assertEqual(resp.status_code, 404)
+        assert resp.status_code == 404
 
     def test_index(self):
         resp = self.client.get('/test/')
-        self.assertEqual(resp.status_code, 302)
-        self.assertEqual(resp.headers['Location'], 'http://localhost/test/home')
+        assert resp.status_code == 302
+        assert resp.headers['Location'] == 'http://localhost/test/home'
 
 
 class TestAirflowBaseViews(TestBase):
@@ -388,10 +388,10 @@ class TestAirflowBaseViews(TestBase):
 
         resp_json = json.loads(self.client.get('health', follow_redirects=True).data.decode('utf-8'))
 
-        self.assertEqual('healthy', resp_json['metadatabase']['status'])
-        self.assertEqual('healthy', resp_json['scheduler']['status'])
-        self.assertEqual(last_scheduler_heartbeat_for_testing_1.isoformat(),
-                         resp_json['scheduler']['latest_scheduler_heartbeat'])
+        assert 'healthy' == resp_json['metadatabase']['status']
+        assert 'healthy' == resp_json['scheduler']['status']
+        assert last_scheduler_heartbeat_for_testing_1.isoformat() == \
+                         resp_json['scheduler']['latest_scheduler_heartbeat']
 
         self.session.query(BaseJob).\
             filter(BaseJob.job_type == 'SchedulerJob',
@@ -413,10 +413,10 @@ class TestAirflowBaseViews(TestBase):
 
         resp_json = json.loads(self.client.get('health', follow_redirects=True).data.decode('utf-8'))
 
-        self.assertEqual('healthy', resp_json['metadatabase']['status'])
-        self.assertEqual('unhealthy', resp_json['scheduler']['status'])
-        self.assertEqual(last_scheduler_heartbeat_for_testing_2.isoformat(),
-                         resp_json['scheduler']['latest_scheduler_heartbeat'])
+        assert 'healthy' == resp_json['metadatabase']['status']
+        assert 'unhealthy' == resp_json['scheduler']['status']
+        assert last_scheduler_heartbeat_for_testing_2.isoformat() == \
+                         resp_json['scheduler']['latest_scheduler_heartbeat']
 
         self.session.query(BaseJob).\
             filter(BaseJob.job_type == 'SchedulerJob',
@@ -434,9 +434,9 @@ class TestAirflowBaseViews(TestBase):
 
         resp_json = json.loads(self.client.get('health', follow_redirects=True).data.decode('utf-8'))
 
-        self.assertEqual('healthy', resp_json['metadatabase']['status'])
-        self.assertEqual('unhealthy', resp_json['scheduler']['status'])
-        self.assertIsNone(None, resp_json['scheduler']['latest_scheduler_heartbeat'])
+        assert 'healthy' == resp_json['metadatabase']['status']
+        assert 'unhealthy' == resp_json['scheduler']['status']
+        assert None is None, resp_json['scheduler']['latest_scheduler_heartbeat']
 
     def test_home(self):
         resp = self.client.get('home', follow_redirects=True)
@@ -446,10 +446,10 @@ class TestAirflowBaseViews(TestBase):
         from airflow.www.views import FILTER_TAGS_COOKIE
         with self.client:
             self.client.get('home?tags=example&tags=data', follow_redirects=True)
-            self.assertEqual('example,data', flask_session[FILTER_TAGS_COOKIE])
+            assert 'example,data' == flask_session[FILTER_TAGS_COOKIE]
 
             self.client.get('home?reset_tags', follow_redirects=True)
-            self.assertEqual(None, flask_session[FILTER_TAGS_COOKIE])
+            assert None == flask_session[FILTER_TAGS_COOKIE]
 
     def test_task(self):
         url = ('task?task_id=runme_0&dag_id=example_bash_operator&execution_date={}'
@@ -472,20 +472,20 @@ class TestAirflowBaseViews(TestBase):
     def test_blocked(self):
         url = 'blocked'
         resp = self.client.post(url, follow_redirects=True)
-        self.assertEqual(200, resp.status_code)
+        assert 200 == resp.status_code
 
     def test_dag_stats(self):
         resp = self.client.post('dag_stats', follow_redirects=True)
-        self.assertEqual(resp.status_code, 200)
+        assert resp.status_code == 200
 
     def test_task_stats(self):
         resp = self.client.post('task_stats', follow_redirects=True)
-        self.assertEqual(resp.status_code, 200)
+        assert resp.status_code == 200
 
     def test_task_stats_only_noncompleted(self):
         conf.set("webserver", "show_recent_stats_for_completed_runs", "False")
         resp = self.client.post('task_stats', follow_redirects=True)
-        self.assertEqual(resp.status_code, 200)
+        assert resp.status_code == 200
 
     def test_dag_details(self):
         url = 'dag_details?dag_id=example_bash_operator'
@@ -538,19 +538,19 @@ class TestAirflowBaseViews(TestBase):
         resp = self.client.post('last_dagruns',
                                 data={'dag_ids': ['example_subdag_operator']},
                                 follow_redirects=True)
-        self.assertEqual(resp.status_code, 200)
+        assert resp.status_code == 200
         stats = json.loads(resp.data.decode('utf-8'))
-        self.assertNotIn('example_bash_operator', stats)
-        self.assertIn('example_subdag_operator', stats)
+        assert 'example_bash_operator' not in stats
+        assert 'example_subdag_operator' in stats
 
         # Multiple
         resp = self.client.post('last_dagruns',
                                 data={'dag_ids': ['example_subdag_operator', 'example_bash_operator']},
                                 follow_redirects=True)
-        self.assertEqual(resp.status_code, 200)
+        assert resp.status_code == 200
         stats = json.loads(resp.data.decode('utf-8'))
-        self.assertIn('example_bash_operator', stats)
-        self.assertIn('example_subdag_operator', stats)
+        assert 'example_bash_operator' in stats
+        assert 'example_subdag_operator' in stats
         self.check_content_not_in_response('example_xcom', resp)
 
     def test_tree(self):
@@ -716,7 +716,7 @@ class TestAirflowBaseViews(TestBase):
 
             msg = "Task is in the &#39;{}&#39; state which is not a valid state for execution. " \
                   .format(state) + "The task must be cleared in order to be run"
-            self.assertFalse(re.search(msg, resp.get_data(as_text=True)))
+            assert not re.search(msg, resp.get_data(as_text=True))
 
     @mock.patch('airflow.executors.executor_loader.ExecutorLoader.get_default_executor')
     def test_run_with_not_runnable_states(self, get_default_executor_function):
@@ -725,7 +725,7 @@ class TestAirflowBaseViews(TestBase):
         task_id = 'runme_0'
 
         for state in QUEUEABLE_STATES:
-            self.assertFalse(state in RUNNABLE_STATES)
+            assert not (state in RUNNABLE_STATES)
 
             self.session.query(models.TaskInstance) \
                 .filter(models.TaskInstance.task_id == task_id) \
@@ -746,7 +746,7 @@ class TestAirflowBaseViews(TestBase):
 
             msg = "Task is in the &#39;{}&#39; state which is not a valid state for execution. " \
                   .format(state) + "The task must be cleared in order to be run"
-            self.assertTrue(re.search(msg, resp.get_data(as_text=True)))
+            assert re.search(msg, resp.get_data(as_text=True))
 
     def test_refresh(self):
         resp = self.client.post('refresh?dag_id=example_bash_operator')
@@ -895,12 +895,12 @@ class TestLogView(TestBase):
             TestLogView.ENDPOINT, data=dict(
                 username='test',
                 password='test'), follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('Log by attempts', response.data.decode('utf-8'))
+        assert response.status_code == 200
+        assert 'Log by attempts' in response.data.decode('utf-8')
         for num in range(1, expected_num_logs_visible + 1):
-            self.assertIn('try-{}'.format(num), response.data.decode('utf-8'))
-        self.assertNotIn('try-0', response.data.decode('utf-8'))
-        self.assertNotIn('try-{}'.format(expected_num_logs_visible + 1), response.data.decode('utf-8'))
+            assert 'try-{}'.format(num) in response.data.decode('utf-8')
+        assert 'try-0' not in response.data.decode('utf-8')
+        assert 'try-{}'.format(expected_num_logs_visible + 1) not in response.data.decode('utf-8')
 
     def test_get_logs_with_metadata_as_download_file(self):
         url_template = "get_logs_with_metadata?dag_id={}&" \
@@ -919,10 +919,10 @@ class TestLogView(TestBase):
                                                      try_number)
 
         content_disposition = response.headers.get('Content-Disposition')
-        self.assertTrue(content_disposition.startswith('attachment'))
-        self.assertTrue(expected_filename in content_disposition)
-        self.assertEqual(200, response.status_code)
-        self.assertIn('Log for testing.', response.data.decode('utf-8'))
+        assert content_disposition.startswith('attachment')
+        assert expected_filename in content_disposition
+        assert 200 == response.status_code
+        assert 'Log for testing.' in response.data.decode('utf-8')
 
     def test_get_logs_with_metadata_as_download_large_file(self):
         with mock.patch("airflow.utils.log.file_task_handler.FileTaskHandler.read") as read_mock:
@@ -942,10 +942,10 @@ class TestLogView(TestBase):
                                       json.dumps({}))
             response = self.client.get(url)
 
-            self.assertIn('1st line', response.data.decode('utf-8'))
-            self.assertIn('2nd line', response.data.decode('utf-8'))
-            self.assertIn('3rd line', response.data.decode('utf-8'))
-            self.assertNotIn('should never be read', response.data.decode('utf-8'))
+            assert '1st line' in response.data.decode('utf-8')
+            assert '2nd line' in response.data.decode('utf-8')
+            assert '3rd line' in response.data.decode('utf-8')
+            assert 'should never be read' not in response.data.decode('utf-8')
 
     def test_get_logs_with_metadata(self):
         url_template = "get_logs_with_metadata?dag_id={}&" \
@@ -961,10 +961,10 @@ class TestLogView(TestBase):
                                                     password='test'),
                             follow_redirects=True)
 
-        self.assertIn('"message":', response.data.decode('utf-8'))
-        self.assertIn('"metadata":', response.data.decode('utf-8'))
-        self.assertIn('Log for testing.', response.data.decode('utf-8'))
-        self.assertEqual(200, response.status_code)
+        assert '"message":' in response.data.decode('utf-8')
+        assert '"metadata":' in response.data.decode('utf-8')
+        assert 'Log for testing.' in response.data.decode('utf-8')
+        assert 200 == response.status_code
 
     def test_get_logs_with_null_metadata(self):
         url_template = "get_logs_with_metadata?dag_id={}&" \
@@ -979,10 +979,10 @@ class TestLogView(TestBase):
                                                     password='test'),
                             follow_redirects=True)
 
-        self.assertIn('"message":', response.data.decode('utf-8'))
-        self.assertIn('"metadata":', response.data.decode('utf-8'))
-        self.assertIn('Log for testing.', response.data.decode('utf-8'))
-        self.assertEqual(200, response.status_code)
+        assert '"message":' in response.data.decode('utf-8')
+        assert '"metadata":' in response.data.decode('utf-8')
+        assert 'Log for testing.' in response.data.decode('utf-8')
+        assert 200 == response.status_code
 
     @mock.patch("airflow.utils.log.file_task_handler.FileTaskHandler.read")
     def test_get_logs_with_metadata_for_removed_dag(self, mock_read):
@@ -1001,10 +1001,10 @@ class TestLogView(TestBase):
             follow_redirects=True
         )
 
-        self.assertIn('"message":', response.data.decode('utf-8'))
-        self.assertIn('"metadata":', response.data.decode('utf-8'))
-        self.assertIn('airflow log line', response.data.decode('utf-8'))
-        self.assertEqual(200, response.status_code)
+        assert '"message":' in response.data.decode('utf-8')
+        assert '"metadata":' in response.data.decode('utf-8')
+        assert 'airflow log line' in response.data.decode('utf-8')
+        assert 200 == response.status_code
 
 
 class TestVersionView(TestBase):
@@ -1428,10 +1428,10 @@ class TestDagACLView(TestBase):
                    password='test')
         test_view_menu = self.appbuilder.sm.find_view_menu('example_bash_operator')
         perms_views = self.appbuilder.sm.find_permissions_view_menu(test_view_menu)
-        self.assertEqual(len(perms_views), 2)
+        assert len(perms_views) == 2
         # each dag view will create one write, and one read permission
-        self.assertTrue(str(perms_views[0]).startswith('can dag'))
-        self.assertTrue(str(perms_views[1]).startswith('can dag'))
+        assert str(perms_views[0]).startswith('can dag')
+        assert str(perms_views[1]).startswith('can dag')
 
     def test_role_permission_associate(self):
         self.logout()
@@ -1439,8 +1439,8 @@ class TestDagACLView(TestBase):
                    password='test')
         test_role = self.appbuilder.sm.find_role('dag_acl_tester')
         perms = {str(perm) for perm in test_role.permissions}
-        self.assertIn('can dag edit on example_bash_operator', perms)
-        self.assertNotIn('can dag read on example_bash_operator', perms)
+        assert 'can dag edit on example_bash_operator' in perms
+        assert 'can dag read on example_bash_operator' not in perms
 
     def test_index_success(self):
         self.logout()
@@ -1497,19 +1497,19 @@ class TestDagACLView(TestBase):
         resp = self.client.post('dag_stats',
                                 data={'dag_ids': ['example_subdag_operator']},
                                 follow_redirects=True)
-        self.assertEqual(resp.status_code, 200)
+        assert resp.status_code == 200
         stats = json.loads(resp.data.decode('utf-8'))
-        self.assertNotIn('example_bash_operator', stats)
-        self.assertIn('example_subdag_operator', stats)
+        assert 'example_bash_operator' not in stats
+        assert 'example_subdag_operator' in stats
 
         # Multiple
         resp = self.client.post('dag_stats',
                                 data={'dag_ids': ['example_subdag_operator', 'example_bash_operator']},
                                 follow_redirects=True)
-        self.assertEqual(resp.status_code, 200)
+        assert resp.status_code == 200
         stats = json.loads(resp.data.decode('utf-8'))
-        self.assertIn('example_bash_operator', stats)
-        self.assertIn('example_subdag_operator', stats)
+        assert 'example_bash_operator' in stats
+        assert 'example_subdag_operator' in stats
         self.check_content_not_in_response('example_xcom', resp)
 
     def test_task_stats_success(self):
@@ -1540,19 +1540,19 @@ class TestDagACLView(TestBase):
         resp = self.client.post('task_stats',
                                 data={'dag_ids': ['example_subdag_operator']},
                                 follow_redirects=True)
-        self.assertEqual(resp.status_code, 200)
+        assert resp.status_code == 200
         stats = json.loads(resp.data.decode('utf-8'))
-        self.assertNotIn('example_bash_operator', stats)
-        self.assertIn('example_subdag_operator', stats)
+        assert 'example_bash_operator' not in stats
+        assert 'example_subdag_operator' in stats
 
         # Multiple
         resp = self.client.post('task_stats',
                                 data={'dag_ids': ['example_subdag_operator', 'example_bash_operator']},
                                 follow_redirects=True)
-        self.assertEqual(resp.status_code, 200)
+        assert resp.status_code == 200
         stats = json.loads(resp.data.decode('utf-8'))
-        self.assertIn('example_bash_operator', stats)
-        self.assertIn('example_subdag_operator', stats)
+        assert 'example_bash_operator' in stats
+        assert 'example_subdag_operator' in stats
         self.check_content_not_in_response('example_xcom', resp)
 
     def test_code_success(self):
@@ -1734,19 +1734,19 @@ class TestDagACLView(TestBase):
         resp = self.client.post('blocked',
                                 data={'dag_ids': ['example_subdag_operator']},
                                 follow_redirects=True)
-        self.assertEqual(resp.status_code, 200)
+        assert resp.status_code == 200
         blocked_dags = {blocked['dag_id'] for blocked in json.loads(resp.data.decode('utf-8'))}
-        self.assertNotIn('example_bash_operator', blocked_dags)
-        self.assertIn('example_subdag_operator', blocked_dags)
+        assert 'example_bash_operator' not in blocked_dags
+        assert 'example_subdag_operator' in blocked_dags
 
         # Multiple
         resp = self.client.post('blocked',
                                 data={'dag_ids': ['example_subdag_operator', 'example_bash_operator']},
                                 follow_redirects=True)
-        self.assertEqual(resp.status_code, 200)
+        assert resp.status_code == 200
         blocked_dags = {blocked['dag_id'] for blocked in json.loads(resp.data.decode('utf-8'))}
-        self.assertIn('example_bash_operator', blocked_dags)
-        self.assertIn('example_subdag_operator', blocked_dags)
+        assert 'example_bash_operator' in blocked_dags
+        assert 'example_subdag_operator' in blocked_dags
         self.check_content_not_in_response('example_xcom', resp)
 
     def test_failed_success(self):
@@ -1980,7 +1980,7 @@ class TestRenderedView(TestBase):
         """
         get_dag_function.return_value = SerializedDagModel.get(self.dag.dag_id).dag
 
-        self.assertEqual(self.task1.bash_command, '{{ task_instance_key_str }}')
+        assert self.task1.bash_command == '{{ task_instance_key_str }}'
         ti = TaskInstance(self.task1, self.default_date)
 
         with create_session() as session:
@@ -2002,7 +2002,7 @@ class TestRenderedView(TestBase):
         """
         get_dag_function.return_value = SerializedDagModel.get(self.dag.dag_id).dag
 
-        self.assertEqual(self.task1.bash_command, '{{ task_instance_key_str }}')
+        assert self.task1.bash_command == '{{ task_instance_key_str }}'
 
         url = ('rendered?task_id=task1&dag_id=task1&execution_date={}'
                .format(self.percent_encode(self.default_date)))
@@ -2020,8 +2020,8 @@ class TestRenderedView(TestBase):
         """
         get_dag_function.return_value = SerializedDagModel.get(self.dag.dag_id).dag
 
-        self.assertEqual(self.task2.bash_command,
-                         'echo {{ fullname("Apache", "Airflow") | hello }}')
+        assert self.task2.bash_command == \
+                         'echo {{ fullname("Apache", "Airflow") | hello }}'
 
         url = ('rendered?task_id=task2&dag_id=testdag&execution_date={}'
                .format(self.percent_encode(self.default_date)))
@@ -2046,8 +2046,8 @@ class TestTriggerDag(TestBase):
 
     def test_trigger_dag_button_normal_exist(self):
         resp = self.client.get('/', follow_redirects=True)
-        self.assertIn('/trigger?dag_id=example_bash_operator', resp.data.decode('utf-8'))
-        self.assertIn("return confirmDeleteDag(this, 'example_bash_operator')", resp.data.decode('utf-8'))
+        assert '/trigger?dag_id=example_bash_operator' in resp.data.decode('utf-8')
+        assert "return confirmDeleteDag(this, 'example_bash_operator')" in resp.data.decode('utf-8')
 
     @pytest.mark.xfail(condition=True, reason="This test might be flaky on mysql")
     def test_trigger_dag_button(self):
@@ -2061,8 +2061,8 @@ class TestTriggerDag(TestBase):
         self.client.post('trigger?dag_id={}'.format(test_dag_id))
 
         run = self.session.query(DR).filter(DR.dag_id == test_dag_id).first()
-        self.assertIsNotNone(run)
-        self.assertIn("manual__", run.run_id)
+        assert run is not None
+        assert "manual__" in run.run_id
 
     @pytest.mark.xfail(condition=True, reason="This test might be flaky on mysql")
     def test_trigger_dag_conf(self):
@@ -2077,9 +2077,9 @@ class TestTriggerDag(TestBase):
         self.client.post('trigger?dag_id={}'.format(test_dag_id), data={'conf': json.dumps(conf_dict)})
 
         run = self.session.query(DR).filter(DR.dag_id == test_dag_id).first()
-        self.assertIsNotNone(run)
-        self.assertIn("manual__", run.run_id)
-        self.assertEqual(run.conf, conf_dict)
+        assert run is not None
+        assert "manual__" in run.run_id
+        assert run.conf == conf_dict
 
     @pytest.mark.xfail(condition=True, reason="This test might be flaky on mysql")
     def test_trigger_dag_conf_malformed(self):
@@ -2090,17 +2090,17 @@ class TestTriggerDag(TestBase):
         self.session.commit()
 
         response = self.client.post('trigger?dag_id={}'.format(test_dag_id), data={'conf': '{"a": "b"'})
-        self.assertEqual(response.status_code, 302)
+        assert response.status_code == 302
 
         run = self.session.query(DR).filter(DR.dag_id == test_dag_id).first()
-        self.assertIsNone(run)
+        assert run is None
 
     def test_trigger_dag_form(self):
         test_dag_id = "example_bash_operator"
 
         resp = self.client.get('trigger?dag_id={}'.format(test_dag_id))
 
-        self.assertEqual(resp.status_code, 200)
+        assert resp.status_code == 200
         self.check_content_in_response('Trigger DAG: {}'.format(test_dag_id), resp)
 
 
@@ -2160,15 +2160,15 @@ class TestExtraLinks(TestBase):
             .format(self.endpoint, self.dag.dag_id, self.task.task_id, self.default_date),
             follow_redirects=True)
 
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         response_str = response.data
         if isinstance(response.data, bytes):
             response_str = response_str.decode()
-        self.assertEqual(json.loads(response_str), {
+        assert json.loads(response_str) == {
             'url': ('http://www.example.com/some_dummy_task/'
                     'foo-bar/2017-01-01T00:00:00+00:00'),
             'error': None
-        })
+        }
 
     @mock.patch('airflow.www.views.dagbag.get_dag')
     def test_global_extra_links_works(self, get_dag_function):
@@ -2179,14 +2179,14 @@ class TestExtraLinks(TestBase):
             .format(self.endpoint, self.dag.dag_id, self.task.task_id, self.default_date),
             follow_redirects=True)
 
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         response_str = response.data
         if isinstance(response.data, bytes):
             response_str = response_str.decode()
-        self.assertEqual(json.loads(response_str), {
+        assert json.loads(response_str) == {
             'url': 'https://github.com/apache/airflow',
             'error': None
-        })
+        }
 
     @mock.patch('airflow.www.views.dagbag.get_dag')
     def test_operator_extra_link_override_global_extra_link(self, get_dag_function):
@@ -2197,14 +2197,14 @@ class TestExtraLinks(TestBase):
                 self.endpoint, self.dag.dag_id, self.task.task_id, self.default_date),
             follow_redirects=True)
 
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         response_str = response.data
         if isinstance(response.data, bytes):
             response_str = response_str.decode()
-        self.assertEqual(json.loads(response_str), {
+        assert json.loads(response_str) == {
             'url': 'https://airflow.apache.org',
             'error': None
-        })
+        }
 
     @mock.patch('airflow.www.views.dagbag.get_dag')
     def test_extra_links_error_raised(self, get_dag_function):
@@ -2215,13 +2215,13 @@ class TestExtraLinks(TestBase):
             .format(self.endpoint, self.dag.dag_id, self.task.task_id, self.default_date),
             follow_redirects=True)
 
-        self.assertEqual(404, response.status_code)
+        assert 404 == response.status_code
         response_str = response.data
         if isinstance(response.data, bytes):
             response_str = response_str.decode()
-        self.assertEqual(json.loads(response_str), {
+        assert json.loads(response_str) == {
             'url': None,
-            'error': 'This is an error'})
+            'error': 'This is an error'}
 
     @mock.patch('airflow.www.views.dagbag.get_dag')
     def test_extra_links_no_response(self, get_dag_function):
@@ -2232,13 +2232,13 @@ class TestExtraLinks(TestBase):
             .format(self.endpoint, self.dag.dag_id, self.task.task_id, self.default_date),
             follow_redirects=True)
 
-        self.assertEqual(response.status_code, 404)
+        assert response.status_code == 404
         response_str = response.data
         if isinstance(response.data, bytes):
             response_str = response_str.decode()
-        self.assertEqual(json.loads(response_str), {
+        assert json.loads(response_str) == {
             'url': None,
-            'error': 'No URL found for no_response'})
+            'error': 'No URL found for no_response'}
 
     @mock.patch('airflow.www.views.dagbag.get_dag')
     def test_operator_extra_link_override_plugin(self, get_dag_function):
@@ -2256,14 +2256,14 @@ class TestExtraLinks(TestBase):
                 self.endpoint, self.dag.dag_id, self.task_2.task_id, self.default_date),
             follow_redirects=True)
 
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         response_str = response.data
         if isinstance(response.data, bytes):
             response_str = response_str.decode()
-        self.assertEqual(json.loads(response_str), {
+        assert json.loads(response_str) == {
             'url': 'https://airflow.apache.org/1.10.5/',
             'error': None
-        })
+        }
 
     @mock.patch('airflow.www.views.dagbag.get_dag')
     def test_operator_extra_link_multiple_operators(self, get_dag_function):
@@ -2282,28 +2282,28 @@ class TestExtraLinks(TestBase):
                 self.endpoint, self.dag.dag_id, self.task_2.task_id, self.default_date),
             follow_redirects=True)
 
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         response_str = response.data
         if isinstance(response.data, bytes):
             response_str = response_str.decode()
-        self.assertEqual(json.loads(response_str), {
+        assert json.loads(response_str) == {
             'url': 'https://airflow.apache.org/1.10.5/',
             'error': None
-        })
+        }
 
         response = self.client.get(
             "{0}?dag_id={1}&task_id={2}&execution_date={3}&link_name=airflow".format(
                 self.endpoint, self.dag.dag_id, self.task_3.task_id, self.default_date),
             follow_redirects=True)
 
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         response_str = response.data
         if isinstance(response.data, bytes):
             response_str = response_str.decode()
-        self.assertEqual(json.loads(response_str), {
+        assert json.loads(response_str) == {
             'url': 'https://airflow.apache.org/1.10.5/',
             'error': None
-        })
+        }
 
         # Also check that the other Operator Link defined for this operator exists
         response = self.client.get(
@@ -2311,14 +2311,14 @@ class TestExtraLinks(TestBase):
                 self.endpoint, self.dag.dag_id, self.task_3.task_id, self.default_date),
             follow_redirects=True)
 
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
         response_str = response.data
         if isinstance(response.data, bytes):
             response_str = response_str.decode()
-        self.assertEqual(json.loads(response_str), {
+        assert json.loads(response_str) == {
             'url': 'https://www.google.com',
             'error': None
-        })
+        }
 
 
 class TestDagRunModelView(TestBase):
@@ -2345,7 +2345,7 @@ class TestDagRunModelView(TestBase):
 
         dr = self.session.query(models.DagRun).one()
 
-        self.assertEqual(dr.execution_date, timezone.convert_to_utc(datetime(2018, 7, 6, 5, 4, 3)))
+        assert dr.execution_date == timezone.convert_to_utc(datetime(2018, 7, 6, 5, 4, 3))
 
     def test_create_dagrun_valid_conf(self):
         conf_value = dict(Valid=True)
@@ -2362,7 +2362,7 @@ class TestDagRunModelView(TestBase):
                                 follow_redirects=True)
         self.check_content_in_response('Added Row', resp)
         dr = self.session.query(models.DagRun).one()
-        self.assertEqual(dr.conf, conf_value)
+        assert dr.conf == conf_value
 
     def test_create_dagrun_invalid_conf(self):
         data = {
@@ -2378,7 +2378,7 @@ class TestDagRunModelView(TestBase):
                                 follow_redirects=True)
         self.check_content_in_response('JSON Validation Error:', resp)
         dr = self.session.query(models.DagRun).all()
-        self.assertFalse(dr)
+        assert not dr
 
 
 class TestDecorators(TestBase):
@@ -2430,8 +2430,8 @@ class TestDecorators(TestBase):
         if execution_date:
             qry = qry.filter(Log.execution_date == execution_date)
         logs = qry.order_by(Log.dttm.desc()).limit(5).all()
-        self.assertGreaterEqual(len(logs), 1)
-        self.assertTrue(logs[0].extra)
+        assert len(logs) >= 1
+        assert logs[0].extra
 
     def test_action_logging_get(self):
         url = 'graph?dag_id=example_bash_operator&execution_date={}'.format(

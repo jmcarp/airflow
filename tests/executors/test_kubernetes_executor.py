@@ -87,24 +87,20 @@ class TestAirflowKubernetesScheduler(unittest.TestCase):
             pod_name = PodGenerator.make_unique_pod_id(
                 AirflowKubernetesScheduler._create_pod_id(dag_id, task_id)
             )
-            self.assertTrue(self._is_valid_pod_id(pod_name))
+            assert self._is_valid_pod_id(pod_name)
 
     def test_make_safe_label_value(self):
         for dag_id, task_id in self._cases():
             safe_dag_id = AirflowKubernetesScheduler._make_safe_label_value(dag_id)
-            self.assertTrue(self._is_safe_label_value(safe_dag_id))
+            assert self._is_safe_label_value(safe_dag_id)
             safe_task_id = AirflowKubernetesScheduler._make_safe_label_value(task_id)
-            self.assertTrue(self._is_safe_label_value(safe_task_id))
+            assert self._is_safe_label_value(safe_task_id)
             dag_id = "my_dag_id"
-            self.assertEqual(
-                dag_id,
+            assert dag_id == \
                 AirflowKubernetesScheduler._make_safe_label_value(dag_id)
-            )
             dag_id = "my_dag_id_" + "a" * 64
-            self.assertEqual(
-                "my_dag_id_" + "a" * 43 + "-0ce114c45",
+            assert "my_dag_id_" + "a" * 43 + "-0ce114c45" == \
                 AirflowKubernetesScheduler._make_safe_label_value(dag_id)
-            )
 
     @unittest.skipIf(AirflowKubernetesScheduler is None,
                      "kubernetes python package is not installed")
@@ -116,7 +112,7 @@ class TestAirflowKubernetesScheduler(unittest.TestCase):
         new_datetime_obj = AirflowKubernetesScheduler._label_safe_datestring_to_datetime(
             serialized_datetime)
 
-        self.assertEqual(datetime_obj, new_datetime_obj)
+        assert datetime_obj == new_datetime_obj
 
 
 class TestKubeConfig(unittest.TestCase):
@@ -131,7 +127,7 @@ class TestKubeConfig(unittest.TestCase):
     })
     def test_kube_config_worker_annotations_properly_parsed(self):
         annotations = KubeConfig().kube_annotations
-        self.assertEqual({'iam.com/role': 'role-arn', 'other/annotation': 'value'}, annotations)
+        assert {'iam.com/role': 'role-arn', 'other/annotation': 'value'} == annotations
 
     @conf_vars({
         ('kubernetes', 'git_ssh_known_hosts_configmap_name'): 'airflow-configmap',
@@ -139,7 +135,7 @@ class TestKubeConfig(unittest.TestCase):
     })
     def test_kube_config_no_worker_annotations(self):
         annotations = KubeConfig().kube_annotations
-        self.assertIsNone(annotations)
+        assert annotations is None
 
     @conf_vars({
         ('kubernetes', 'git_repo'): 'foo',
@@ -148,7 +144,7 @@ class TestKubeConfig(unittest.TestCase):
         ('kubernetes', 'git_sync_run_as_user'): '0',
     })
     def test_kube_config_git_sync_run_as_user_root(self):
-        self.assertEqual(KubeConfig().git_sync_run_as_user, 0)
+        assert KubeConfig().git_sync_run_as_user == 0
 
     @conf_vars({
         ('kubernetes', 'git_repo'): 'foo',
@@ -156,7 +152,7 @@ class TestKubeConfig(unittest.TestCase):
         ('kubernetes', 'git_dags_folder_mount_point'): 'foo',
     })
     def test_kube_config_git_sync_run_as_user_not_present(self):
-        self.assertEqual(KubeConfig().git_sync_run_as_user, 65533)
+        assert KubeConfig().git_sync_run_as_user == 65533
 
     @conf_vars({
         ('kubernetes', 'git_repo'): 'foo',
@@ -165,7 +161,7 @@ class TestKubeConfig(unittest.TestCase):
         ('kubernetes', 'git_sync_run_as_user'): '',
     })
     def test_kube_config_git_sync_run_as_user_empty_string(self):
-        self.assertEqual(KubeConfig().git_sync_run_as_user, '')
+        assert KubeConfig().git_sync_run_as_user == ''
 
 
 class TestKubernetesExecutor(unittest.TestCase):
@@ -210,7 +206,7 @@ class TestKubernetesExecutor(unittest.TestCase):
         kubernetes_executor.sync()
 
         assert mock_kube_client.create_namespaced_pod.called
-        self.assertFalse(kubernetes_executor.task_queue.empty())
+        assert not kubernetes_executor.task_queue.empty()
 
         # Disable the ApiException
         mock_kube_client.create_namespaced_pod.side_effect = None
@@ -218,7 +214,7 @@ class TestKubernetesExecutor(unittest.TestCase):
         # Execute the task without errors should empty the queue
         kubernetes_executor.sync()
         assert mock_kube_client.create_namespaced_pod.called
-        self.assertTrue(kubernetes_executor.task_queue.empty())
+        assert kubernetes_executor.task_queue.empty()
 
     @mock.patch('airflow.executors.kubernetes_executor.KubeConfig')
     @mock.patch('airflow.executors.kubernetes_executor.KubernetesExecutor.sync')
@@ -239,7 +235,7 @@ class TestKubernetesExecutor(unittest.TestCase):
         executor.start()
         key = ('dag_id', 'task_id', 'ex_time', 'try_number1')
         executor._change_state(key, State.RUNNING, 'pod_id', 'default')
-        self.assertTrue(executor.event_buffer[key] == State.RUNNING)
+        assert executor.event_buffer[key] == State.RUNNING
 
     @mock.patch('airflow.executors.kubernetes_executor.KubernetesJobWatcher')
     @mock.patch('airflow.executors.kubernetes_executor.get_kube_client')
@@ -250,7 +246,7 @@ class TestKubernetesExecutor(unittest.TestCase):
         test_time = timezone.utcnow()
         key = ('dag_id', 'task_id', test_time, 'try_number2')
         executor._change_state(key, State.SUCCESS, 'pod_id', 'default')
-        self.assertTrue(executor.event_buffer[key] == State.SUCCESS)
+        assert executor.event_buffer[key] == State.SUCCESS
         mock_delete_pod.assert_called_once_with('pod_id', 'default')
 
     @mock.patch('airflow.executors.kubernetes_executor.KubernetesJobWatcher')
@@ -269,7 +265,7 @@ class TestKubernetesExecutor(unittest.TestCase):
         test_time = timezone.utcnow()
         key = ('dag_id', 'task_id', test_time, 'try_number3')
         executor._change_state(key, State.FAILED, 'pod_id', 'default')
-        self.assertTrue(executor.event_buffer[key] == State.FAILED)
+        assert executor.event_buffer[key] == State.FAILED
         mock_delete_pod.assert_not_called()
 # pylint: enable=unused-argument
 
@@ -286,7 +282,7 @@ class TestKubernetesExecutor(unittest.TestCase):
         executor.start()
         key = ('dag_id', 'task_id', test_time, 'try_number2')
         executor._change_state(key, State.SUCCESS, 'pod_id', 'default')
-        self.assertTrue(executor.event_buffer[key] == State.SUCCESS)
+        assert executor.event_buffer[key] == State.SUCCESS
         mock_delete_pod.assert_not_called()
 
     @mock.patch('airflow.executors.kubernetes_executor.KubernetesJobWatcher')
@@ -300,7 +296,7 @@ class TestKubernetesExecutor(unittest.TestCase):
         executor.start()
         key = ('dag_id', 'task_id', 'ex_time', 'try_number2')
         executor._change_state(key, State.FAILED, 'pod_id', 'test-namespace')
-        self.assertTrue(executor.event_buffer[key] == State.FAILED)
+        assert executor.event_buffer[key] == State.FAILED
         mock_delete_pod.assert_called_once_with('pod_id', 'test-namespace')
 
 

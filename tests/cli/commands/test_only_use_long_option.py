@@ -40,9 +40,7 @@ class TestOnlyUseLongOption(unittest.TestCase):
                 content = f.read()
                 match.extend(pattern_1.findall(content))
                 match.extend(pattern_2.findall(content))
-                self.assertListEqual(
-                    [],
-                    match,
-                    "Should use long option in test for more clearer intent, "
+                assert [] == \
+                    match, \
+                    "Should use long option in test for more clearer intent, " \
                     f"but get {match} in {test_file}"
-                )

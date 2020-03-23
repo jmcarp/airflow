@@ -66,7 +66,7 @@ class TestSageMakerBaseOperator(unittest.TestCase):
             ['key1'], ['key2', 'key3'], ['key2', 'key4'], ['key5', 'key6']
         ]
         self.sagemaker.parse_config_integers()
-        self.assertEqual(self.sagemaker.config, parsed_config)
+        assert self.sagemaker.config == parsed_config
 
 
 if __name__ == '__main__':

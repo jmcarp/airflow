@@ -35,6 +35,7 @@ from airflow.providers.google.cloud.operators.mlengine import (
 )
 from airflow.serialization.serialized_objects import SerializedDAG
 from airflow.utils.dates import days_ago
+import pytest
 
 DEFAULT_DATE = datetime.datetime(2017, 6, 6)
 
@@ -129,7 +130,7 @@ class TestMLEngineBatchPredictionOperator(unittest.TestCase):
             },
             use_existing_job_fn=ANY
         )
-        self.assertEqual(success_message['predictionOutput'], prediction_output)
+        assert success_message['predictionOutput'] == prediction_output
 
     @patch('airflow.providers.google.cloud.operators.mlengine.MLEngineHook')
     def test_success_with_version(self, mock_hook):
@@ -168,7 +169,7 @@ class TestMLEngineBatchPredictionOperator(unittest.TestCase):
             },
             use_existing_job_fn=ANY
         )
-        self.assertEqual(success_message['predictionOutput'], prediction_output)
+        assert success_message['predictionOutput'] == prediction_output
 
     @patch('airflow.providers.google.cloud.operators.mlengine.MLEngineHook')
     def test_success_with_uri(self, mock_hook):
@@ -205,47 +206,46 @@ class TestMLEngineBatchPredictionOperator(unittest.TestCase):
             },
             use_existing_job_fn=ANY
         )
-        self.assertEqual(success_message['predictionOutput'], prediction_output)
+        assert success_message['predictionOutput'] == prediction_output
 
     def test_invalid_model_origin(self):
         # Test that both uri and model is given
         task_args = self.BATCH_PREDICTION_DEFAULT_ARGS.copy()
         task_args['uri'] = 'gs://fake-uri/saved_model'
         task_args['model_name'] = 'fake_model'
-        with self.assertRaises(AirflowException) as context:
+        with pytest.raises(AirflowException) as context:
             MLEngineStartBatchPredictionJobOperator(**task_args).execute(None)
-        self.assertEqual('Ambiguous model origin: Both uri and '
-                         'model/version name are provided.',
-                         str(context.exception))
+        assert 'Ambiguous model origin: Both uri and ' \
+                         'model/version name are provided.' == \
+                         str(context.exception)
 
         # Test that both uri and model/version is given
         task_args = self.BATCH_PREDICTION_DEFAULT_ARGS.copy()
         task_args['uri'] = 'gs://fake-uri/saved_model'
         task_args['model_name'] = 'fake_model'
         task_args['version_name'] = 'fake_version'
-        with self.assertRaises(AirflowException) as context:
+        with pytest.raises(AirflowException) as context:
             MLEngineStartBatchPredictionJobOperator(**task_args).execute(None)
-        self.assertEqual('Ambiguous model origin: Both uri and '
-                         'model/version name are provided.',
-                         str(context.exception))
+        assert 'Ambiguous model origin: Both uri and ' \
+                         'model/version name are provided.' == \
+                         str(context.exception)
 
         # Test that a version is given without a model
         task_args = self.BATCH_PREDICTION_DEFAULT_ARGS.copy()
         task_args['version_name'] = 'bare_version'
-        with self.assertRaises(AirflowException) as context:
+        with pytest.raises(AirflowException) as context:
             MLEngineStartBatchPredictionJobOperator(**task_args).execute(None)
-        self.assertEqual('Missing model: Batch prediction expects a model '
-                         'name when a version name is provided.',
-                         str(context.exception))
+        assert 'Missing model: Batch prediction expects a model ' \
+                         'name when a version name is provided.' == \
+                         str(context.exception)
 
         # Test that none of uri, model, model/version is given
         task_args = self.BATCH_PREDICTION_DEFAULT_ARGS.copy()
-        with self.assertRaises(AirflowException) as context:
+        with pytest.raises(AirflowException) as context:
             MLEngineStartBatchPredictionJobOperator(**task_args).execute(None)
-        self.assertEqual(
-            'Missing model origin: Batch prediction expects a '
-            'model, a model & version combination, or a URI to a savedModel.',
-            str(context.exception))
+        assert 'Missing model origin: Batch prediction expects a ' \
+            'model, a model & version combination, or a URI to a savedModel.' == \
+            str(context.exception)
 
     @patch('airflow.providers.google.cloud.operators.mlengine.MLEngineHook')
     def test_http_error(self, mock_hook):
@@ -261,7 +261,7 @@ class TestMLEngineBatchPredictionOperator(unittest.TestCase):
             }),
             content=b'Forbidden')
 
-        with self.assertRaises(HttpError) as context:
+        with pytest.raises(HttpError) as context:
             prediction_task = MLEngineStartBatchPredictionJobOperator(
                 job_id='test_prediction',
                 project_id='test-project',
@@ -281,7 +281,7 @@ class TestMLEngineBatchPredictionOperator(unittest.TestCase):
                     'predictionInput': input_with_model
                 }, ANY)
 
-        self.assertEqual(http_error_code, context.exception.resp.status)
+        assert http_error_code == context.exception.resp.status
 
     @patch('airflow.providers.google.cloud.operators.mlengine.MLEngineHook')
     def test_failed_job_error(self, mock_hook):
@@ -293,10 +293,10 @@ class TestMLEngineBatchPredictionOperator(unittest.TestCase):
         task_args = self.BATCH_PREDICTION_DEFAULT_ARGS.copy()
         task_args['uri'] = 'a uri'
 
-        with self.assertRaises(RuntimeError) as context:
+        with pytest.raises(RuntimeError) as context:
             MLEngineStartBatchPredictionJobOperator(**task_args).execute(None)
 
-        self.assertEqual('A failure message', str(context.exception))
+        assert 'A failure message' == str(context.exception)
 
 
 class TestMLEngineTrainingOperator(unittest.TestCase):
@@ -339,7 +339,7 @@ class TestMLEngineTrainingOperator(unittest.TestCase):
         mock_hook.assert_called_once_with(
             gcp_conn_id='google_cloud_default', delegate_to=None)
         # Make sure only 'create_job' is invoked on hook instance
-        self.assertEqual(len(hook_instance.mock_calls), 1)
+        assert len(hook_instance.mock_calls) == 1
         hook_instance.create_job.assert_called_once_with(
             project_id='test-project', job=self.TRAINING_INPUT, use_existing_job_fn=ANY)
 
@@ -364,7 +364,7 @@ class TestMLEngineTrainingOperator(unittest.TestCase):
 
         mock_hook.assert_called_once_with(gcp_conn_id='google_cloud_default', delegate_to=None)
         # Make sure only 'create_job' is invoked on hook instance
-        self.assertEqual(len(hook_instance.mock_calls), 1)
+        assert len(hook_instance.mock_calls) == 1
         hook_instance.create_job.assert_called_once_with(
             project_id='test-project', job=training_input, use_existing_job_fn=ANY)
 
@@ -378,7 +378,7 @@ class TestMLEngineTrainingOperator(unittest.TestCase):
             }),
             content=b'Forbidden')
 
-        with self.assertRaises(HttpError) as context:
+        with pytest.raises(HttpError) as context:
             training_op = MLEngineStartTrainingJobOperator(
                 **self.TRAINING_DEFAULT_ARGS)
             training_op.execute(None)
@@ -386,10 +386,10 @@ class TestMLEngineTrainingOperator(unittest.TestCase):
         mock_hook.assert_called_once_with(
             gcp_conn_id='google_cloud_default', delegate_to=None)
         # Make sure only 'create_job' is invoked on hook instance
-        self.assertEqual(len(hook_instance.mock_calls), 1)
+        assert len(hook_instance.mock_calls) == 1
         hook_instance.create_job.assert_called_once_with(
             project_id='test-project', job=self.TRAINING_INPUT, use_existing_job_fn=ANY)
-        self.assertEqual(http_error_code, context.exception.resp.status)
+        assert http_error_code == context.exception.resp.status
 
     @patch('airflow.providers.google.cloud.operators.mlengine.MLEngineHook')
     def test_failed_job_error(self, mock_hook):
@@ -399,7 +399,7 @@ class TestMLEngineTrainingOperator(unittest.TestCase):
         hook_instance = mock_hook.return_value
         hook_instance.create_job.return_value = failure_response
 
-        with self.assertRaises(RuntimeError) as context:
+        with pytest.raises(RuntimeError) as context:
             training_op = MLEngineStartTrainingJobOperator(
                 **self.TRAINING_DEFAULT_ARGS)
             training_op.execute(None)
@@ -407,10 +407,10 @@ class TestMLEngineTrainingOperator(unittest.TestCase):
         mock_hook.assert_called_once_with(
             gcp_conn_id='google_cloud_default', delegate_to=None)
         # Make sure only 'create_job' is invoked on hook instance
-        self.assertEqual(len(hook_instance.mock_calls), 1)
+        assert len(hook_instance.mock_calls) == 1
         hook_instance.create_job.assert_called_once_with(
             project_id='test-project', job=self.TRAINING_INPUT, use_existing_job_fn=ANY)
-        self.assertEqual('A failure message', str(context.exception))
+        assert 'A failure message' == str(context.exception)
 
     @patch('airflow.providers.google.cloud.operators.mlengine.MLEngineHook')
     def test_console_extra_link(self, mock_hook):
@@ -430,15 +430,11 @@ class TestMLEngineTrainingOperator(unittest.TestCase):
         }
         ti.xcom_push(key='gcp_metadata', value=gcp_metadata)
 
-        self.assertEqual(
-            f"https://console.cloud.google.com/ai-platform/jobs/{job_id}?project={project_id}",
-            training_op.get_extra_links(DEFAULT_DATE, AIPlatformConsoleLink.name),
-        )
+        assert f"https://console.cloud.google.com/ai-platform/jobs/{job_id}?project={project_id}" == \
+            training_op.get_extra_links(DEFAULT_DATE, AIPlatformConsoleLink.name)
 
-        self.assertEqual(
-            '',
-            training_op.get_extra_links(datetime.datetime(2019, 1, 1), AIPlatformConsoleLink.name),
-        )
+        assert '' == \
+            training_op.get_extra_links(datetime.datetime(2019, 1, 1), AIPlatformConsoleLink.name)
 
     def test_console_extra_link_serialized_field(self):
         with self.dag:
@@ -448,13 +444,11 @@ class TestMLEngineTrainingOperator(unittest.TestCase):
         simple_task = dag.task_dict[self.TRAINING_DEFAULT_ARGS['task_id']]
 
         # Check Serialized version of operator link
-        self.assertEqual(
-            serialized_dag["dag"]["tasks"][0]["_operator_extra_links"],
+        assert serialized_dag["dag"]["tasks"][0]["_operator_extra_links"] == \
             [{"airflow.providers.google.cloud.operators.mlengine.AIPlatformConsoleLink": {}}]
-        )
 
         # Check DeSerialized version of operator link
-        self.assertIsInstance(list(simple_task.operator_extra_links)[0], AIPlatformConsoleLink)
+        assert isinstance(list(simple_task.operator_extra_links)[0], AIPlatformConsoleLink)
 
         job_id = self.TRAINING_DEFAULT_ARGS['job_id']
         project_id = self.TRAINING_DEFAULT_ARGS['project_id']
@@ -469,15 +463,11 @@ class TestMLEngineTrainingOperator(unittest.TestCase):
         )
         ti.xcom_push(key='gcp_metadata', value=gcp_metadata)
 
-        self.assertEqual(
-            f"https://console.cloud.google.com/ai-platform/jobs/{job_id}?project={project_id}",
-            simple_task.get_extra_links(DEFAULT_DATE, AIPlatformConsoleLink.name),
-        )
+        assert f"https://console.cloud.google.com/ai-platform/jobs/{job_id}?project={project_id}" == \
+            simple_task.get_extra_links(DEFAULT_DATE, AIPlatformConsoleLink.name)
 
-        self.assertEqual(
-            '',
-            simple_task.get_extra_links(datetime.datetime(2019, 1, 1), AIPlatformConsoleLink.name),
-        )
+        assert '' == \
+            simple_task.get_extra_links(datetime.datetime(2019, 1, 1), AIPlatformConsoleLink.name)
 
 
 class TestMLEngineTrainingJobFailureOperator(unittest.TestCase):
@@ -501,7 +491,7 @@ class TestMLEngineTrainingJobFailureOperator(unittest.TestCase):
         mock_hook.assert_called_once_with(
             gcp_conn_id='google_cloud_default', delegate_to=None)
         # Make sure only 'cancel_job' is invoked on hook instance
-        self.assertEqual(len(hook_instance.mock_calls), 1)
+        assert len(hook_instance.mock_calls) == 1
         hook_instance.cancel_job.assert_called_once_with(
             project_id=self.TRAINING_DEFAULT_ARGS['project_id'], job_id=self.TRAINING_DEFAULT_ARGS['job_id'])
 
@@ -515,7 +505,7 @@ class TestMLEngineTrainingJobFailureOperator(unittest.TestCase):
             }),
             content=b'Forbidden')
 
-        with self.assertRaises(HttpError) as context:
+        with pytest.raises(HttpError) as context:
             cancel_training_op = MLEngineTrainingJobFailureOperator(
                 **self.TRAINING_DEFAULT_ARGS)
             cancel_training_op.execute(None)
@@ -523,10 +513,10 @@ class TestMLEngineTrainingJobFailureOperator(unittest.TestCase):
         mock_hook.assert_called_once_with(
             gcp_conn_id='google_cloud_default', delegate_to=None)
         # Make sure only 'create_job' is invoked on hook instance
-        self.assertEqual(len(hook_instance.mock_calls), 1)
+        assert len(hook_instance.mock_calls) == 1
         hook_instance.cancel_job.assert_called_once_with(
             project_id=self.TRAINING_DEFAULT_ARGS['project_id'], job_id=self.TRAINING_DEFAULT_ARGS['job_id'])
-        self.assertEqual(http_error_code, context.exception.resp.status)
+        assert http_error_code == context.exception.resp.status
 
 
 class TestMLEngineModelOperator(unittest.TestCase):
@@ -566,7 +556,7 @@ class TestMLEngineModelOperator(unittest.TestCase):
         mock_hook.return_value.get_model.assert_called_once_with(
             project_id=TEST_PROJECT_ID, model_name=TEST_MODEL_NAME
         )
-        self.assertEqual(mock_hook.return_value.get_model.return_value, result)
+        assert mock_hook.return_value.get_model.return_value == result
 
     @patch('airflow.providers.google.cloud.operators.mlengine.MLEngineHook')
     def test_fail(self, mock_hook):
@@ -578,7 +568,7 @@ class TestMLEngineModelOperator(unittest.TestCase):
             gcp_conn_id=TEST_GCP_CONN_ID,
             delegate_to=TEST_DELEGATE_TO
         )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             task.execute(None)
 
 
@@ -620,7 +610,7 @@ class TestMLEngineGetModelOperator(unittest.TestCase):
         mock_hook.return_value.get_model.assert_called_once_with(
             project_id=TEST_PROJECT_ID, model_name=TEST_MODEL_NAME
         )
-        self.assertEqual(mock_hook.return_value.get_model.return_value, result)
+        assert mock_hook.return_value.get_model.return_value == result
 
 
 class TestMLEngineDeleteModelOperator(unittest.TestCase):
@@ -664,7 +654,7 @@ class TestMLEngineVersionOperator(unittest.TestCase):
 
         mock_hook.assert_called_once_with(gcp_conn_id='google_cloud_default', delegate_to=None)
         # Make sure only 'create_version' is invoked on hook instance
-        self.assertEqual(len(hook_instance.mock_calls), 1)
+        assert len(hook_instance.mock_calls) == 1
         hook_instance.create_version.assert_called_once_with(
             project_id='test-project', model_name='test-model', version_spec=TEST_VERSION)
 
@@ -692,7 +682,7 @@ class TestMLEngineCreateVersion(unittest.TestCase):
         )
 
     def test_missing_model_name(self):
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             MLEngineCreateVersionOperator(
                 task_id="task-id",
                 project_id=TEST_PROJECT_ID,
@@ -703,7 +693,7 @@ class TestMLEngineCreateVersion(unittest.TestCase):
             )
 
     def test_missing_version(self):
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             MLEngineCreateVersionOperator(
                 task_id="task-id",
                 project_id=TEST_PROJECT_ID,
@@ -737,7 +727,7 @@ class TestMLEngineSetDefaultVersion(unittest.TestCase):
         )
 
     def test_missing_model_name(self):
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             MLEngineSetDefaultVersionOperator(
                 task_id="task-id",
                 project_id=TEST_PROJECT_ID,
@@ -748,7 +738,7 @@ class TestMLEngineSetDefaultVersion(unittest.TestCase):
             )
 
     def test_missing_version_name(self):
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             MLEngineSetDefaultVersionOperator(
                 task_id="task-id",
                 project_id=TEST_PROJECT_ID,
@@ -780,7 +770,7 @@ class TestMLEngineListVersions(unittest.TestCase):
         )
 
     def test_missing_model_name(self):
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             MLEngineListVersionsOperator(
                 task_id="task-id",
                 project_id=TEST_PROJECT_ID,
@@ -813,7 +803,7 @@ class TestMLEngineDeleteVersion(unittest.TestCase):
         )
 
     def test_missing_version_name(self):
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             MLEngineDeleteVersionOperator(
                 task_id="task-id",
                 project_id=TEST_PROJECT_ID,
@@ -824,7 +814,7 @@ class TestMLEngineDeleteVersion(unittest.TestCase):
             )
 
     def test_missing_model_name(self):
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             MLEngineDeleteVersionOperator(
                 task_id="task-id",
                 project_id=TEST_PROJECT_ID,

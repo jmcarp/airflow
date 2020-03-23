@@ -38,9 +38,9 @@ class TestBaseExecutor(unittest.TestCase):
         executor.event_buffer[key2] = state
         executor.event_buffer[key3] = state
 
-        self.assertEqual(len(executor.get_event_buffer(("my_dag1",))), 1)
-        self.assertEqual(len(executor.get_event_buffer()), 2)
-        self.assertEqual(len(executor.event_buffer), 0)
+        assert len(executor.get_event_buffer(("my_dag1",))) == 1
+        assert len(executor.get_event_buffer()) == 2
+        assert len(executor.event_buffer) == 0
 
     @mock.patch('airflow.executors.base_executor.BaseExecutor.sync')
     @mock.patch('airflow.executors.base_executor.BaseExecutor.trigger_tasks')

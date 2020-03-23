@@ -58,7 +58,7 @@ class TestApiKerberos(unittest.TestCase):
                 data=json.dumps(dict(run_id='my_run' + datetime.now().isoformat())),
                 content_type="application/json"
             )
-            self.assertEqual(401, response.status_code)
+            assert 401 == response.status_code
 
             response.url = 'http://{}'.format(socket.getfqdn())
 
@@ -78,7 +78,7 @@ class TestApiKerberos(unittest.TestCase):
             CLIENT_AUTH.hostname_override = socket.getfqdn()
 
             CLIENT_AUTH.handle_response(response)
-            self.assertIn('Authorization', response.request.headers)
+            assert 'Authorization' in response.request.headers
 
             response2 = client.post(
                 url_template.format('example_bash_operator'),
@@ -86,7 +86,7 @@ class TestApiKerberos(unittest.TestCase):
                 content_type="application/json",
                 headers=response.request.headers
             )
-            self.assertEqual(200, response2.status_code)
+            assert 200 == response2.status_code
 
     def test_unauthorized(self):
         with self.app.test_client() as client:
@@ -97,4 +97,4 @@ class TestApiKerberos(unittest.TestCase):
                 content_type="application/json"
             )
 
-            self.assertEqual(401, response.status_code)
+            assert 401 == response.status_code

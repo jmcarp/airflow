@@ -60,12 +60,12 @@ class TestStreamLogWriter(unittest.TestCase):
         msg = "test_message"
         log.write(msg)
 
-        self.assertEqual(log._buffer, msg)
+        assert log._buffer == msg
 
         log.write(" \n")
         logger.log.assert_called_once_with(1, msg)
 
-        self.assertEqual(log._buffer, "")
+        assert log._buffer == ""
 
     def test_flush(self):
         logger = mock.MagicMock()
@@ -76,23 +76,23 @@ class TestStreamLogWriter(unittest.TestCase):
         msg = "test_message"
 
         log.write(msg)
-        self.assertEqual(log._buffer, msg)
+        assert log._buffer == msg
 
         log.flush()
         logger.log.assert_called_once_with(1, msg)
 
-        self.assertEqual(log._buffer, "")
+        assert log._buffer == ""
 
     def test_isatty(self):
         logger = mock.MagicMock()
         logger.log = mock.MagicMock()
 
         log = StreamLogWriter(logger, 1)
-        self.assertFalse(log.isatty())
+        assert not log.isatty()
 
     def test_encoding(self):
         logger = mock.MagicMock()
         logger.log = mock.MagicMock()
 
         log = StreamLogWriter(logger, 1)
-        self.assertIsNone(log.encoding)
+        assert log.encoding is None

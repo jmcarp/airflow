@@ -20,6 +20,7 @@ from unittest.mock import Mock, patch
 
 from airflow.exceptions import AirflowException
 from airflow.providers.salesforce.operators.tableau_refresh_workbook import TableauRefreshWorkbookOperator
+import pytest
 
 
 class TestTableauRefreshWorkbookOperator(unittest.TestCase):
@@ -46,7 +47,7 @@ class TestTableauRefreshWorkbookOperator(unittest.TestCase):
         job_id = operator.execute(context={})
 
         mock_tableau_hook.server.workbooks.refresh.assert_called_once_with(2)
-        self.assertEqual(mock_tableau_hook.server.workbooks.refresh.return_value.id, job_id)
+        assert mock_tableau_hook.server.workbooks.refresh.return_value.id == job_id
 
     @patch('airflow.providers.salesforce.sensors.tableau_job_status.TableauJobStatusSensor')
     @patch('airflow.providers.salesforce.operators.tableau_refresh_workbook.TableauHook')
@@ -58,7 +59,7 @@ class TestTableauRefreshWorkbookOperator(unittest.TestCase):
         job_id = operator.execute(context={})
 
         mock_tableau_hook.server.workbooks.refresh.assert_called_once_with(2)
-        self.assertEqual(mock_tableau_hook.server.workbooks.refresh.return_value.id, job_id)
+        assert mock_tableau_hook.server.workbooks.refresh.return_value.id == job_id
         mock_tableau_job_status_sensor.assert_called_once_with(
             job_id=job_id,
             site_id=self.kwargs['site_id'],
@@ -73,4 +74,5 @@ class TestTableauRefreshWorkbookOperator(unittest.TestCase):
         mock_tableau_hook.return_value.__enter__ = Mock(return_value=mock_tableau_hook)
         operator = TableauRefreshWorkbookOperator(workbook_name='test', **self.kwargs)
 
-        self.assertRaises(AirflowException, operator.execute, {})
+        with pytest.raises(AirflowException):
+            operator.execute({})

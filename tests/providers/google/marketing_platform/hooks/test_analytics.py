@@ -47,7 +47,7 @@ class TestGoogleAnalyticsHook(unittest.TestCase):
             http=mock_authorize.return_value,
             cache_discovery=False,
         )
-        self.assertEqual(mock_build.return_value, result)
+        assert mock_build.return_value == result
 
     @mock.patch(
         "airflow.providers.google.marketing_platform.hooks."
@@ -59,7 +59,7 @@ class TestGoogleAnalyticsHook(unittest.TestCase):
         mock_execute = mock_list.return_value.execute
         mock_execute.return_value = {"items": ["a", "b"], "totalResults": 2}
         list_accounts = self.hook.list_accounts()
-        self.assertEqual(list_accounts, ["a", "b"])
+        assert list_accounts == ["a", "b"]
 
     @mock.patch(
         "airflow.providers.google.marketing_platform.hooks."
@@ -74,7 +74,7 @@ class TestGoogleAnalyticsHook(unittest.TestCase):
             {"items": ["b"], "totalResults": 2},
         ]
         list_accounts = self.hook.list_accounts()
-        self.assertEqual(list_accounts, ["a", "b"])
+        assert list_accounts == ["a", "b"]
 
     @mock.patch(
         "airflow.providers.google.marketing_platform.hooks."
@@ -115,7 +115,7 @@ class TestGoogleAnalyticsHook(unittest.TestCase):
         mock_execute = mock_list.return_value.execute
         mock_execute.return_value = {"items": ["a", "b"], "totalResults": 2}
         list_ads_links = self.hook.list_ad_words_links(account_id=account_id, web_property_id=web_property_id)
-        self.assertEqual(list_ads_links, ["a", "b"])
+        assert list_ads_links == ["a", "b"]
 
     @mock.patch(
         "airflow.providers.google.marketing_platform.hooks."
@@ -132,4 +132,4 @@ class TestGoogleAnalyticsHook(unittest.TestCase):
             {"items": ["b"], "totalResults": 2},
         ]
         list_ads_links = self.hook.list_ad_words_links(account_id=account_id, web_property_id=web_property_id)
-        self.assertEqual(list_ads_links, ["a", "b"])
+        assert list_ads_links == ["a", "b"]

@@ -33,7 +33,7 @@ class TestDagUnpausedDep(unittest.TestCase):
         task = Mock(dag=dag)
         ti = TaskInstance(task=task, execution_date=None)
 
-        self.assertFalse(DagUnpausedDep().is_met(ti=ti))
+        assert not DagUnpausedDep().is_met(ti=ti)
 
     def test_all_conditions_met(self):
         """
@@ -43,4 +43,4 @@ class TestDagUnpausedDep(unittest.TestCase):
         task = Mock(dag=dag)
         ti = TaskInstance(task=task, execution_date=None)
 
-        self.assertTrue(DagUnpausedDep().is_met(ti=ti))
+        assert DagUnpausedDep().is_met(ti=ti)

@@ -30,6 +30,7 @@ from tests.providers.google.cloud.utils.base_gcp_mock import (
     GCP_PROJECT_ID_HOOK_UNIT_TEST, mock_base_gcp_hook_default_project_id,
     mock_base_gcp_hook_no_default_project_id,
 )
+import pytest
 
 CBT_INSTANCE = 'instance'
 CBT_CLUSTER = 'cluster'
@@ -58,8 +59,8 @@ class TestBigtableHookNoDefaultProjectId(unittest.TestCase):
             client_info=mock_client_info.return_value,
             admin=True
         )
-        self.assertEqual(mock_client.return_value, result)
-        self.assertEqual(self.bigtable_hook_no_default_project_id._client, result)
+        assert mock_client.return_value == result
+        assert self.bigtable_hook_no_default_project_id._client == result
 
     @mock.patch(
         'airflow.providers.google.cloud.hooks.base.CloudBaseHook.project_id',
@@ -71,12 +72,12 @@ class TestBigtableHookNoDefaultProjectId(unittest.TestCase):
         instance_method = get_client.return_value.instance
         instance_exists_method = instance_method.return_value.exists
         instance_exists_method.return_value = True
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             self.bigtable_hook_no_default_project_id.get_instance(instance_id=CBT_INSTANCE)
         instance_exists_method.assert_not_called()
         instance_method.assert_not_called()
         err = cm.exception
-        self.assertIn("The project id must be passed", str(err))
+        assert "The project id must be passed" in str(err)
 
     @mock.patch('airflow.providers.google.cloud.hooks.bigtable.BigtableHook._get_client')
     def test_get_instance_overridden_project_id(self, get_client):
@@ -89,7 +90,7 @@ class TestBigtableHookNoDefaultProjectId(unittest.TestCase):
         instance_method.assert_called_once_with('instance')
         instance_exists_method.assert_called_once_with()
         get_client.assert_called_once_with(project_id='example-project')
-        self.assertIsNotNone(res)
+        assert res is not None
 
     @mock.patch(
         'airflow.providers.google.cloud.hooks.base.CloudBaseHook.project_id',
@@ -102,13 +103,13 @@ class TestBigtableHookNoDefaultProjectId(unittest.TestCase):
         instance_exists_method = instance_method.return_value.exists
         delete_method = instance_method.return_value.delete
         instance_exists_method.return_value = True
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             self.bigtable_hook_no_default_project_id.delete_instance(instance_id=CBT_INSTANCE)
         instance_exists_method.assert_not_called()
         instance_method.assert_not_called()
         delete_method.assert_not_called()
         err = cm.exception
-        self.assertIn("The project id must be passed", str(err))
+        assert "The project id must be passed" in str(err)
 
     @mock.patch('airflow.providers.google.cloud.hooks.bigtable.BigtableHook._get_client')
     def test_delete_instance_overridden_project_id(self, get_client):
@@ -122,7 +123,7 @@ class TestBigtableHookNoDefaultProjectId(unittest.TestCase):
         instance_exists_method.assert_called_once_with()
         delete_method.assert_called_once_with()
         get_client.assert_called_once_with(project_id='example-project')
-        self.assertIsNone(res)
+        assert res is None
 
     @mock.patch(
         'airflow.providers.google.cloud.hooks.base.CloudBaseHook.project_id',
@@ -135,7 +136,7 @@ class TestBigtableHookNoDefaultProjectId(unittest.TestCase):
         operation = mock.Mock()
         operation.result_return_value = Instance(instance_id=CBT_INSTANCE, client=get_client)
         instance_create.return_value = operation
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             self.bigtable_hook_no_default_project_id.create_instance(
                 instance_id=CBT_INSTANCE,
                 main_cluster_id=CBT_CLUSTER,
@@ -143,7 +144,7 @@ class TestBigtableHookNoDefaultProjectId(unittest.TestCase):
         get_client.assert_not_called()
         instance_create.assert_not_called()
         err = cm.exception
-        self.assertIn("The project id must be passed", str(err))
+        assert "The project id must be passed" in str(err)
 
     @mock.patch('google.cloud.bigtable.instance.Instance.create')
     @mock.patch('airflow.providers.google.cloud.hooks.bigtable.BigtableHook._get_client')
@@ -158,7 +159,7 @@ class TestBigtableHookNoDefaultProjectId(unittest.TestCase):
             main_cluster_zone=CBT_ZONE)
         get_client.assert_called_once_with(project_id='example-project')
         instance_create.assert_called_once_with(clusters=mock.ANY)
-        self.assertEqual(res.instance_id, 'instance')
+        assert res.instance_id == 'instance'
 
     @mock.patch(
         'airflow.providers.google.cloud.hooks.base.CloudBaseHook.project_id',
@@ -171,7 +172,7 @@ class TestBigtableHookNoDefaultProjectId(unittest.TestCase):
         instance_exists_method = instance_method.return_value.exists
         table_delete_method = instance_method.return_value.table.return_value.delete
         instance_exists_method.return_value = True
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             self.bigtable_hook_no_default_project_id.delete_table(
                 instance_id=CBT_INSTANCE,
                 table_id=CBT_TABLE)
@@ -179,7 +180,7 @@ class TestBigtableHookNoDefaultProjectId(unittest.TestCase):
         instance_exists_method.assert_not_called()
         table_delete_method.assert_not_called()
         err = cm.exception
-        self.assertIn("The project id must be passed", str(err))
+        assert "The project id must be passed" in str(err)
 
     @mock.patch('airflow.providers.google.cloud.hooks.bigtable.BigtableHook._get_client')
     def test_delete_table_overridden_project_id(self, get_client):
@@ -217,8 +218,8 @@ class TestBigtableHookDefaultProjectId(unittest.TestCase):
             client_info=mock_client_info.return_value,
             admin=True
         )
-        self.assertEqual(mock_client.return_value, result)
-        self.assertEqual(self.bigtable_hook_default_project_id._client, result)
+        assert mock_client.return_value == result
+        assert self.bigtable_hook_default_project_id._client == result
 
     @mock.patch(
         'airflow.providers.google.cloud.hooks.base.CloudBaseHook.project_id',
@@ -235,7 +236,7 @@ class TestBigtableHookDefaultProjectId(unittest.TestCase):
         instance_method.assert_called_once_with('instance')
         instance_exists_method.assert_called_once_with()
         get_client.assert_called_once_with(project_id='example-project')
-        self.assertIsNotNone(res)
+        assert res is not None
 
     @mock.patch('airflow.providers.google.cloud.hooks.bigtable.BigtableHook._get_client')
     def test_get_instance_overridden_project_id(self, get_client):
@@ -248,7 +249,7 @@ class TestBigtableHookDefaultProjectId(unittest.TestCase):
         instance_method.assert_called_once_with('instance')
         instance_exists_method.assert_called_once_with()
         get_client.assert_called_once_with(project_id='new-project')
-        self.assertIsNotNone(res)
+        assert res is not None
 
     @mock.patch(
         'airflow.providers.google.cloud.hooks.base.CloudBaseHook.project_id',
@@ -265,7 +266,7 @@ class TestBigtableHookDefaultProjectId(unittest.TestCase):
         instance_method.assert_called_once_with('instance')
         instance_exists_method.assert_called_once_with()
         get_client.assert_called_once_with(project_id='example-project')
-        self.assertIsNone(res)
+        assert res is None
 
     @mock.patch(
         'airflow.providers.google.cloud.hooks.base.CloudBaseHook.project_id',
@@ -284,7 +285,7 @@ class TestBigtableHookDefaultProjectId(unittest.TestCase):
         instance_exists_method.assert_called_once_with()
         delete_method.assert_called_once_with()
         get_client.assert_called_once_with(project_id='example-project')
-        self.assertIsNone(res)
+        assert res is None
 
     @mock.patch('airflow.providers.google.cloud.hooks.bigtable.BigtableHook._get_client')
     def test_delete_instance_overridden_project_id(self, get_client):
@@ -298,7 +299,7 @@ class TestBigtableHookDefaultProjectId(unittest.TestCase):
         instance_exists_method.assert_called_once_with()
         delete_method.assert_called_once_with()
         get_client.assert_called_once_with(project_id='new-project')
-        self.assertIsNone(res)
+        assert res is None
 
     @mock.patch(
         'airflow.providers.google.cloud.hooks.base.CloudBaseHook.project_id',
@@ -335,7 +336,7 @@ class TestBigtableHookDefaultProjectId(unittest.TestCase):
             main_cluster_zone=CBT_ZONE)
         get_client.assert_called_once_with(project_id='example-project')
         instance_create.assert_called_once_with(clusters=mock.ANY)
-        self.assertEqual(res.instance_id, 'instance')
+        assert res.instance_id == 'instance'
 
     @mock.patch('google.cloud.bigtable.instance.Instance.create')
     @mock.patch('airflow.providers.google.cloud.hooks.bigtable.BigtableHook._get_client')
@@ -350,7 +351,7 @@ class TestBigtableHookDefaultProjectId(unittest.TestCase):
             main_cluster_zone=CBT_ZONE)
         get_client.assert_called_once_with(project_id='new-project')
         instance_create.assert_called_once_with(clusters=mock.ANY)
-        self.assertEqual(res.instance_id, 'instance')
+        assert res.instance_id == 'instance'
 
     @mock.patch(
         'airflow.providers.google.cloud.hooks.base.CloudBaseHook.project_id',

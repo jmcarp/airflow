@@ -21,6 +21,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import MagicMock, call
+import pytest
 
 SETTINGS_FILE_POLICY = """
 def test_policy(task_instance):
@@ -95,7 +96,7 @@ class TestLocalSettings(unittest.TestCase):
             from airflow import settings
             settings.import_local_settings()
 
-            with self.assertRaises(AttributeError):
+            with pytest.raises(AttributeError):
                 settings.not_policy()  # pylint: disable=no-member
 
     def test_import_with_dunder_all(self):

@@ -32,6 +32,7 @@ from airflow.providers.google.cloud.operators.cloud_sql import (
     CloudSQLExportInstanceOperator, CloudSQLImportInstanceOperator, CloudSQLInstancePatchOperator,
     CloudSQLPatchInstanceDatabaseOperator,
 )
+import pytest
 
 PROJECT_ID = os.environ.get('PROJECT_ID', 'project-id')
 INSTANCE_NAME = os.environ.get('INSTANCE_NAME', 'test-name')
@@ -183,7 +184,7 @@ class TestCloudSql(unittest.TestCase):
             project_id=PROJECT_ID,
             body=CREATE_BODY
         )
-        self.assertIsNone(result)
+        assert result is None
 
     @mock.patch("airflow.providers.google.cloud.operators.cloud_sql"
                 ".CloudSQLCreateInstanceOperator._check_if_instance_exists")
@@ -205,7 +206,7 @@ class TestCloudSql(unittest.TestCase):
             project_id=None,
             body=CREATE_BODY
         )
-        self.assertIsNone(result)
+        assert result is None
 
     @mock.patch("airflow.providers.google.cloud.operators.cloud_sql"
                 ".CloudSQLCreateInstanceOperator._check_if_instance_exists")
@@ -225,11 +226,11 @@ class TestCloudSql(unittest.TestCase):
         mock_hook.assert_called_once_with(api_version="v1beta4",
                                           gcp_conn_id="google_cloud_default")
         mock_hook.return_value.create_instance.assert_not_called()
-        self.assertIsNone(result)
+        assert result is None
 
     @mock.patch("airflow.providers.google.cloud.operators.cloud_sql.CloudSQLHook")
     def test_create_should_throw_ex_when_empty_project_id(self, mock_hook):
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             op = CloudSQLCreateInstanceOperator(
                 project_id="",
                 body=CREATE_BODY,
@@ -238,12 +239,12 @@ class TestCloudSql(unittest.TestCase):
             )
             op.execute(None)
         err = cm.exception
-        self.assertIn("The required parameter 'project_id' is empty", str(err))
+        assert "The required parameter 'project_id' is empty" in str(err)
         mock_hook.assert_not_called()
 
     @mock.patch("airflow.providers.google.cloud.operators.cloud_sql.CloudSQLHook")
     def test_create_should_throw_ex_when_empty_body(self, mock_hook):
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             op = CloudSQLCreateInstanceOperator(
                 project_id=PROJECT_ID,
                 body={},
@@ -252,12 +253,12 @@ class TestCloudSql(unittest.TestCase):
             )
             op.execute(None)
         err = cm.exception
-        self.assertIn("The required parameter 'body' is empty", str(err))
+        assert "The required parameter 'body' is empty" in str(err)
         mock_hook.assert_not_called()
 
     @mock.patch("airflow.providers.google.cloud.operators.cloud_sql.CloudSQLHook")
     def test_create_should_throw_ex_when_empty_instance(self, mock_hook):
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             op = CloudSQLCreateInstanceOperator(
                 project_id=PROJECT_ID,
                 body=CREATE_BODY,
@@ -266,7 +267,7 @@ class TestCloudSql(unittest.TestCase):
             )
             op.execute(None)
         err = cm.exception
-        self.assertIn("The required parameter 'instance' is empty", str(err))
+        assert "The required parameter 'instance' is empty" in str(err)
         mock_hook.assert_not_called()
 
     @mock.patch("airflow.providers.google.cloud.operators.cloud_sql.CloudSQLHook")
@@ -281,7 +282,7 @@ class TestCloudSql(unittest.TestCase):
                 }
             }
         }
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             op = CloudSQLCreateInstanceOperator(
                 project_id=PROJECT_ID,
                 body=wrong_list_type_body,
@@ -290,8 +291,8 @@ class TestCloudSql(unittest.TestCase):
             )
             op.execute(None)
         err = cm.exception
-        self.assertIn("The field 'settings.ipConfiguration.authorizedNetworks' "
-                      "should be of list type according to the specification", str(err))
+        assert "The field 'settings.ipConfiguration.authorizedNetworks' " \
+                      "should be of list type according to the specification" in str(err)
         mock_hook.assert_called_once_with(api_version="v1beta4",
                                           gcp_conn_id="google_cloud_default")
 
@@ -304,7 +305,7 @@ class TestCloudSql(unittest.TestCase):
                 # Testing if the validation catches this.
             }
         }
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             op = CloudSQLCreateInstanceOperator(
                 project_id=PROJECT_ID,
                 body=empty_tier_body,
@@ -313,8 +314,8 @@ class TestCloudSql(unittest.TestCase):
             )
             op.execute(None)
         err = cm.exception
-        self.assertIn("The body field 'settings.tier' can't be empty. "
-                      "Please provide a value.", str(err))
+        assert "The body field 'settings.tier' can't be empty. " \
+                      "Please provide a value." in str(err)
         mock_hook.assert_called_once_with(api_version="v1beta4",
                                           gcp_conn_id="google_cloud_default")
 
@@ -335,7 +336,7 @@ class TestCloudSql(unittest.TestCase):
             body=PATCH_BODY,
             instance=INSTANCE_NAME
         )
-        self.assertTrue(result)
+        assert result
 
     @mock.patch("airflow.providers.google.cloud.operators.cloud_sql.CloudSQLHook")
     def test_instance_patch_missing_project_id(self, mock_hook):
@@ -353,7 +354,7 @@ class TestCloudSql(unittest.TestCase):
             body=PATCH_BODY,
             instance=INSTANCE_NAME
         )
-        self.assertTrue(result)
+        assert result
 
     @mock.patch("airflow.providers.google.cloud.operators.cloud_sql"
                 ".CloudSQLInstancePatchOperator._check_if_instance_exists")
@@ -361,7 +362,7 @@ class TestCloudSql(unittest.TestCase):
     def test_instance_patch_should_bubble_up_ex_if_not_exists(self, mock_hook,
                                                               _check_if_instance_exists):
         _check_if_instance_exists.return_value = False
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             op = CloudSQLInstancePatchOperator(
                 project_id=PROJECT_ID,
                 body=PATCH_BODY,
@@ -370,7 +371,7 @@ class TestCloudSql(unittest.TestCase):
             )
             op.execute(None)
         err = cm.exception
-        self.assertIn('specify another instance to patch', str(err))
+        assert 'specify another instance to patch' in str(err)
         mock_hook.assert_called_once_with(api_version="v1beta4",
                                           gcp_conn_id="google_cloud_default")
         mock_hook.return_value.patch_instance.assert_not_called()
@@ -386,7 +387,7 @@ class TestCloudSql(unittest.TestCase):
             task_id="id"
         )
         result = op.execute(None)
-        self.assertTrue(result)
+        assert result
         mock_hook.assert_called_once_with(api_version="v1beta4",
                                           gcp_conn_id="google_cloud_default")
         mock_hook.return_value.delete_instance.assert_called_once_with(
@@ -404,7 +405,7 @@ class TestCloudSql(unittest.TestCase):
             task_id="id"
         )
         result = op.execute(None)
-        self.assertTrue(result)
+        assert result
         mock_hook.assert_called_once_with(api_version="v1beta4",
                                           gcp_conn_id="google_cloud_default")
         mock_hook.return_value.delete_instance.assert_called_once_with(
@@ -426,7 +427,7 @@ class TestCloudSql(unittest.TestCase):
             task_id="id"
         )
         result = op.execute(None)
-        self.assertTrue(result)
+        assert result
         mock_hook.assert_called_once_with(api_version="v1beta4",
                                           gcp_conn_id="google_cloud_default")
         mock_hook.return_value.delete_instance.assert_not_called()
@@ -450,7 +451,7 @@ class TestCloudSql(unittest.TestCase):
             instance=INSTANCE_NAME,
             body=DATABASE_INSERT_BODY
         )
-        self.assertTrue(result)
+        assert result
 
     @mock.patch("airflow.providers.google.cloud.operators.cloud_sql"
                 ".CloudSQLCreateInstanceDatabaseOperator._check_if_db_exists")
@@ -470,7 +471,7 @@ class TestCloudSql(unittest.TestCase):
             instance=INSTANCE_NAME,
             body=DATABASE_INSERT_BODY
         )
-        self.assertTrue(result)
+        assert result
 
     @mock.patch("airflow.providers.google.cloud.operators.cloud_sql"
                 ".CloudSQLCreateInstanceDatabaseOperator._check_if_db_exists")
@@ -485,7 +486,7 @@ class TestCloudSql(unittest.TestCase):
             task_id="id"
         )
         result = op.execute(None)
-        self.assertTrue(result)
+        assert result
         mock_hook.assert_called_once_with(api_version="v1beta4",
                                           gcp_conn_id="google_cloud_default")
         mock_hook.return_value.create_database.assert_not_called()
@@ -511,7 +512,7 @@ class TestCloudSql(unittest.TestCase):
             database=DB_NAME,
             body=DATABASE_PATCH_BODY
         )
-        self.assertTrue(result)
+        assert result
 
     @mock.patch("airflow.providers.google.cloud.operators.cloud_sql"
                 ".CloudSQLPatchInstanceDatabaseOperator._check_if_db_exists")
@@ -533,7 +534,7 @@ class TestCloudSql(unittest.TestCase):
             database=DB_NAME,
             body=DATABASE_PATCH_BODY
         )
-        self.assertTrue(result)
+        assert result
 
     @mock.patch("airflow.providers.google.cloud.operators.cloud_sql"
                 ".CloudSQLPatchInstanceDatabaseOperator._check_if_db_exists")
@@ -541,7 +542,7 @@ class TestCloudSql(unittest.TestCase):
     def test_instance_db_patch_should_throw_ex_if_not_exists(
             self, mock_hook, _check_if_db_exists):
         _check_if_db_exists.return_value = False
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             op = CloudSQLPatchInstanceDatabaseOperator(
                 project_id=PROJECT_ID,
                 instance=INSTANCE_NAME,
@@ -551,15 +552,15 @@ class TestCloudSql(unittest.TestCase):
             )
             op.execute(None)
         err = cm.exception
-        self.assertIn("Cloud SQL instance with ID", str(err))
-        self.assertIn("does not contain database", str(err))
+        assert "Cloud SQL instance with ID" in str(err)
+        assert "does not contain database" in str(err)
         mock_hook.assert_called_once_with(api_version="v1beta4",
                                           gcp_conn_id="google_cloud_default")
         mock_hook.return_value.patch_database.assert_not_called()
 
     @mock.patch("airflow.providers.google.cloud.operators.cloud_sql.CloudSQLHook")
     def test_instance_db_patch_should_throw_ex_when_empty_database(self, mock_hook):
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             op = CloudSQLPatchInstanceDatabaseOperator(
                 project_id=PROJECT_ID,
                 instance=INSTANCE_NAME,
@@ -569,7 +570,7 @@ class TestCloudSql(unittest.TestCase):
             )
             op.execute(None)
         err = cm.exception
-        self.assertIn("The required parameter 'database' is empty", str(err))
+        assert "The required parameter 'database' is empty" in str(err)
         mock_hook.assert_not_called()
         mock_hook.return_value.patch_database.assert_not_called()
 
@@ -585,7 +586,7 @@ class TestCloudSql(unittest.TestCase):
             task_id="id"
         )
         result = op.execute(None)
-        self.assertTrue(result)
+        assert result
         mock_hook.assert_called_once_with(api_version="v1beta4",
                                           gcp_conn_id="google_cloud_default")
         mock_hook.return_value.delete_database.assert_called_once_with(
@@ -605,7 +606,7 @@ class TestCloudSql(unittest.TestCase):
             task_id="id"
         )
         result = op.execute(None)
-        self.assertTrue(result)
+        assert result
         mock_hook.assert_called_once_with(api_version="v1beta4",
                                           gcp_conn_id="google_cloud_default")
         mock_hook.return_value.delete_database.assert_called_once_with(
@@ -627,7 +628,7 @@ class TestCloudSql(unittest.TestCase):
             task_id="id"
         )
         result = op.execute(None)
-        self.assertTrue(result)
+        assert result
         mock_hook.assert_called_once_with(api_version="v1beta4",
                                           gcp_conn_id="google_cloud_default")
         mock_hook.return_value.delete_database.assert_not_called()
@@ -649,7 +650,7 @@ class TestCloudSql(unittest.TestCase):
             instance=INSTANCE_NAME,
             body=EXPORT_BODY
         )
-        self.assertTrue(result)
+        assert result
 
     @mock.patch("airflow.providers.google.cloud.operators.cloud_sql.CloudSQLHook")
     def test_instance_export_missing_project_id(self, mock_hook):
@@ -667,7 +668,7 @@ class TestCloudSql(unittest.TestCase):
             instance=INSTANCE_NAME,
             body=EXPORT_BODY
         )
-        self.assertTrue(result)
+        assert result
 
     @mock.patch("airflow.providers.google.cloud.operators.cloud_sql.CloudSQLHook")
     def test_instance_import(self, mock_hook):
@@ -686,7 +687,7 @@ class TestCloudSql(unittest.TestCase):
             instance=INSTANCE_NAME,
             body=IMPORT_BODY
         )
-        self.assertTrue(result)
+        assert result
 
     @mock.patch("airflow.providers.google.cloud.operators.cloud_sql.CloudSQLHook")
     def test_instance_import_missing_project_id(self, mock_hook):
@@ -704,7 +705,7 @@ class TestCloudSql(unittest.TestCase):
             instance=INSTANCE_NAME,
             body=IMPORT_BODY
         )
-        self.assertTrue(result)
+        assert result
 
 
 class TestCloudSqlQueryValidation(unittest.TestCase):
@@ -762,14 +763,14 @@ class TestCloudSqlQueryValidation(unittest.TestCase):
                 use_proxy=use_proxy,
                 use_ssl=use_ssl)
         self._setup_connections(get_connections, uri)
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             op = CloudSQLExecuteQueryOperator(
                 sql=sql,
                 task_id='task_id'
             )
             op.execute(None)
         err = cm.exception
-        self.assertIn(message, str(err))
+        assert message in str(err)
 
     @mock.patch("airflow.hooks.base_hook.BaseHook.get_connections")
     def test_create_operator_with_too_long_unix_socket_path(self, get_connections):
@@ -784,7 +785,7 @@ class TestCloudSqlQueryValidation(unittest.TestCase):
             sql=['SELECT * FROM TABLE'],
             task_id='task_id'
         )
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             operator.execute(None)
         err = cm.exception
-        self.assertIn("The UNIX socket path length cannot exceed", str(err))
+        assert "The UNIX socket path length cannot exceed" in str(err)

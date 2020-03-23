@@ -56,7 +56,7 @@ class SingularityOperatorTestCase(unittest.TestCase):
                                                     return_result=True)
 
         execute_args, _ = client_mock.execute.call_args
-        self.assertIs(execute_args[0], instance)
+        assert execute_args[0] is instance
 
         instance.start.assert_called_once_with()
         instance.stop.assert_called_once_with()

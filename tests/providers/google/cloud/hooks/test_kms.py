@@ -69,8 +69,8 @@ class TestCloudKMSHook(unittest.TestCase):
             credentials=mock_get_creds.return_value,
             client_info=mock_client_info.return_value,
         )
-        self.assertEqual(mock_client.return_value, result)
-        self.assertEqual(self.kms_hook._conn, result)
+        assert mock_client.return_value == result
+        assert self.kms_hook._conn == result
 
     @mock.patch("airflow.providers.google.cloud.hooks.kms.CloudKMSHook.get_conn")
     def test_encrypt(self, mock_get_conn):
@@ -85,7 +85,7 @@ class TestCloudKMSHook(unittest.TestCase):
             timeout=None,
             metadata=None,
         )
-        self.assertEqual(PLAINTEXT_b64, result)
+        assert PLAINTEXT_b64 == result
 
     @mock.patch("airflow.providers.google.cloud.hooks.kms.CloudKMSHook.get_conn")
     def test_encrypt_with_auth_data(self, mock_get_conn):
@@ -100,7 +100,7 @@ class TestCloudKMSHook(unittest.TestCase):
             timeout=None,
             metadata=None,
         )
-        self.assertEqual(PLAINTEXT_b64, result)
+        assert PLAINTEXT_b64 == result
 
     @mock.patch("airflow.providers.google.cloud.hooks.kms.CloudKMSHook.get_conn")
     def test_decrypt(self, mock_get_conn):
@@ -115,7 +115,7 @@ class TestCloudKMSHook(unittest.TestCase):
             timeout=None,
             metadata=None,
         )
-        self.assertEqual(PLAINTEXT, result)
+        assert PLAINTEXT == result
 
     @mock.patch("airflow.providers.google.cloud.hooks.kms.CloudKMSHook.get_conn")
     def test_decrypt_with_auth_data(self, mock_get_conn):
@@ -130,4 +130,4 @@ class TestCloudKMSHook(unittest.TestCase):
             timeout=None,
             metadata=None,
         )
-        self.assertEqual(PLAINTEXT, result)
+        assert PLAINTEXT == result

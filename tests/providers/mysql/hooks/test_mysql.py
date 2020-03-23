@@ -60,11 +60,11 @@ class TestMySqlHookConn(unittest.TestCase):
         self.db_hook.get_conn()
         assert mock_connect.call_count == 1
         args, kwargs = mock_connect.call_args
-        self.assertEqual(args, ())
-        self.assertEqual(kwargs['user'], 'login')
-        self.assertEqual(kwargs['passwd'], 'password')
-        self.assertEqual(kwargs['host'], 'host')
-        self.assertEqual(kwargs['db'], 'schema')
+        assert args == ()
+        assert kwargs['user'] == 'login'
+        assert kwargs['passwd'] == 'password'
+        assert kwargs['host'] == 'host'
+        assert kwargs['db'] == 'schema'
 
     @mock.patch('MySQLdb.connect')
     def test_get_uri(self, mock_connect):
@@ -72,7 +72,7 @@ class TestMySqlHookConn(unittest.TestCase):
         self.db_hook.get_conn()
         assert mock_connect.call_count == 1
         args, kwargs = mock_connect.call_args
-        self.assertEqual(self.db_hook.get_uri(), "mysql://login:password@host/schema?charset=utf-8")
+        assert self.db_hook.get_uri() == "mysql://login:password@host/schema?charset=utf-8"
 
     @mock.patch('MySQLdb.connect')
     def test_get_conn_from_connection(self, mock_connect):
@@ -98,8 +98,8 @@ class TestMySqlHookConn(unittest.TestCase):
         self.db_hook.get_conn()
         assert mock_connect.call_count == 1
         args, kwargs = mock_connect.call_args
-        self.assertEqual(args, ())
-        self.assertEqual(kwargs['port'], 3307)
+        assert args == ()
+        assert kwargs['port'] == 3307
 
     @mock.patch('MySQLdb.connect')
     def test_get_conn_charset(self, mock_connect):
@@ -107,9 +107,9 @@ class TestMySqlHookConn(unittest.TestCase):
         self.db_hook.get_conn()
         assert mock_connect.call_count == 1
         args, kwargs = mock_connect.call_args
-        self.assertEqual(args, ())
-        self.assertEqual(kwargs['charset'], 'utf-8')
-        self.assertEqual(kwargs['use_unicode'], True)
+        assert args == ()
+        assert kwargs['charset'] == 'utf-8'
+        assert kwargs['use_unicode'] == True
 
     @mock.patch('MySQLdb.connect')
     def test_get_conn_cursor(self, mock_connect):
@@ -117,8 +117,8 @@ class TestMySqlHookConn(unittest.TestCase):
         self.db_hook.get_conn()
         assert mock_connect.call_count == 1
         args, kwargs = mock_connect.call_args
-        self.assertEqual(args, ())
-        self.assertEqual(kwargs['cursorclass'], MySQLdb.cursors.SSCursor)
+        assert args == ()
+        assert kwargs['cursorclass'] == MySQLdb.cursors.SSCursor
 
     @mock.patch('MySQLdb.connect')
     def test_get_conn_local_infile(self, mock_connect):
@@ -126,8 +126,8 @@ class TestMySqlHookConn(unittest.TestCase):
         self.db_hook.get_conn()
         assert mock_connect.call_count == 1
         args, kwargs = mock_connect.call_args
-        self.assertEqual(args, ())
-        self.assertEqual(kwargs['local_infile'], 1)
+        assert args == ()
+        assert kwargs['local_infile'] == 1
 
     @mock.patch('MySQLdb.connect')
     def test_get_con_unix_socket(self, mock_connect):
@@ -135,8 +135,8 @@ class TestMySqlHookConn(unittest.TestCase):
         self.db_hook.get_conn()
         assert mock_connect.call_count == 1
         args, kwargs = mock_connect.call_args
-        self.assertEqual(args, ())
-        self.assertEqual(kwargs['unix_socket'], '/tmp/socket')
+        assert args == ()
+        assert kwargs['unix_socket'] == '/tmp/socket'
 
     @mock.patch('MySQLdb.connect')
     def test_get_conn_ssl_as_dictionary(self, mock_connect):
@@ -144,8 +144,8 @@ class TestMySqlHookConn(unittest.TestCase):
         self.db_hook.get_conn()
         assert mock_connect.call_count == 1
         args, kwargs = mock_connect.call_args
-        self.assertEqual(args, ())
-        self.assertEqual(kwargs['ssl'], SSL_DICT)
+        assert args == ()
+        assert kwargs['ssl'] == SSL_DICT
 
     @mock.patch('MySQLdb.connect')
     def test_get_conn_ssl_as_string(self, mock_connect):
@@ -153,8 +153,8 @@ class TestMySqlHookConn(unittest.TestCase):
         self.db_hook.get_conn()
         assert mock_connect.call_count == 1
         args, kwargs = mock_connect.call_args
-        self.assertEqual(args, ())
-        self.assertEqual(kwargs['ssl'], SSL_DICT)
+        assert args == ()
+        assert kwargs['ssl'] == SSL_DICT
 
     @mock.patch('MySQLdb.connect')
     @mock.patch('airflow.providers.amazon.aws.hooks.base_aws.AwsBaseHook.get_client_type')
@@ -189,11 +189,11 @@ class TestMySqlHookConnMySqlConnectorPython(unittest.TestCase):
         self.db_hook.get_conn()
         assert mock_connect.call_count == 1
         args, kwargs = mock_connect.call_args
-        self.assertEqual(args, ())
-        self.assertEqual(kwargs['user'], 'login')
-        self.assertEqual(kwargs['password'], 'password')
-        self.assertEqual(kwargs['host'], 'host')
-        self.assertEqual(kwargs['database'], 'schema')
+        assert args == ()
+        assert kwargs['user'] == 'login'
+        assert kwargs['password'] == 'password'
+        assert kwargs['host'] == 'host'
+        assert kwargs['database'] == 'schema'
 
     @mock.patch('mysql.connector.connect')
     def test_get_conn_port(self, mock_connect):
@@ -201,8 +201,8 @@ class TestMySqlHookConnMySqlConnectorPython(unittest.TestCase):
         self.db_hook.get_conn()
         assert mock_connect.call_count == 1
         args, kwargs = mock_connect.call_args
-        self.assertEqual(args, ())
-        self.assertEqual(kwargs['port'], 3307)
+        assert args == ()
+        assert kwargs['port'] == 3307
 
     @mock.patch('mysql.connector.connect')
     def test_get_conn_allow_local_infile(self, mock_connect):
@@ -212,8 +212,8 @@ class TestMySqlHookConnMySqlConnectorPython(unittest.TestCase):
         self.db_hook.get_conn()
         assert mock_connect.call_count == 1
         args, kwargs = mock_connect.call_args
-        self.assertEqual(args, ())
-        self.assertEqual(kwargs['allow_local_infile'], 1)
+        assert args == ()
+        assert kwargs['allow_local_infile'] == 1
 
 
 class TestMySqlHook(unittest.TestCase):
@@ -272,9 +272,9 @@ class TestMySqlHook(unittest.TestCase):
         self.conn.autocommit.assert_called_once_with(True)
         for i in range(len(self.cur.execute.call_args_list)):
             args, kwargs = self.cur.execute.call_args_list[i]
-            self.assertEqual(len(args), 1)
-            self.assertEqual(args[0], sql[i])
-            self.assertEqual(kwargs, {})
+            assert len(args) == 1
+            assert args[0] == sql[i]
+            assert kwargs == {}
         calls = [
             mock.call(sql[0]),
             mock.call(sql[1])
@@ -297,7 +297,7 @@ class TestMySqlHook(unittest.TestCase):
             """)
 
     def test_serialize_cell(self):
-        self.assertEqual('foo', self.db_hook._serialize_cell('foo', None))
+        assert 'foo' == self.db_hook._serialize_cell('foo', None)
 
     def test_bulk_load_custom(self):
         self.db_hook.bulk_load_custom(
@@ -374,7 +374,7 @@ class TestMySql(unittest.TestCase):
                     hook.bulk_load("test_airflow", f.name)
                     conn.execute("SELECT dummy FROM test_airflow")
                     results = tuple(result[0] for result in conn.fetchall())
-                    self.assertEqual(sorted(results), sorted(records))
+                    assert sorted(results) == sorted(records)
 
     @parameterized.expand([("mysqlclient",), ("mysql-connector-python",), ])
     def test_mysql_hook_test_bulk_dump(self, client):

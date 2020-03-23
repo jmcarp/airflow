@@ -91,7 +91,7 @@ class TestSnowflakeHook(unittest.TestCase):
 
     def test_get_uri(self):
         uri_shouldbe = 'snowflake://user:pw@airflow/db/public?warehouse=af_wh&role=af_role'
-        self.assertEqual(uri_shouldbe, self.db_hook.get_uri())
+        assert uri_shouldbe == self.db_hook.get_uri()
 
     def test_get_conn_params(self):
         conn_params_shouldbe = {'user': 'user',
@@ -102,10 +102,10 @@ class TestSnowflakeHook(unittest.TestCase):
                                 'warehouse': 'af_wh',
                                 'region': 'af_region',
                                 'role': 'af_role'}
-        self.assertEqual(conn_params_shouldbe, self.db_hook._get_conn_params())
+        assert conn_params_shouldbe == self.db_hook._get_conn_params()
 
     def test_get_conn(self):
-        self.assertEqual(self.db_hook.get_conn(), self.conn)
+        assert self.db_hook.get_conn() == self.conn
 
     def test_key_pair_auth_encrypted(self):
         self.conn.extra_dejson = {'database': 'db',
@@ -116,7 +116,7 @@ class TestSnowflakeHook(unittest.TestCase):
                                   'private_key_file': self.encrypted_private_key}
 
         params = self.db_hook._get_conn_params()
-        self.assertTrue('private_key' in params)
+        assert 'private_key' in params
 
     def test_key_pair_auth_not_encrypted(self):
         self.conn.extra_dejson = {'database': 'db',
@@ -128,8 +128,8 @@ class TestSnowflakeHook(unittest.TestCase):
 
         self.conn.password = ''
         params = self.db_hook._get_conn_params()
-        self.assertTrue('private_key' in params)
+        assert 'private_key' in params
 
         self.conn.password = None
         params = self.db_hook._get_conn_params()
-        self.assertTrue('private_key' in params)
+        assert 'private_key' in params

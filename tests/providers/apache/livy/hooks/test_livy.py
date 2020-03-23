@@ -26,6 +26,7 @@ from airflow.exceptions import AirflowException
 from airflow.models import Connection
 from airflow.providers.apache.livy.hooks.livy import BatchState, LivyHook
 from airflow.utils import db
+import pytest
 
 BATCH_ID = 100
 SAMPLE_GET_RESPONSE = {'id': BATCH_ID, 'state': BatchState.SUCCESS.value}
@@ -59,18 +60,18 @@ class TestLivyHook(unittest.TestCase):
                 hook = LivyHook(livy_conn_id=conn_id)
 
                 hook.get_conn()
-                self.assertEqual(hook.base_url, expected)
+                assert hook.base_url == expected
 
     @unittest.skip("inherited HttpHook does not handle missing hostname")
     def test_missing_host(self):
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             LivyHook(livy_conn_id='missing_host').get_conn()
 
     def test_build_body(self):
         with self.subTest('minimal request'):
             body = LivyHook.build_post_batch_body(file='appname')
 
-            self.assertEqual(body, {'file': 'appname'})
+            assert body == {'file': 'appname'}
 
         with self.subTest('complex request'):
             body = LivyHook.build_post_batch_body(
@@ -92,7 +93,7 @@ class TestLivyHook(unittest.TestCase):
                 num_executors='10',
             )
 
-            self.assertEqual(body, {
+            assert body == {
                 'file': 'appname',
                 'className': 'org.example.livy',
                 'proxyUser': 'proxyUser',
@@ -109,50 +110,48 @@ class TestLivyHook(unittest.TestCase):
                 'executorMemory': '1m',
                 'executorCores': '1',
                 'numExecutors': '10'
-            })
+            }
 
     def test_parameters_validation(self):
         with self.subTest('not a size'):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 LivyHook.build_post_batch_body(file='appname', executor_memory='xxx')
 
         with self.subTest('list of stringables'):
-            self.assertEqual(
-                LivyHook.build_post_batch_body(file='appname', args=['a', 1, 0.1])['args'],
+            assert LivyHook.build_post_batch_body(file='appname', args=['a', 1, 0.1])['args'] == \
                 ['a', '1', '0.1']
-            )
 
     def test_validate_size_format(self):
         with self.subTest('lower 1'):
-            self.assertTrue(LivyHook._validate_size_format('1m'))
+            assert LivyHook._validate_size_format('1m')
 
         with self.subTest('lower 2'):
-            self.assertTrue(LivyHook._validate_size_format('1mb'))
+            assert LivyHook._validate_size_format('1mb')
 
         with self.subTest('upper 1'):
-            self.assertTrue(LivyHook._validate_size_format('1G'))
+            assert LivyHook._validate_size_format('1G')
 
         with self.subTest('upper 2'):
-            self.assertTrue(LivyHook._validate_size_format('1GB'))
+            assert LivyHook._validate_size_format('1GB')
 
         with self.subTest('snake 1'):
-            self.assertTrue(LivyHook._validate_size_format('1Gb'))
+            assert LivyHook._validate_size_format('1Gb')
 
         with self.subTest('fullmatch'):
-            with self.assertRaises(ValueError):
-                self.assertTrue(LivyHook._validate_size_format('1Gb foo'))
+            with pytest.raises(ValueError):
+                assert LivyHook._validate_size_format('1Gb foo')
 
         with self.subTest('missing size'):
-            with self.assertRaises(ValueError):
-                self.assertTrue(LivyHook._validate_size_format('10'))
+            with pytest.raises(ValueError):
+                assert LivyHook._validate_size_format('10')
 
         with self.subTest('numeric'):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 LivyHook._validate_size_format(1)
 
         with self.subTest('None'):
             # noinspection PyTypeChecker
-            self.assertTrue(LivyHook._validate_size_format(None))
+            assert LivyHook._validate_size_format(None)
 
     def test_validate_list_of_stringables(self):
         with self.subTest('valid list'):
@@ -174,27 +173,27 @@ class TestLivyHook(unittest.TestCase):
                 self.fail("Exception raised")
 
         with self.subTest('dict'):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 LivyHook._validate_list_of_stringables({'a': 'a'})
 
         with self.subTest('invalid element'):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 LivyHook._validate_list_of_stringables([1, {}])
 
         with self.subTest('dict'):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 LivyHook._validate_list_of_stringables([1, None])
 
         with self.subTest('None'):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 LivyHook._validate_list_of_stringables(None)
 
         with self.subTest('int'):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 LivyHook._validate_list_of_stringables(1)
 
         with self.subTest('string'):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 LivyHook._validate_list_of_stringables('string')
 
     def test_validate_extra_conf(self):
@@ -218,25 +217,25 @@ class TestLivyHook(unittest.TestCase):
                 self.fail("Exception raised")
 
         with self.subTest('not a dict 1'):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 # noinspection PyTypeChecker
                 LivyHook._validate_extra_conf('k1=v1')
 
         with self.subTest('not a dict 2'):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 # noinspection PyTypeChecker
                 LivyHook._validate_extra_conf([('k1', 'v1'), ('k2', 0)])
 
         with self.subTest('nested dict'):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 LivyHook._validate_extra_conf({'outer': {'inner': 'val'}})
 
         with self.subTest('empty items'):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 LivyHook._validate_extra_conf({'has_val': 'val', 'no_val': None})
 
         with self.subTest('empty string'):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 LivyHook._validate_extra_conf({'has_val': 'val', 'no_val': ''})
 
     @patch('airflow.providers.apache.livy.hooks.livy.LivyHook.run_method')
@@ -259,11 +258,11 @@ class TestLivyHook(unittest.TestCase):
         )
 
         request_args = mock_request.call_args[1]
-        self.assertIn('data', request_args)
-        self.assertIsInstance(request_args['data'], str)
+        assert 'data' in request_args
+        assert isinstance(request_args['data'], str)
 
-        self.assertIsInstance(resp, int)
-        self.assertEqual(resp, BATCH_ID)
+        assert isinstance(resp, int)
+        assert resp == BATCH_ID
 
     @requests_mock.mock()
     def test_post_batch_success(self, mock):
@@ -275,8 +274,8 @@ class TestLivyHook(unittest.TestCase):
 
         resp = LivyHook().post_batch(file='sparkapp')
 
-        self.assertIsInstance(resp, int)
-        self.assertEqual(resp, BATCH_ID)
+        assert isinstance(resp, int)
+        assert resp == BATCH_ID
 
     @requests_mock.mock()
     def test_post_batch_fail(self, mock):
@@ -288,7 +287,7 @@ class TestLivyHook(unittest.TestCase):
         )
 
         hook = LivyHook()
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             hook.post_batch(file='sparkapp')
 
     @requests_mock.mock()
@@ -302,8 +301,8 @@ class TestLivyHook(unittest.TestCase):
         hook = LivyHook()
         resp = hook.get_batch(BATCH_ID)
 
-        self.assertIsInstance(resp, dict)
-        self.assertIn('id', resp)
+        assert isinstance(resp, dict)
+        assert 'id' in resp
 
     @requests_mock.mock()
     def test_get_batch_fail(self, mock):
@@ -315,12 +314,12 @@ class TestLivyHook(unittest.TestCase):
         )
 
         hook = LivyHook()
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             hook.get_batch(BATCH_ID)
 
     def test_invalid_uri(self):
         hook = LivyHook(livy_conn_id='invalid_uri')
-        with self.assertRaises(RequestException):
+        with pytest.raises(RequestException):
             hook.post_batch(file='sparkapp')
 
     @requests_mock.mock()
@@ -336,8 +335,8 @@ class TestLivyHook(unittest.TestCase):
 
         state = LivyHook().get_batch_state(BATCH_ID)
 
-        self.assertIsInstance(state, BatchState)
-        self.assertEqual(state, running)
+        assert isinstance(state, BatchState)
+        assert state == running
 
     @requests_mock.mock()
     def test_get_batch_state_fail(self, mock):
@@ -349,7 +348,7 @@ class TestLivyHook(unittest.TestCase):
         )
 
         hook = LivyHook()
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             hook.get_batch_state(BATCH_ID)
 
     @requests_mock.mock()
@@ -361,13 +360,13 @@ class TestLivyHook(unittest.TestCase):
         )
 
         hook = LivyHook()
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             hook.get_batch_state(BATCH_ID)
 
     def test_parse_post_response(self):
         res_id = LivyHook._parse_post_response({'id': BATCH_ID, 'log': []})
 
-        self.assertEqual(BATCH_ID, res_id)
+        assert BATCH_ID == res_id
 
     @requests_mock.mock()
     def test_delete_batch_success(self, mock):
@@ -379,7 +378,7 @@ class TestLivyHook(unittest.TestCase):
 
         resp = LivyHook().delete_batch(BATCH_ID)
 
-        self.assertEqual(resp, {'msg': 'deleted'})
+        assert resp == {'msg': 'deleted'}
 
     @requests_mock.mock()
     def test_delete_batch_fail(self, mock):
@@ -391,7 +390,7 @@ class TestLivyHook(unittest.TestCase):
         )
 
         hook = LivyHook()
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             hook.delete_batch(BATCH_ID)
 
     @requests_mock.mock()
@@ -403,7 +402,7 @@ class TestLivyHook(unittest.TestCase):
         )
 
         hook = LivyHook()
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             hook.post_batch(file='sparkapp')
 
     @requests_mock.mock()
@@ -421,7 +420,7 @@ class TestLivyHook(unittest.TestCase):
         # make sure blocked by validation
         for val in [None, 'one', {'a': 'b'}]:
             with self.subTest('get_batch {}'.format(val)):
-                with self.assertRaises(TypeError):
+                with pytest.raises(TypeError):
                     # noinspection PyTypeChecker
                     hook.get_batch(val)
 
@@ -439,7 +438,7 @@ class TestLivyHook(unittest.TestCase):
 
         for val in [None, 'one', {'a': 'b'}]:
             with self.subTest('get_batch {}'.format(val)):
-                with self.assertRaises(TypeError):
+                with pytest.raises(TypeError):
                     # noinspection PyTypeChecker
                     hook.get_batch_state(val)
 
@@ -457,7 +456,7 @@ class TestLivyHook(unittest.TestCase):
 
         for val in [None, 'one', {'a': 'b'}]:
             with self.subTest('get_batch {}'.format(val)):
-                with self.assertRaises(TypeError):
+                with pytest.raises(TypeError):
                     # noinspection PyTypeChecker
                     hook.delete_batch(val)
 
@@ -475,11 +474,11 @@ class TestLivyHook(unittest.TestCase):
                 self.fail("")
 
         with self.subTest('None'):
-            with self.assertRaises(TypeError):
+            with pytest.raises(TypeError):
                 LivyHook._validate_session_id(None)
 
         with self.subTest('random string'):
-            with self.assertRaises(TypeError):
+            with pytest.raises(TypeError):
                 LivyHook._validate_session_id('asd')
 
 

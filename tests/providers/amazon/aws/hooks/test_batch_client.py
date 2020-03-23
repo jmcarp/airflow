@@ -26,6 +26,7 @@ from parameterized import parameterized
 
 from airflow.exceptions import AirflowException
 from airflow.providers.amazon.aws.hooks.batch_client import AwsBatchClient
+import pytest
 
 # Use dummy AWS credentials
 AWS_REGION = "eu-west-1"
@@ -53,7 +54,7 @@ class TestAwsBatchClient(unittest.TestCase):
             region_name=AWS_REGION,
         )
         self.client_mock = self.aws_hook_mock.return_value.get_client_type.return_value
-        self.assertEqual(self.batch_client.client, self.client_mock)  # setup client property
+        assert self.batch_client.client == self.client_mock  # setup client property
 
         # don't pause in these unit tests
         self.mock_delay = mock.Mock(return_value=None)
@@ -62,12 +63,12 @@ class TestAwsBatchClient(unittest.TestCase):
         self.batch_client.exponential_delay = self.mock_exponential_delay
 
     def test_init(self):
-        self.assertEqual(self.batch_client.max_retries, self.MAX_RETRIES)
-        self.assertEqual(self.batch_client.status_retries, self.STATUS_RETRIES)
-        self.assertEqual(self.batch_client.region_name, AWS_REGION)
-        self.assertEqual(self.batch_client.aws_conn_id, None)
-        self.assertEqual(self.batch_client.hook, self.aws_hook_mock.return_value)
-        self.assertEqual(self.batch_client.client, self.client_mock)
+        assert self.batch_client.max_retries == self.MAX_RETRIES
+        assert self.batch_client.status_retries == self.STATUS_RETRIES
+        assert self.batch_client.region_name == AWS_REGION
+        assert self.batch_client.aws_conn_id == None
+        assert self.batch_client.hook == self.aws_hook_mock.return_value
+        assert self.batch_client.client == self.client_mock
 
         self.aws_hook_mock.assert_called_once_with(aws_conn_id=None)
         self.aws_hook_mock.return_value.get_client_type.assert_called_once_with(
@@ -95,7 +96,7 @@ class TestAwsBatchClient(unittest.TestCase):
             self.batch_client.wait_for_job(JOB_ID)
             job_complete.assert_called_once_with(JOB_ID, None)
 
-        self.assertEqual(self.client_mock.describe_jobs.call_count, 4)
+        assert self.client_mock.describe_jobs.call_count == 4
 
     def test_wait_for_job_with_failure(self):
         self.client_mock.describe_jobs.return_value = {
@@ -118,7 +119,7 @@ class TestAwsBatchClient(unittest.TestCase):
             self.batch_client.wait_for_job(JOB_ID)
             job_complete.assert_called_once_with(JOB_ID, None)
 
-        self.assertEqual(self.client_mock.describe_jobs.call_count, 4)
+        assert self.client_mock.describe_jobs.call_count == 4
 
     def test_poll_job_running_for_status_running(self):
         self.client_mock.describe_jobs.return_value = {
@@ -138,35 +139,35 @@ class TestAwsBatchClient(unittest.TestCase):
         self.client_mock.describe_jobs.return_value = {
             "jobs": [{"jobId": JOB_ID, "status": "RUNNING"}]
         }
-        with self.assertRaises(AirflowException) as e:
+        with pytest.raises(AirflowException) as e:
             self.batch_client.poll_for_job_complete(JOB_ID)
         msg = "AWS Batch job ({}) status checks exceed max_retries".format(JOB_ID)
-        self.assertIn(msg, str(e.exception))
+        assert msg in str(e.exception)
         self.client_mock.describe_jobs.assert_called_with(jobs=[JOB_ID])
-        self.assertEqual(self.client_mock.describe_jobs.call_count, self.MAX_RETRIES + 1)
+        assert self.client_mock.describe_jobs.call_count == self.MAX_RETRIES + 1
 
     def test_poll_job_status_hit_api_throttle(self):
         self.client_mock.describe_jobs.side_effect = botocore.exceptions.ClientError(
             error_response={"Error": {"Code": "TooManyRequestsException"}},
             operation_name="get job description",
         )
-        with self.assertRaises(AirflowException) as e:
+        with pytest.raises(AirflowException) as e:
             self.batch_client.poll_for_job_complete(JOB_ID)
         msg = "AWS Batch job ({}) description error".format(JOB_ID)
-        self.assertIn(msg, str(e.exception))
+        assert msg in str(e.exception)
         # It should retry when this client error occurs
         self.client_mock.describe_jobs.assert_called_with(jobs=[JOB_ID])
-        self.assertEqual(self.client_mock.describe_jobs.call_count, self.STATUS_RETRIES)
+        assert self.client_mock.describe_jobs.call_count == self.STATUS_RETRIES
 
     def test_poll_job_status_with_client_error(self):
         self.client_mock.describe_jobs.side_effect = botocore.exceptions.ClientError(
             error_response={"Error": {"Code": "InvalidClientTokenId"}},
             operation_name="get job description",
         )
-        with self.assertRaises(AirflowException) as e:
+        with pytest.raises(AirflowException) as e:
             self.batch_client.poll_for_job_complete(JOB_ID)
         msg = "AWS Batch job ({}) description error".format(JOB_ID)
-        self.assertIn(msg, str(e.exception))
+        assert msg in str(e.exception)
         # It will not retry when this client error occurs
         self.client_mock.describe_jobs.assert_called_once_with(jobs=[JOB_ID])
 
@@ -175,7 +176,7 @@ class TestAwsBatchClient(unittest.TestCase):
             "jobs": [{"jobId": JOB_ID, "status": "SUCCEEDED"}]
         }
         status = self.batch_client.check_job_success(JOB_ID)
-        self.assertTrue(status)
+        assert status
         self.client_mock.describe_jobs.assert_called_once_with(jobs=[JOB_ID])
 
     def test_check_job_success_raises_failed(self):
@@ -189,11 +190,11 @@ class TestAwsBatchClient(unittest.TestCase):
                 }
             ]
         }
-        with self.assertRaises(AirflowException) as e:
+        with pytest.raises(AirflowException) as e:
             self.batch_client.check_job_success(JOB_ID)
         self.client_mock.describe_jobs.assert_called_once_with(jobs=[JOB_ID])
         msg = "AWS Batch job ({}) failed".format(JOB_ID)
-        self.assertIn(msg, str(e.exception))
+        assert msg in str(e.exception)
 
     def test_check_job_success_raises_failed_for_multiple_attempts(self):
         self.client_mock.describe_jobs.return_value = {
@@ -206,48 +207,48 @@ class TestAwsBatchClient(unittest.TestCase):
                 }
             ]
         }
-        with self.assertRaises(AirflowException) as e:
+        with pytest.raises(AirflowException) as e:
             self.batch_client.check_job_success(JOB_ID)
         self.client_mock.describe_jobs.assert_called_once_with(jobs=[JOB_ID])
         msg = "AWS Batch job ({}) failed".format(JOB_ID)
-        self.assertIn(msg, str(e.exception))
+        assert msg in str(e.exception)
 
     def test_check_job_success_raises_incomplete(self):
         self.client_mock.describe_jobs.return_value = {
             "jobs": [{"jobId": JOB_ID, "status": "RUNNABLE"}]
         }
-        with self.assertRaises(AirflowException) as e:
+        with pytest.raises(AirflowException) as e:
             self.batch_client.check_job_success(JOB_ID)
         self.client_mock.describe_jobs.assert_called_once_with(jobs=[JOB_ID])
         msg = "AWS Batch job ({}) is not complete".format(JOB_ID)
-        self.assertIn(msg, str(e.exception))
+        assert msg in str(e.exception)
 
     def test_check_job_success_raises_unknown_status(self):
         status = "STRANGE"
         self.client_mock.describe_jobs.return_value = {
             "jobs": [{"jobId": JOB_ID, "status": status}]
         }
-        with self.assertRaises(AirflowException) as e:
+        with pytest.raises(AirflowException) as e:
             self.batch_client.check_job_success(JOB_ID)
         self.client_mock.describe_jobs.assert_called_once_with(jobs=[JOB_ID])
         msg = "AWS Batch job ({}) has unknown status".format(JOB_ID)
-        self.assertIn(msg, str(e.exception))
-        self.assertIn(status, str(e.exception))
+        assert msg in str(e.exception)
+        assert status in str(e.exception)
 
     def test_check_job_success_raises_without_jobs(self):
         self.client_mock.describe_jobs.return_value = {"jobs": []}
-        with self.assertRaises(AirflowException) as e:
+        with pytest.raises(AirflowException) as e:
             self.batch_client.check_job_success(JOB_ID)
         self.client_mock.describe_jobs.assert_called_once_with(jobs=[JOB_ID])
         msg = "AWS Batch job ({}) description error".format(JOB_ID)
-        self.assertIn(msg, str(e.exception))
+        assert msg in str(e.exception)
 
     def test_terminate_job(self):
         self.client_mock.terminate_job.return_value = {}
         reason = "Task killed by the user"
         response = self.batch_client.terminate_job(JOB_ID, reason)
         self.client_mock.terminate_job.assert_called_once_with(jobId=JOB_ID, reason=reason)
-        self.assertEqual(response, {})
+        assert response == {}
 
 
 class TestAwsBatchClientDelays(unittest.TestCase):
@@ -258,23 +259,23 @@ class TestAwsBatchClientDelays(unittest.TestCase):
         self.batch_client = AwsBatchClient(region_name=AWS_REGION)
 
     def test_init(self):
-        self.assertEqual(self.batch_client.max_retries, self.batch_client.MAX_RETRIES)
-        self.assertEqual(self.batch_client.status_retries, self.batch_client.STATUS_RETRIES)
-        self.assertEqual(self.batch_client.region_name, AWS_REGION)
-        self.assertEqual(self.batch_client.aws_conn_id, None)
+        assert self.batch_client.max_retries == self.batch_client.MAX_RETRIES
+        assert self.batch_client.status_retries == self.batch_client.STATUS_RETRIES
+        assert self.batch_client.region_name == AWS_REGION
+        assert self.batch_client.aws_conn_id == None
 
     def test_add_jitter(self):
         minima = 0
         width = 5
         result = self.batch_client.add_jitter(0, width=width, minima=minima)
-        self.assertGreaterEqual(result, minima)
-        self.assertLessEqual(result, width)
+        assert result >= minima
+        assert result <= width
 
     @mock.patch("airflow.providers.amazon.aws.hooks.batch_client.uniform")
     @mock.patch("airflow.providers.amazon.aws.hooks.batch_client.sleep")
     def test_delay_defaults(self, mock_sleep, mock_uniform):
-        self.assertEqual(AwsBatchClient.DEFAULT_DELAY_MIN, 1)
-        self.assertEqual(AwsBatchClient.DEFAULT_DELAY_MAX, 10)
+        assert AwsBatchClient.DEFAULT_DELAY_MIN == 1
+        assert AwsBatchClient.DEFAULT_DELAY_MAX == 10
         mock_uniform.return_value = 0
         self.batch_client.delay()
         mock_uniform.assert_called_once_with(
@@ -320,8 +321,8 @@ class TestAwsBatchClientDelays(unittest.TestCase):
     )
     def test_exponential_delay(self, tries, lower, upper):
         result = self.batch_client.exponential_delay(tries)
-        self.assertGreaterEqual(result, lower)
-        self.assertLessEqual(result, upper)
+        assert result >= lower
+        assert result <= upper
 
 
 if __name__ == "__main__":

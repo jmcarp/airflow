@@ -65,4 +65,4 @@ class DynamodbToS3Test(unittest.TestCase):
 
         dynamodb_to_s3_operator.execute(context={})
 
-        self.assertEqual([{'a': 1}, {'b': 2}, {'c': 3}], self.output_queue)
+        assert [{'a': 1}, {'b': 2}, {'c': 3}] == self.output_queue

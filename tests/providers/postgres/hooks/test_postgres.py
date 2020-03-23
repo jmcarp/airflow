@@ -73,7 +73,7 @@ class TestPostgresHookConn(unittest.TestCase):
     @mock.patch('airflow.providers.postgres.hooks.postgres.psycopg2.connect')
     def test_get_conn_with_invalid_cursor(self, mock_connect):
         self.connection.extra = '{"cursor": "mycursor"}'
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             self.db_hook.get_conn()
 
     @mock.patch('airflow.providers.postgres.hooks.postgres.psycopg2.connect')
@@ -153,13 +153,13 @@ class TestPostgresHook(unittest.TestCase):
 
             self.cur.fetchall.return_value = None
 
-            self.assertEqual(None, self.db_hook.copy_expert(statement, filename, open=open_mock))
+            assert None == self.db_hook.copy_expert(statement, filename, open=open_mock)
 
             assert self.conn.close.call_count == 1
             assert self.cur.close.call_count == 1
             assert self.conn.commit.call_count == 1
             self.cur.copy_expert.assert_called_once_with(statement, open_mock.return_value)
-            self.assertEqual(open_mock.call_args[0], (filename, "r+"))
+            assert open_mock.call_args[0] == (filename, "r+")
 
     @pytest.mark.backend("postgres")
     def test_bulk_load(self):
@@ -179,7 +179,7 @@ class TestPostgresHook(unittest.TestCase):
                 cur.execute("SELECT * FROM {}".format(self.table))
                 results = [row[0] for row in cur.fetchall()]
 
-        self.assertEqual(sorted(input_data), sorted(results))
+        assert sorted(input_data) == sorted(results)
 
     @pytest.mark.backend("postgres")
     def test_bulk_dump(self):
@@ -198,4 +198,4 @@ class TestPostgresHook(unittest.TestCase):
                     f.seek(0)
                     results = [line.rstrip().decode("utf-8") for line in f.readlines()]
 
-        self.assertEqual(sorted(input_data), sorted(results))
+        assert sorted(input_data) == sorted(results)

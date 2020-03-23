@@ -24,6 +24,7 @@ import mock
 from airflow.exceptions import AirflowException
 from airflow.providers.jenkins.hooks.jenkins import JenkinsHook
 from airflow.providers.jenkins.operators.jenkins_job_trigger import JenkinsJobTriggerOperator
+import pytest
 
 
 class TestJenkinsOperator(unittest.TestCase):
@@ -60,7 +61,7 @@ class TestJenkinsOperator(unittest.TestCase):
 
             operator.execute(None)
 
-            self.assertEqual(jenkins_mock.get_build_info.call_count, 1)
+            assert jenkins_mock.get_build_info.call_count == 1
             jenkins_mock.get_build_info.assert_called_once_with(name='a_job_on_jenkins',
                                                                 number='1')
 
@@ -98,7 +99,7 @@ class TestJenkinsOperator(unittest.TestCase):
                 sleep_time=1)
 
             operator.execute(None)
-            self.assertEqual(jenkins_mock.get_build_info.call_count, 2)
+            assert jenkins_mock.get_build_info.call_count == 2
 
     @unittest.skipIf(mock is None, 'mock package not present')
     def test_execute_job_failure(self):
@@ -132,7 +133,8 @@ class TestJenkinsOperator(unittest.TestCase):
                 # The hook is mocked, this connection won't be used
                 sleep_time=1)
 
-            self.assertRaises(AirflowException, operator.execute, None)
+            with pytest.raises(AirflowException):
+                operator.execute(None)
 
     @unittest.skipIf(mock is None, 'mock package not present')
     def test_build_job_request_settings(self):
@@ -150,8 +152,8 @@ class TestJenkinsOperator(unittest.TestCase):
             operator.build_job(jenkins_mock)
             mock_request = mock_make_request.call_args_list[0][0][1]
 
-        self.assertEqual(mock_request.method, 'POST')
-        self.assertEqual(mock_request.url, 'http://apache.org')
+        assert mock_request.method == 'POST'
+        assert mock_request.url == 'http://apache.org'
 
 
 if __name__ == "__main__":

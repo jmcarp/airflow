@@ -26,6 +26,7 @@ from airflow.providers.google.cloud.operators.dataflow import (
     DataflowTemplatedJobStartOperator, GoogleCloudBucketHelper,
 )
 from airflow.version import version
+import pytest
 
 TASK_ID = 'test-dataflow-operator'
 JOB_NAME = 'test-dataflow-pipeline'
@@ -76,16 +77,16 @@ class TestDataflowPythonOperator(unittest.TestCase):
 
     def test_init(self):
         """Test DataFlowPythonOperator instance is properly initialized."""
-        self.assertEqual(self.dataflow.task_id, TASK_ID)
-        self.assertEqual(self.dataflow.job_name, JOB_NAME)
-        self.assertEqual(self.dataflow.py_file, PY_FILE)
-        self.assertEqual(self.dataflow.py_options, PY_OPTIONS)
-        self.assertEqual(self.dataflow.py_interpreter, PY_INTERPRETER)
-        self.assertEqual(self.dataflow.poll_sleep, POLL_SLEEP)
-        self.assertEqual(self.dataflow.dataflow_default_options,
-                         DEFAULT_OPTIONS_PYTHON)
-        self.assertEqual(self.dataflow.options,
-                         EXPECTED_ADDITIONAL_OPTIONS)
+        assert self.dataflow.task_id == TASK_ID
+        assert self.dataflow.job_name == JOB_NAME
+        assert self.dataflow.py_file == PY_FILE
+        assert self.dataflow.py_options == PY_OPTIONS
+        assert self.dataflow.py_interpreter == PY_INTERPRETER
+        assert self.dataflow.poll_sleep == POLL_SLEEP
+        assert self.dataflow.dataflow_default_options == \
+                         DEFAULT_OPTIONS_PYTHON
+        assert self.dataflow.options == \
+                         EXPECTED_ADDITIONAL_OPTIONS
 
     @mock.patch('airflow.providers.google.cloud.operators.dataflow.DataflowHook')
     @mock.patch(GCS_HOOK_STRING.format('GoogleCloudBucketHelper'))
@@ -97,7 +98,7 @@ class TestDataflowPythonOperator(unittest.TestCase):
         start_python_hook = dataflow_mock.return_value.start_python_dataflow
         gcs_download_hook = gcs_hook.return_value.google_cloud_to_local
         self.dataflow.execute(None)
-        self.assertTrue(dataflow_mock.called)
+        assert dataflow_mock.called
         expected_options = {
             'project': 'test',
             'staging_location': 'gs://test/staging',
@@ -115,7 +116,7 @@ class TestDataflowPythonOperator(unittest.TestCase):
             py_system_site_packages=False,
             on_new_job_id_callback=mock.ANY
         )
-        self.assertTrue(self.dataflow.py_file.startswith('/tmp/dataflow'))
+        assert self.dataflow.py_file.startswith('/tmp/dataflow')
 
 
 class TestDataflowJavaOperator(unittest.TestCase):
@@ -132,16 +133,16 @@ class TestDataflowJavaOperator(unittest.TestCase):
 
     def test_init(self):
         """Test DataflowTemplateOperator instance is properly initialized."""
-        self.assertEqual(self.dataflow.task_id, TASK_ID)
-        self.assertEqual(self.dataflow.job_name, JOB_NAME)
-        self.assertEqual(self.dataflow.poll_sleep, POLL_SLEEP)
-        self.assertEqual(self.dataflow.dataflow_default_options,
-                         DEFAULT_OPTIONS_JAVA)
-        self.assertEqual(self.dataflow.job_class, JOB_CLASS)
-        self.assertEqual(self.dataflow.jar, JAR_FILE)
-        self.assertEqual(self.dataflow.options,
-                         EXPECTED_ADDITIONAL_OPTIONS)
-        self.assertEqual(self.dataflow.check_if_running, CheckJobRunning.WaitForRun)
+        assert self.dataflow.task_id == TASK_ID
+        assert self.dataflow.job_name == JOB_NAME
+        assert self.dataflow.poll_sleep == POLL_SLEEP
+        assert self.dataflow.dataflow_default_options == \
+                         DEFAULT_OPTIONS_JAVA
+        assert self.dataflow.job_class == JOB_CLASS
+        assert self.dataflow.jar == JAR_FILE
+        assert self.dataflow.options == \
+                         EXPECTED_ADDITIONAL_OPTIONS
+        assert self.dataflow.check_if_running == CheckJobRunning.WaitForRun
 
     @mock.patch('airflow.providers.google.cloud.operators.dataflow.DataflowHook')
     @mock.patch(GCS_HOOK_STRING.format('GoogleCloudBucketHelper'))
@@ -154,7 +155,7 @@ class TestDataflowJavaOperator(unittest.TestCase):
         gcs_download_hook = gcs_hook.return_value.google_cloud_to_local
         self.dataflow.check_if_running = CheckJobRunning.IgnoreJob
         self.dataflow.execute(None)
-        self.assertTrue(dataflow_mock.called)
+        assert dataflow_mock.called
         gcs_download_hook.assert_called_once_with(JAR_FILE)
         start_java_hook.assert_called_once_with(
             job_name=JOB_NAME,
@@ -179,7 +180,7 @@ class TestDataflowJavaOperator(unittest.TestCase):
         gcs_download_hook = gcs_hook.return_value.google_cloud_to_local
         self.dataflow.check_if_running = True
         self.dataflow.execute(None)
-        self.assertTrue(dataflow_mock.called)
+        assert dataflow_mock.called
         gcs_download_hook.assert_not_called()
         start_java_hook.assert_not_called()
         dataflow_running.assert_called_once_with(name=JOB_NAME, variables=mock.ANY)
@@ -197,7 +198,7 @@ class TestDataflowJavaOperator(unittest.TestCase):
         gcs_download_hook = gcs_hook.return_value.google_cloud_to_local
         self.dataflow.check_if_running = True
         self.dataflow.execute(None)
-        self.assertTrue(dataflow_mock.called)
+        assert dataflow_mock.called
         gcs_download_hook.assert_called_once_with(JAR_FILE)
         start_java_hook.assert_called_once_with(
             job_name=JOB_NAME,
@@ -224,7 +225,7 @@ class TestDataflowJavaOperator(unittest.TestCase):
         self.dataflow.multiple_jobs = True
         self.dataflow.check_if_running = True
         self.dataflow.execute(None)
-        self.assertTrue(dataflow_mock.called)
+        assert dataflow_mock.called
         gcs_download_hook.assert_called_once_with(JAR_FILE)
         start_java_hook.assert_called_once_with(
             job_name=JOB_NAME,
@@ -251,13 +252,13 @@ class TestDataflowTemplateOperator(unittest.TestCase):
 
     def test_init(self):
         """Test DataflowTemplateOperator instance is properly initialized."""
-        self.assertEqual(self.dataflow.task_id, TASK_ID)
-        self.assertEqual(self.dataflow.job_name, JOB_NAME)
-        self.assertEqual(self.dataflow.template, TEMPLATE)
-        self.assertEqual(self.dataflow.parameters, PARAMETERS)
-        self.assertEqual(self.dataflow.poll_sleep, POLL_SLEEP)
-        self.assertEqual(self.dataflow.dataflow_default_options,
-                         DEFAULT_OPTIONS_TEMPLATE)
+        assert self.dataflow.task_id == TASK_ID
+        assert self.dataflow.job_name == JOB_NAME
+        assert self.dataflow.template == TEMPLATE
+        assert self.dataflow.parameters == PARAMETERS
+        assert self.dataflow.poll_sleep == POLL_SLEEP
+        assert self.dataflow.dataflow_default_options == \
+                         DEFAULT_OPTIONS_TEMPLATE
 
     @mock.patch('airflow.providers.google.cloud.operators.dataflow.DataflowHook')
     def test_exec(self, dataflow_mock):
@@ -267,7 +268,7 @@ class TestDataflowTemplateOperator(unittest.TestCase):
         """
         start_template_hook = dataflow_mock.return_value.start_template_dataflow
         self.dataflow.execute(None)
-        self.assertTrue(dataflow_mock.called)
+        assert dataflow_mock.called
         expected_options = {
             'project': 'test',
             'stagingLocation': 'gs://test/staging',
@@ -296,12 +297,11 @@ class TestGoogleCloudBucketHelper(unittest.TestCase):
         gcs_bucket_helper = GoogleCloudBucketHelper()
         gcs_bucket_helper._gcs_hook = mock.Mock()
 
-        with self.assertRaises(Exception) as context:
+        with pytest.raises(Exception) as context:
             gcs_bucket_helper.google_cloud_to_local(file_name)
 
-        self.assertEqual(
-            'Invalid Google Cloud Storage (GCS) object path: {}'.format(file_name),
-            str(context.exception))
+        assert 'Invalid Google Cloud Storage (GCS) object path: {}'.format(file_name) == \
+            str(context.exception)
 
     @mock.patch(
         'airflow.providers.google.cloud.operators.dataflow.GoogleCloudBucketHelper.__init__'
@@ -323,7 +323,7 @@ class TestGoogleCloudBucketHelper(unittest.TestCase):
         gcs_bucket_helper._gcs_hook.download.side_effect = _mock_download
 
         local_file = gcs_bucket_helper.google_cloud_to_local(file_name)
-        self.assertIn('obj.jar', local_file)
+        assert 'obj.jar' in local_file
 
     @mock.patch(
         'airflow.providers.google.cloud.operators.dataflow.GoogleCloudBucketHelper.__init__'
@@ -344,9 +344,8 @@ class TestGoogleCloudBucketHelper(unittest.TestCase):
 
         gcs_bucket_helper._gcs_hook.download.side_effect = _mock_download
 
-        with self.assertRaises(Exception) as context:
+        with pytest.raises(Exception) as context:
             gcs_bucket_helper.google_cloud_to_local(file_name)
 
-        self.assertEqual(
-            'Failed to download Google Cloud Storage (GCS) object: {}'.format(file_name),
-            str(context.exception))
+        assert 'Failed to download Google Cloud Storage (GCS) object: {}'.format(file_name) == \
+            str(context.exception)

@@ -26,6 +26,7 @@ from parameterized import parameterized
 
 from airflow.exceptions import AirflowException
 from airflow.providers.google.cloud.sensors.bigtable import BigtableTableReplicationCompletedSensor
+import pytest
 
 PROJECT_ID = 'test_project_id'
 INSTANCE_ID = 'test-instance-id'
@@ -41,7 +42,7 @@ class BigtableWaitForTableReplicationTest(unittest.TestCase):
     @mock.patch('airflow.providers.google.cloud.sensors.bigtable.BigtableHook')
     def test_empty_attribute(self, missing_attribute, project_id, instance_id, table_id,
                              mock_hook):
-        with self.assertRaises(AirflowException) as e:
+        with pytest.raises(AirflowException) as e:
             BigtableTableReplicationCompletedSensor(
                 project_id=project_id,
                 instance_id=instance_id,
@@ -50,7 +51,7 @@ class BigtableWaitForTableReplicationTest(unittest.TestCase):
                 gcp_conn_id=GCP_CONN_ID
             )
         err = e.exception
-        self.assertEqual(str(err), 'Empty parameter: {}'.format(missing_attribute))
+        assert str(err) == 'Empty parameter: {}'.format(missing_attribute)
         mock_hook.assert_not_called()
 
     @mock.patch('airflow.providers.google.cloud.sensors.bigtable.BigtableHook')
@@ -64,7 +65,7 @@ class BigtableWaitForTableReplicationTest(unittest.TestCase):
             task_id="id",
             gcp_conn_id=GCP_CONN_ID
         )
-        self.assertFalse(op.poke(None))
+        assert not op.poke(None)
         mock_hook.assert_called_once_with(gcp_conn_id=GCP_CONN_ID)
 
     @mock.patch('airflow.providers.google.cloud.sensors.bigtable.BigtableHook')
@@ -80,7 +81,7 @@ class BigtableWaitForTableReplicationTest(unittest.TestCase):
             task_id="id",
             gcp_conn_id=GCP_CONN_ID
         )
-        self.assertFalse(op.poke(None))
+        assert not op.poke(None)
         mock_hook.assert_called_once_with(gcp_conn_id=GCP_CONN_ID)
 
     @mock.patch('airflow.providers.google.cloud.sensors.bigtable.BigtableHook')
@@ -96,7 +97,7 @@ class BigtableWaitForTableReplicationTest(unittest.TestCase):
             task_id="id",
             gcp_conn_id=GCP_CONN_ID
         )
-        self.assertFalse(op.poke(None))
+        assert not op.poke(None)
         mock_hook.assert_called_once_with(gcp_conn_id=GCP_CONN_ID)
 
     @mock.patch('airflow.providers.google.cloud.sensors.bigtable.BigtableHook')
@@ -112,5 +113,5 @@ class BigtableWaitForTableReplicationTest(unittest.TestCase):
             task_id="id",
             gcp_conn_id=GCP_CONN_ID
         )
-        self.assertTrue(op.poke(None))
+        assert op.poke(None)
         mock_hook.assert_called_once_with(gcp_conn_id=GCP_CONN_ID)

@@ -189,7 +189,7 @@ class TestTransfer(unittest.TestCase):
             ordered_dict["c3"] = "BIGINT"
             ordered_dict["c4"] = "DECIMAL(38,0)"
             ordered_dict["c5"] = "TIMESTAMP"
-            self.assertEqual(mock_load_file.call_args[1]["field_dict"], ordered_dict)
+            assert mock_load_file.call_args[1]["field_dict"] == ordered_dict
         finally:
             with hook.get_conn() as conn:
                 conn.execute("DROP TABLE IF EXISTS {}".format(mysql_table))
@@ -235,7 +235,7 @@ class TestTransfer(unittest.TestCase):
 
             hive_hook = HiveServer2Hook()
             result = hive_hook.get_records("SELECT * FROM {}".format(hive_table))
-            self.assertEqual(result[0], db_record)
+            assert result[0] == db_record
         finally:
             with hook.get_conn() as conn:
                 conn.execute("DROP TABLE IF EXISTS {}".format(mysql_table))
@@ -294,7 +294,7 @@ class TestTransfer(unittest.TestCase):
 
             hive_hook = HiveServer2Hook()
             result = hive_hook.get_records("SELECT * FROM {}".format(hive_table))
-            self.assertEqual(result[0], minmax)
+            assert result[0] == minmax
         finally:
             with hook.get_conn() as conn:
                 conn.execute("DROP TABLE IF EXISTS {}".format(mysql_table))

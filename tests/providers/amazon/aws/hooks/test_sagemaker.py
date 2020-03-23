@@ -30,6 +30,7 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.amazon.aws.hooks.sagemaker import (
     LogState, SageMakerHook, secondary_training_status_changed, secondary_training_status_message,
 )
+import pytest
 
 role = 'arn:aws:iam:role/test-role'
 
@@ -251,7 +252,7 @@ class TestSageMakerHook(unittest.TestCase):
         mock_log_stream.side_effect = [iter([event]), iter([]), None]
         hook = SageMakerHook()
         event_iter = hook.multi_stream_iter('log', [None, None, None])
-        self.assertEqual(next(event_iter), (0, event))
+        assert next(event_iter) == (0, event)
 
     @mock.patch.object(S3Hook, 'create_bucket')
     @mock.patch.object(S3Hook, 'load_file')
@@ -262,7 +263,7 @@ class TestSageMakerHook(unittest.TestCase):
             'Role': role
         }
         hook.configure_s3_resources(test_evaluation_config)
-        self.assertEqual(test_evaluation_config, evaluation_result)
+        assert test_evaluation_config == evaluation_result
         mock_create_bucket.assert_called_once_with(bucket_name=bucket)
         mock_load_file.assert_called_once_with(path, key, bucket)
 
@@ -280,12 +281,12 @@ class TestSageMakerHook(unittest.TestCase):
         mock_check_bucket.side_effect = [False, True, True, True]
         mock_check_key.side_effect = [False, True, False]
         mock_check_prefix.side_effect = [False, True, True]
-        self.assertRaises(AirflowException,
-                          hook.check_s3_url, data_url)
-        self.assertRaises(AirflowException,
-                          hook.check_s3_url, data_url)
-        self.assertEqual(hook.check_s3_url(data_url), True)
-        self.assertEqual(hook.check_s3_url(data_url), True)
+        with pytest.raises(AirflowException):
+            hook.check_s3_url(data_url)
+        with pytest.raises(AirflowException):
+            hook.check_s3_url(data_url)
+        assert hook.check_s3_url(data_url) == True
+        assert hook.check_s3_url(data_url) == True
 
     @mock.patch.object(SageMakerHook, 'get_conn')
     @mock.patch.object(SageMakerHook, 'check_s3_url')
@@ -311,7 +312,7 @@ class TestSageMakerHook(unittest.TestCase):
     @mock.patch.object(SageMakerHook, 'get_client_type')
     def test_conn(self, mock_get_client_type):
         hook = SageMakerHook(aws_conn_id='sagemaker_test_conn_id')
-        self.assertEqual(hook.aws_conn_id, 'sagemaker_test_conn_id')
+        assert hook.aws_conn_id == 'sagemaker_test_conn_id'
 
     @mock.patch.object(SageMakerHook, 'check_training_config')
     @mock.patch.object(SageMakerHook, 'get_conn')
@@ -327,7 +328,7 @@ class TestSageMakerHook(unittest.TestCase):
                                             wait_for_completion=False,
                                             print_log=False)
         mock_session.create_training_job.assert_called_once_with(**create_training_params)
-        self.assertEqual(response, test_arn_return)
+        assert response == test_arn_return
 
     @mock.patch.object(SageMakerHook, 'check_training_config')
     @mock.patch.object(SageMakerHook, 'get_conn')
@@ -347,7 +348,7 @@ class TestSageMakerHook(unittest.TestCase):
         hook = SageMakerHook(aws_conn_id='sagemaker_test_conn_id_1')
         hook.create_training_job(create_training_params, wait_for_completion=True,
                                  print_log=False, check_interval=1)
-        self.assertEqual(mock_session.describe_training_job.call_count, 4)
+        assert mock_session.describe_training_job.call_count == 4
 
     @mock.patch.object(SageMakerHook, 'check_training_config')
     @mock.patch.object(SageMakerHook, 'get_conn')
@@ -366,10 +367,10 @@ class TestSageMakerHook(unittest.TestCase):
         mock_session.configure_mock(**attrs)
         mock_client.return_value = mock_session
         hook = SageMakerHook(aws_conn_id='sagemaker_test_conn_id_1')
-        self.assertRaises(AirflowException, hook.create_training_job,
-                          create_training_params, wait_for_completion=True,
+        with pytest.raises(AirflowException):
+            hook.create_training_job(create_training_params, wait_for_completion=True,
                           print_log=False, check_interval=1)
-        self.assertEqual(mock_session.describe_training_job.call_count, 3)
+        assert mock_session.describe_training_job.call_count == 3
 
     @mock.patch.object(SageMakerHook, 'check_tuning_config')
     @mock.patch.object(SageMakerHook, 'get_conn')
@@ -384,7 +385,7 @@ class TestSageMakerHook(unittest.TestCase):
                                           wait_for_completion=False)
         mock_session.create_hyper_parameter_tuning_job.\
             assert_called_once_with(**create_tuning_params)
-        self.assertEqual(response, test_arn_return)
+        assert response == test_arn_return
 
     @mock.patch.object(SageMakerHook, 'check_s3_url')
     @mock.patch.object(SageMakerHook, 'get_conn')
@@ -400,7 +401,7 @@ class TestSageMakerHook(unittest.TestCase):
                                              wait_for_completion=False)
         mock_session.create_transform_job.assert_called_once_with(
             **create_transform_params)
-        self.assertEqual(response, test_arn_return)
+        assert response == test_arn_return
 
     @mock.patch.object(SageMakerHook, 'get_conn')
     def test_create_model(self, mock_client):
@@ -412,7 +413,7 @@ class TestSageMakerHook(unittest.TestCase):
         hook = SageMakerHook(aws_conn_id='sagemaker_test_conn_id')
         response = hook.create_model(create_model_params)
         mock_session.create_model.assert_called_once_with(**create_model_params)
-        self.assertEqual(response, test_arn_return)
+        assert response == test_arn_return
 
     @mock.patch.object(SageMakerHook, 'get_conn')
     def test_create_endpoint_config(self, mock_client):
@@ -425,7 +426,7 @@ class TestSageMakerHook(unittest.TestCase):
         response = hook.create_endpoint_config(create_endpoint_config_params)
         mock_session.create_endpoint_config\
             .assert_called_once_with(**create_endpoint_config_params)
-        self.assertEqual(response, test_arn_return)
+        assert response == test_arn_return
 
     @mock.patch.object(SageMakerHook, 'get_conn')
     def test_create_endpoint(self, mock_client):
@@ -439,7 +440,7 @@ class TestSageMakerHook(unittest.TestCase):
                                         wait_for_completion=False)
         mock_session.create_endpoint\
             .assert_called_once_with(**create_endpoint_params)
-        self.assertEqual(response, test_arn_return)
+        assert response == test_arn_return
 
     @mock.patch.object(SageMakerHook, 'get_conn')
     def test_update_endpoint(self, mock_client):
@@ -453,7 +454,7 @@ class TestSageMakerHook(unittest.TestCase):
                                         wait_for_completion=False)
         mock_session.update_endpoint\
             .assert_called_once_with(**update_endpoint_params)
-        self.assertEqual(response, test_arn_return)
+        assert response == test_arn_return
 
     @mock.patch.object(SageMakerHook, 'get_conn')
     def test_describe_training_job(self, mock_client):
@@ -465,7 +466,7 @@ class TestSageMakerHook(unittest.TestCase):
         response = hook.describe_training_job(job_name)
         mock_session.describe_training_job.\
             assert_called_once_with(TrainingJobName=job_name)
-        self.assertEqual(response, 'InProgress')
+        assert response == 'InProgress'
 
     @mock.patch.object(SageMakerHook, 'get_conn')
     def test_describe_tuning_job(self, mock_client):
@@ -478,7 +479,7 @@ class TestSageMakerHook(unittest.TestCase):
         response = hook.describe_tuning_job(job_name)
         mock_session.describe_hyper_parameter_tuning_job.\
             assert_called_once_with(HyperParameterTuningJobName=job_name)
-        self.assertEqual(response, 'InProgress')
+        assert response == 'InProgress'
 
     @mock.patch.object(SageMakerHook, 'get_conn')
     def test_describe_transform_job(self, mock_client):
@@ -491,7 +492,7 @@ class TestSageMakerHook(unittest.TestCase):
         response = hook.describe_transform_job(job_name)
         mock_session.describe_transform_job.\
             assert_called_once_with(TransformJobName=job_name)
-        self.assertEqual(response, 'InProgress')
+        assert response == 'InProgress'
 
     @mock.patch.object(SageMakerHook, 'get_conn')
     def test_describe_model(self, mock_client):
@@ -504,7 +505,7 @@ class TestSageMakerHook(unittest.TestCase):
         response = hook.describe_model(model_name)
         mock_session.describe_model.\
             assert_called_once_with(ModelName=model_name)
-        self.assertEqual(response, model_name)
+        assert response == model_name
 
     @mock.patch.object(SageMakerHook, 'get_conn')
     def test_describe_endpoint_config(self, mock_client):
@@ -517,7 +518,7 @@ class TestSageMakerHook(unittest.TestCase):
         response = hook.describe_endpoint_config(config_name)
         mock_session.describe_endpoint_config.\
             assert_called_once_with(EndpointConfigName=config_name)
-        self.assertEqual(response, config_name)
+        assert response == config_name
 
     @mock.patch.object(SageMakerHook, 'get_conn')
     def test_describe_endpoint(self, mock_client):
@@ -530,17 +531,17 @@ class TestSageMakerHook(unittest.TestCase):
         response = hook.describe_endpoint(endpoint_name)
         mock_session.describe_endpoint.\
             assert_called_once_with(EndpointName=endpoint_name)
-        self.assertEqual(response, 'InProgress')
+        assert response == 'InProgress'
 
     def test_secondary_training_status_changed_true(self):
         changed = secondary_training_status_changed(SECONDARY_STATUS_DESCRIPTION_1,
                                                     SECONDARY_STATUS_DESCRIPTION_2)
-        self.assertTrue(changed)
+        assert changed
 
     def test_secondary_training_status_changed_false(self):
         changed = secondary_training_status_changed(SECONDARY_STATUS_DESCRIPTION_1,
                                                     SECONDARY_STATUS_DESCRIPTION_1)
-        self.assertFalse(changed)
+        assert not changed
 
     def test_secondary_training_status_message_status_changed(self):
         now = datetime.now(get_localzone())
@@ -550,9 +551,8 @@ class TestSageMakerHook(unittest.TestCase):
             status,
             message
         )
-        self.assertEqual(
-            secondary_training_status_message(SECONDARY_STATUS_DESCRIPTION_1, SECONDARY_STATUS_DESCRIPTION_2),
-            expected)
+        assert secondary_training_status_message(SECONDARY_STATUS_DESCRIPTION_1, SECONDARY_STATUS_DESCRIPTION_2) == \
+            expected
 
     @mock.patch.object(AwsLogsHook, 'get_conn')
     @mock.patch.object(SageMakerHook, 'get_conn')
@@ -581,7 +581,7 @@ class TestSageMakerHook(unittest.TestCase):
                                                        state=LogState.WAIT_IN_PROGRESS,
                                                        last_description={},
                                                        last_describe_job_call=0)
-        self.assertEqual(response, (LogState.JOB_COMPLETE, {}, 50))
+        assert response == (LogState.JOB_COMPLETE, {}, 50)
 
     @mock.patch.object(AwsLogsHook, 'get_conn')
     @mock.patch.object(SageMakerHook, 'get_conn')
@@ -608,7 +608,7 @@ class TestSageMakerHook(unittest.TestCase):
                                                        state=LogState.JOB_COMPLETE,
                                                        last_description={},
                                                        last_describe_job_call=0)
-        self.assertEqual(response, (LogState.COMPLETE, {}, 0))
+        assert response == (LogState.COMPLETE, {}, 0)
 
     @mock.patch.object(AwsLogsHook, 'get_conn')
     @mock.patch.object(SageMakerHook, 'get_conn')
@@ -635,7 +635,7 @@ class TestSageMakerHook(unittest.TestCase):
                                                        state=LogState.COMPLETE,
                                                        last_description={},
                                                        last_describe_job_call=0)
-        self.assertEqual(response, (LogState.COMPLETE, {}, 0))
+        assert response == (LogState.COMPLETE, {}, 0)
 
     @mock.patch.object(SageMakerHook, 'check_training_config')
     @mock.patch.object(AwsLogsHook, 'get_conn')
@@ -666,8 +666,8 @@ class TestSageMakerHook(unittest.TestCase):
         hook = SageMakerHook(aws_conn_id='sagemaker_test_conn_id_1')
         hook.create_training_job(create_training_params, wait_for_completion=True,
                                  print_log=True, check_interval=1)
-        self.assertEqual(mock_describe.call_count, 3)
-        self.assertEqual(mock_session.describe_training_job.call_count, 1)
+        assert mock_describe.call_count == 3
+        assert mock_session.describe_training_job.call_count == 1
 
 
 if __name__ == '__main__':

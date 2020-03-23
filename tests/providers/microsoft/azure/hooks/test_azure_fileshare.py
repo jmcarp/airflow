@@ -54,15 +54,15 @@ class TestAzureFileshareHook(unittest.TestCase):
     def test_key_and_connection(self):
         from azure.storage.file import FileService
         hook = AzureFileShareHook(wasb_conn_id='wasb_test_key')
-        self.assertEqual(hook.conn_id, 'wasb_test_key')
-        self.assertIsNone(hook._conn)
-        self.assertIsInstance(hook.get_conn(), FileService)
+        assert hook.conn_id == 'wasb_test_key'
+        assert hook._conn is None
+        assert isinstance(hook.get_conn(), FileService)
 
     def test_sas_token(self):
         from azure.storage.file import FileService
         hook = AzureFileShareHook(wasb_conn_id='wasb_test_sas_token')
-        self.assertEqual(hook.conn_id, 'wasb_test_sas_token')
-        self.assertIsInstance(hook.get_conn(), FileService)
+        assert hook.conn_id == 'wasb_test_sas_token'
+        assert isinstance(hook.get_conn(), FileService)
 
     @mock.patch('airflow.providers.microsoft.azure.hooks.azure_fileshare.FileService',
                 autospec=True)
@@ -70,7 +70,7 @@ class TestAzureFileshareHook(unittest.TestCase):
         mock_instance = mock_service.return_value
         mock_instance.exists.return_value = True
         hook = AzureFileShareHook(wasb_conn_id='wasb_test_sas_token')
-        self.assertTrue(hook.check_for_file('share', 'directory', 'file', timeout=3))
+        assert hook.check_for_file('share', 'directory', 'file', timeout=3)
         mock_instance.exists.assert_called_once_with(
             'share', 'directory', 'file', timeout=3
         )
@@ -81,7 +81,7 @@ class TestAzureFileshareHook(unittest.TestCase):
         mock_instance = mock_service.return_value
         mock_instance.exists.return_value = True
         hook = AzureFileShareHook(wasb_conn_id='wasb_test_sas_token')
-        self.assertTrue(hook.check_for_directory('share', 'directory', timeout=3))
+        assert hook.check_for_directory('share', 'directory', timeout=3)
         mock_instance.exists.assert_called_once_with(
             'share', 'directory', timeout=3
         )

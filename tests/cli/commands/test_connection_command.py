@@ -27,6 +27,7 @@ from airflow.models import Connection
 from airflow.utils.db import merge_conn
 from airflow.utils.session import create_session, provide_session
 from tests.test_utils.db import clear_db_connections
+import pytest
 
 TEST_CONN_IDS = [f"new{index}" for index in range(1, 7)]
 
@@ -60,7 +61,7 @@ class TestCliListConnections(unittest.TestCase):
             lines = stdout.split("\n")
 
         for conn_id, conn_type in self.EXPECTED_CONS:
-            self.assertTrue(any(conn_id in line and conn_type in line for line in lines))
+            assert any(conn_id in line and conn_type in line for line in lines)
 
     def test_cli_connections_list_as_tsv(self):
         args = self.parser.parse_args(["connections", "list", "--output", "tsv"])
@@ -71,7 +72,7 @@ class TestCliListConnections(unittest.TestCase):
             lines = stdout.split("\n")
 
         for conn_id, conn_type in self.EXPECTED_CONS:
-            self.assertTrue(any(conn_id in line and conn_type in line for line in lines))
+            assert any(conn_id in line and conn_type in line for line in lines)
 
 
 TEST_URL = "postgresql://airflow:airflow@host:5432/airflow"
@@ -214,7 +215,7 @@ class TestCliAddConnections(unittest.TestCase):
 
         stdout = stdout.getvalue()
 
-        self.assertIn(expected_output, stdout)
+        assert expected_output in stdout
         conn_id = cmd[2]
         with create_session() as session:
             comparable_attrs = [
@@ -228,7 +229,7 @@ class TestCliAddConnections(unittest.TestCase):
                 "schema",
             ]
             current_conn = session.query(Connection).filter(Connection.conn_id == conn_id).first()
-            self.assertEqual(expected_conn, {attr: getattr(current_conn, attr) for attr in comparable_attrs})
+            assert expected_conn == {attr: getattr(current_conn, attr) for attr in comparable_attrs}
 
     def test_cli_connections_add_duplicate(self):
         # Attempt to add duplicate
@@ -242,13 +243,11 @@ class TestCliAddConnections(unittest.TestCase):
             stdout = stdout.getvalue()
 
         # Check stdout for addition attempt
-        self.assertIn("\tA connection with `conn_id`=new1 already exists", stdout)
+        assert "\tA connection with `conn_id`=new1 already exists" in stdout
 
     def test_cli_connections_add_delete_with_missing_parameters(self):
         # Attempt to add without providing conn_uri
-        with self.assertRaisesRegex(
-            SystemExit, r"The following args are required to add a connection: \['conn_uri or conn_type'\]"
-        ):
+        with pytest.raises(SystemExit, match=r"The following args are required to add a connection: \['conn_uri or conn_type'\]"):
             connection_command.connections_add(self.parser.parse_args(["connections", "add", "new1"]))
 
 
@@ -276,12 +275,12 @@ class TestCliDeleteConnections(unittest.TestCase):
             stdout = stdout.getvalue()
 
         # Check deletion stdout
-        self.assertIn("\tSuccessfully deleted `conn_id`=new1", stdout)
+        assert "\tSuccessfully deleted `conn_id`=new1" in stdout
 
         # Check deletions
         result = session.query(Connection).filter(Connection.conn_id == "new1").first()
 
-        self.assertTrue(result is None)
+        assert result is None
 
     def test_cli_delete_invalid_connection(self):
         # Attempt to delete a non-existing connection
@@ -290,4 +289,4 @@ class TestCliDeleteConnections(unittest.TestCase):
             stdout = stdout.getvalue()
 
         # Check deletion attempt stdout
-        self.assertIn("\tDid not find a connection with `conn_id`=fake", stdout)
+        assert "\tDid not find a connection with `conn_id`=fake" in stdout

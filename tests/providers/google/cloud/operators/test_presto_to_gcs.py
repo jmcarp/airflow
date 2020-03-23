@@ -49,21 +49,21 @@ class TestPrestoToGCSOperator(unittest.TestCase):
     def test_init(self):
         """Test PrestoToGCSOperator instance is properly initialized."""
         op = PrestoToGCSOperator(task_id=TASK_ID, sql=SQL, bucket=BUCKET, filename=FILENAME)
-        self.assertEqual(op.task_id, TASK_ID)
-        self.assertEqual(op.sql, SQL)
-        self.assertEqual(op.bucket, BUCKET)
-        self.assertEqual(op.filename, FILENAME)
+        assert op.task_id == TASK_ID
+        assert op.sql == SQL
+        assert op.bucket == BUCKET
+        assert op.filename == FILENAME
 
     @patch("airflow.providers.google.cloud.operators.presto_to_gcs.PrestoHook")
     @patch("airflow.providers.google.cloud.operators.sql_to_gcs.GCSHook")
     def test_save_as_json(self, mock_gcs_hook, mock_presto_hook):
         def _assert_upload(bucket, obj, tmp_filename, mime_type, gzip):
-            self.assertEqual(BUCKET, bucket)
-            self.assertEqual(FILENAME.format(0), obj)
-            self.assertEqual("application/json", mime_type)
-            self.assertFalse(gzip)
+            assert BUCKET == bucket
+            assert FILENAME.format(0) == obj
+            assert "application/json" == mime_type
+            assert not gzip
             with open(tmp_filename, "rb") as file:
-                self.assertEqual(b"".join(NDJSON_LINES), file.read())
+                assert b"".join(NDJSON_LINES) == file.read()
 
         mock_gcs_hook.return_value.upload.side_effect = _assert_upload
 
@@ -108,11 +108,11 @@ class TestPrestoToGCSOperator(unittest.TestCase):
         }
 
         def _assert_upload(bucket, obj, tmp_filename, mime_type, gzip):
-            self.assertEqual(BUCKET, bucket)
-            self.assertEqual("application/json", mime_type)
-            self.assertFalse(gzip)
+            assert BUCKET == bucket
+            assert "application/json" == mime_type
+            assert not gzip
             with open(tmp_filename, "rb") as file:
-                self.assertEqual(expected_upload[obj], file.read())
+                assert expected_upload[obj] == file.read()
 
         mock_gcs_hook.return_value.upload.side_effect = _assert_upload
 
@@ -150,7 +150,7 @@ class TestPrestoToGCSOperator(unittest.TestCase):
         def _assert_upload(bucket, obj, tmp_filename, mime_type, gzip):  # pylint: disable=unused-argument
             if obj == SCHEMA_FILENAME:
                 with open(tmp_filename, "rb") as file:
-                    self.assertEqual(SCHEMA_JSON, file.read())
+                    assert SCHEMA_JSON == file.read()
 
         mock_gcs_hook.return_value.upload.side_effect = _assert_upload
 
@@ -181,18 +181,18 @@ class TestPrestoToGCSOperator(unittest.TestCase):
         op.execute(None)
 
         # once for the file and once for the schema
-        self.assertEqual(2, mock_gcs_hook.return_value.upload.call_count)
+        assert 2 == mock_gcs_hook.return_value.upload.call_count
 
     @patch("airflow.providers.google.cloud.operators.sql_to_gcs.GCSHook")
     @patch("airflow.providers.google.cloud.operators.presto_to_gcs.PrestoHook")
     def test_save_as_csv(self, mock_presto_hook, mock_gcs_hook):
         def _assert_upload(bucket, obj, tmp_filename, mime_type, gzip):
-            self.assertEqual(BUCKET, bucket)
-            self.assertEqual(FILENAME.format(0), obj)
-            self.assertEqual("text/csv", mime_type)
-            self.assertFalse(gzip)
+            assert BUCKET == bucket
+            assert FILENAME.format(0) == obj
+            assert "text/csv" == mime_type
+            assert not gzip
             with open(tmp_filename, "rb") as file:
-                self.assertEqual(b"".join(CSV_LINES), file.read())
+                assert b"".join(CSV_LINES) == file.read()
 
         mock_gcs_hook.return_value.upload.side_effect = _assert_upload
 
@@ -238,11 +238,11 @@ class TestPrestoToGCSOperator(unittest.TestCase):
         }
 
         def _assert_upload(bucket, obj, tmp_filename, mime_type, gzip):
-            self.assertEqual(BUCKET, bucket)
-            self.assertEqual("text/csv", mime_type)
-            self.assertFalse(gzip)
+            assert BUCKET == bucket
+            assert "text/csv" == mime_type
+            assert not gzip
             with open(tmp_filename, "rb") as file:
-                self.assertEqual(expected_upload[obj], file.read())
+                assert expected_upload[obj] == file.read()
 
         mock_gcs_hook.return_value.upload.side_effect = _assert_upload
 
@@ -281,7 +281,7 @@ class TestPrestoToGCSOperator(unittest.TestCase):
         def _assert_upload(bucket, obj, tmp_filename, mime_type, gzip):  # pylint: disable=unused-argument
             if obj == SCHEMA_FILENAME:
                 with open(tmp_filename, "rb") as file:
-                    self.assertEqual(SCHEMA_JSON, file.read())
+                    assert SCHEMA_JSON == file.read()
 
         mock_gcs_hook.return_value.upload.side_effect = _assert_upload
 
@@ -310,4 +310,4 @@ class TestPrestoToGCSOperator(unittest.TestCase):
         op.execute(None)
 
         # once for the file and once for the schema
-        self.assertEqual(2, mock_gcs_hook.return_value.upload.call_count)
+        assert 2 == mock_gcs_hook.return_value.upload.call_count

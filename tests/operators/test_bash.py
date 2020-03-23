@@ -29,6 +29,7 @@ from airflow.models.dag import DAG
 from airflow.operators.bash import BashOperator
 from airflow.utils import timezone
 from airflow.utils.state import State
+import pytest
 
 DEFAULT_DATE = datetime(2016, 1, 1, tzinfo=timezone.utc)
 END_DATE = datetime(2016, 1, 2, tzinfo=timezone.utc)
@@ -83,13 +84,13 @@ class TestBashOperator(unittest.TestCase):
 
             with open(tmp_file.name, 'r') as file:
                 output = ''.join(file.readlines())
-                self.assertIn('MY_PATH_TO_AIRFLOW_HOME', output)
+                assert 'MY_PATH_TO_AIRFLOW_HOME' in output
                 # exported in run-tests as part of PYTHONPATH
-                self.assertIn('AWESOME_PYTHONPATH', output)
-                self.assertIn('bash_op_test', output)
-                self.assertIn('echo_env_vars', output)
-                self.assertIn(DEFAULT_DATE.isoformat(), output)
-                self.assertIn('manual__' + DEFAULT_DATE.isoformat(), output)
+                assert 'AWESOME_PYTHONPATH' in output
+                assert 'bash_op_test' in output
+                assert 'echo_env_vars' in output
+                assert DEFAULT_DATE.isoformat() in output
+                assert 'manual__' + DEFAULT_DATE.isoformat() in output
 
     def test_return_value(self):
         bash_operator = BashOperator(
@@ -99,7 +100,7 @@ class TestBashOperator(unittest.TestCase):
         )
         return_value = bash_operator.execute(context={})
 
-        self.assertEqual(return_value, 'stdout')
+        assert return_value == 'stdout'
 
     def test_raise_exception_on_non_zero_exit_code(self):
         bash_operator = BashOperator(
@@ -107,10 +108,7 @@ class TestBashOperator(unittest.TestCase):
             task_id='test_return_value',
             dag=None
         )
-        with self.assertRaisesRegex(
-            AirflowException,
-            "Bash command failed\\. The command returned a non-zero exit code\\."
-        ):
+        with pytest.raises(AirflowException, match="Bash command failed\\. The command returned a non-zero exit code\\."):
             bash_operator.execute(context={})
 
     def test_task_retries(self):
@@ -121,7 +119,7 @@ class TestBashOperator(unittest.TestCase):
             dag=None
         )
 
-        self.assertEqual(bash_operator.retries, 2)
+        assert bash_operator.retries == 2
 
     def test_default_retries(self):
         bash_operator = BashOperator(
@@ -130,7 +128,7 @@ class TestBashOperator(unittest.TestCase):
             dag=None
         )
 
-        self.assertEqual(bash_operator.retries, 0)
+        assert bash_operator.retries == 0
 
     @mock.patch.dict('os.environ', clear=True)
     @mock.patch("airflow.operators.bash.TemporaryDirectory", **{  # type: ignore

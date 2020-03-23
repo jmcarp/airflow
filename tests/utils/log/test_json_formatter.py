@@ -35,7 +35,7 @@ class TestJSONFormatter(unittest.TestCase):
         JSONFormatter instance  should return not none
         """
         json_fmt = JSONFormatter()
-        self.assertIsNotNone(json_fmt)
+        assert json_fmt is not None
 
     def test_format(self):
         """
@@ -43,7 +43,7 @@ class TestJSONFormatter(unittest.TestCase):
         """
         log_record = makeLogRecord({"label": "value"})
         json_fmt = JSONFormatter(json_fields=["label"])
-        self.assertEqual(json_fmt.format(log_record), '{"label": "value"}')
+        assert json_fmt.format(log_record) == '{"label": "value"}'
 
     def test_format_with_extras(self):
         """
@@ -52,5 +52,5 @@ class TestJSONFormatter(unittest.TestCase):
         log_record = makeLogRecord({"label": "value"})
         json_fmt = JSONFormatter(json_fields=["label"], extras={'pod_extra': 'useful_message'})
         # compare as a dicts to not fail on sorting errors
-        self.assertDictEqual(json.loads(json_fmt.format(log_record)),
-                             {"label": "value", "pod_extra": "useful_message"})
+        assert json.loads(json_fmt.format(log_record)) == \
+                             {"label": "value", "pod_extra": "useful_message"}

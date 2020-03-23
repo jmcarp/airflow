@@ -31,6 +31,7 @@ from moto import mock_s3
 
 from airflow.exceptions import AirflowException
 from airflow.providers.amazon.aws.operators.s3_file_transform import S3FileTransformOperator
+import pytest
 
 
 class TestS3FileTransformOperator(unittest.TestCase):
@@ -106,10 +107,10 @@ class TestS3FileTransformOperator(unittest.TestCase):
             replace=True,
             task_id="task_id")
 
-        with self.assertRaises(AirflowException) as e:
+        with pytest.raises(AirflowException) as e:
             op.execute(None)
 
-        self.assertEqual('Transform script failed: 42', str(e.exception))
+        assert 'Transform script failed: 42' == str(e.exception)
 
     @mock.patch('airflow.providers.amazon.aws.hooks.s3.S3Hook.select_key', return_value="input")
     @mock_s3

@@ -23,6 +23,7 @@ import requests_mock
 
 from airflow.exceptions import AirflowException
 from airflow.providers.http.operators.http import SimpleHttpOperator
+import pytest
 
 
 @mock.patch.dict('os.environ', AIRFLOW_CONN_HTTP_EXAMPLE='http://www.example.com')
@@ -73,7 +74,8 @@ class TestSimpleHttpOp(unittest.TestCase):
         )
 
         with mock.patch.object(operator.log, 'info') as mock_info:
-            self.assertRaises(AirflowException, operator.execute, None)
+            with pytest.raises(AirflowException):
+                operator.execute(None)
             calls = [
                 mock.call('Calling HTTP method'),
                 mock.call('invalid response')

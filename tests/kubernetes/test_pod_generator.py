@@ -27,6 +27,7 @@ from airflow.kubernetes.k8s_model import append_to_pod
 from airflow.kubernetes.pod import Resources
 from airflow.kubernetes.pod_generator import PodDefaults, PodGenerator, extend_object_field, merge_objects
 from airflow.kubernetes.secret import Secret
+import pytest
 
 
 class TestPodGenerator(unittest.TestCase):
@@ -190,7 +191,7 @@ class TestPodGenerator(unittest.TestCase):
         result_dict['spec']['containers'][0]['envFrom'].sort(
             key=lambda x: list(x.values())[0]['name']
         )
-        self.assertDictEqual(self.expected, result_dict)
+        assert self.expected == result_dict
 
     @mock.patch('uuid.uuid4')
     def test_gen_pod_extract_xcom(self, mock_uuid):
@@ -236,7 +237,7 @@ class TestPodGenerator(unittest.TestCase):
             'name': 'xcom', 'emptyDir': {}
         })
         result_dict['spec']['containers'][0]['env'].sort(key=lambda x: x['name'])
-        self.assertEqual(result_dict, self.expected)
+        assert result_dict == self.expected
 
     def test_from_obj(self):
         result = PodGenerator.from_obj({
@@ -258,7 +259,7 @@ class TestPodGenerator(unittest.TestCase):
         })
         result = self.k8s_client.sanitize_for_serialization(result)
 
-        self.assertEqual({
+        assert {
             'apiVersion': 'v1',
             'kind': 'Pod',
             'metadata': {
@@ -284,7 +285,7 @@ class TestPodGenerator(unittest.TestCase):
                     'name': 'example-kubernetes-test-volume'
                 }],
             }
-        }, result)
+        } == result
 
     @mock.patch('uuid.uuid4')
     def test_reconcile_pods_empty_mutator_pod(self, mock_uuid):
@@ -311,11 +312,11 @@ class TestPodGenerator(unittest.TestCase):
         base_pod.metadata.name = name
 
         result = PodGenerator.reconcile_pods(base_pod, mutator_pod)
-        self.assertEqual(base_pod, result)
+        assert base_pod == result
 
         mutator_pod = k8s.V1Pod()
         result = PodGenerator.reconcile_pods(base_pod, mutator_pod)
-        self.assertEqual(base_pod, result)
+        assert base_pod == result
 
     @mock.patch('uuid.uuid4')
     def test_reconcile_pods(self, mock_uuid):
@@ -353,7 +354,7 @@ class TestPodGenerator(unittest.TestCase):
 
         result = PodGenerator.reconcile_pods(base_pod, mutator_pod)
         result = self.k8s_client.sanitize_for_serialization(result)
-        self.assertEqual({
+        assert {
             'apiVersion': 'v1',
             'kind': 'Pod',
             'metadata': {'name': 'name2-' + self.static_uuid.hex},
@@ -390,7 +391,7 @@ class TestPodGenerator(unittest.TestCase):
                     'name': 'example-kubernetes-test-volume2'
                 }]
             }
-        }, result)
+        } == result
 
     @mock.patch('uuid.uuid4')
     def test_construct_pod_empty_worker_config(self, mock_uuid):
@@ -426,7 +427,7 @@ class TestPodGenerator(unittest.TestCase):
         )
         sanitized_result = self.k8s_client.sanitize_for_serialization(result)
 
-        self.assertEqual({
+        assert {
             'apiVersion': 'v1',
             'kind': 'Pod',
             'metadata': self.metadata,
@@ -450,7 +451,7 @@ class TestPodGenerator(unittest.TestCase):
                 'imagePullSecrets': [],
                 'volumes': []
             }
-        }, sanitized_result)
+        } == sanitized_result
 
     @mock.patch('uuid.uuid4')
     def test_construct_pod_empty_execuctor_config(self, mock_uuid):
@@ -486,7 +487,7 @@ class TestPodGenerator(unittest.TestCase):
         )
         sanitized_result = self.k8s_client.sanitize_for_serialization(result)
 
-        self.assertEqual({
+        assert {
             'apiVersion': 'v1',
             'kind': 'Pod',
             'metadata': self.metadata,
@@ -510,7 +511,7 @@ class TestPodGenerator(unittest.TestCase):
                 'imagePullSecrets': [],
                 'volumes': []
             }
-        }, sanitized_result)
+        } == sanitized_result
 
     @mock.patch('uuid.uuid4')
     def test_construct_pod(self, mock_uuid):
@@ -571,7 +572,7 @@ class TestPodGenerator(unittest.TestCase):
 
         self.metadata.update({'annotations': {'should': 'stay'}})
 
-        self.assertEqual({
+        assert {
             'apiVersion': 'v1',
             'kind': 'Pod',
             'metadata': self.metadata,
@@ -596,27 +597,27 @@ class TestPodGenerator(unittest.TestCase):
                 'imagePullSecrets': [],
                 'volumes': []
             }
-        }, sanitized_result)
+        } == sanitized_result
 
     def test_merge_objects_empty(self):
         annotations = {'foo1': 'bar1'}
         base_obj = k8s.V1ObjectMeta(annotations=annotations)
         client_obj = None
         res = merge_objects(base_obj, client_obj)
-        self.assertEqual(base_obj, res)
+        assert base_obj == res
 
         client_obj = k8s.V1ObjectMeta()
         res = merge_objects(base_obj, client_obj)
-        self.assertEqual(base_obj, res)
+        assert base_obj == res
 
         client_obj = k8s.V1ObjectMeta(annotations=annotations)
         base_obj = None
         res = merge_objects(base_obj, client_obj)
-        self.assertEqual(client_obj, res)
+        assert client_obj == res
 
         base_obj = k8s.V1ObjectMeta()
         res = merge_objects(base_obj, client_obj)
-        self.assertEqual(client_obj, res)
+        assert client_obj == res
 
     def test_merge_objects(self):
         base_annotations = {'foo1': 'bar1'}
@@ -629,7 +630,7 @@ class TestPodGenerator(unittest.TestCase):
         client_obj = k8s.V1ObjectMeta(annotations=client_annotations)
         res = merge_objects(base_obj, client_obj)
         client_obj.labels = base_labels
-        self.assertEqual(client_obj, res)
+        assert client_obj == res
 
     def test_extend_object_field_empty(self):
         ports = [k8s.V1ContainerPort(container_port=1, name='port')]
@@ -637,21 +638,21 @@ class TestPodGenerator(unittest.TestCase):
         client_obj = k8s.V1Container(name='client_container')
         res = extend_object_field(base_obj, client_obj, 'ports')
         client_obj.ports = ports
-        self.assertEqual(client_obj, res)
+        assert client_obj == res
 
         base_obj = k8s.V1Container(name='base_container')
         client_obj = k8s.V1Container(name='base_container', ports=ports)
         res = extend_object_field(base_obj, client_obj, 'ports')
-        self.assertEqual(client_obj, res)
+        assert client_obj == res
 
     def test_extend_object_field_not_list(self):
         base_obj = k8s.V1Container(name='base_container', image='image')
         client_obj = k8s.V1Container(name='client_container')
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             extend_object_field(base_obj, client_obj, 'image')
         base_obj = k8s.V1Container(name='base_container')
         client_obj = k8s.V1Container(name='client_container', image='image')
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             extend_object_field(base_obj, client_obj, 'image')
 
     def test_extend_object_field(self):
@@ -661,21 +662,21 @@ class TestPodGenerator(unittest.TestCase):
         client_obj = k8s.V1Container(name='client_container', ports=client_ports)
         res = extend_object_field(base_obj, client_obj, 'ports')
         client_obj.ports = base_ports + client_ports
-        self.assertEqual(client_obj, res)
+        assert client_obj == res
 
     def test_reconcile_containers_empty(self):
         base_objs = [k8s.V1Container(name='base_container')]
         client_objs = []
         res = PodGenerator.reconcile_containers(base_objs, client_objs)
-        self.assertEqual(base_objs, res)
+        assert base_objs == res
 
         client_objs = [k8s.V1Container(name='client_container')]
         base_objs = []
         res = PodGenerator.reconcile_containers(base_objs, client_objs)
-        self.assertEqual(client_objs, res)
+        assert client_objs == res
 
         res = PodGenerator.reconcile_containers([], [])
-        self.assertEqual(res, [])
+        assert res == []
 
     def test_reconcile_containers(self):
         base_ports = [k8s.V1ContainerPort(container_port=1, name='base_port')]
@@ -690,7 +691,7 @@ class TestPodGenerator(unittest.TestCase):
         ]
         res = PodGenerator.reconcile_containers(base_objs, client_objs)
         client_objs[0].ports = base_ports + client_ports
-        self.assertEqual(client_objs, res)
+        assert client_objs == res
 
         base_ports = [k8s.V1ContainerPort(container_port=1, name='base_port')]
         base_objs = [
@@ -705,18 +706,18 @@ class TestPodGenerator(unittest.TestCase):
         res = PodGenerator.reconcile_containers(base_objs, client_objs)
         client_objs[0].ports = base_ports + client_ports
         client_objs[1].image = 'base_image'
-        self.assertEqual(client_objs, res)
+        assert client_objs == res
 
     def test_reconcile_specs_empty(self):
         base_spec = k8s.V1PodSpec(containers=[])
         client_spec = None
         res = PodGenerator.reconcile_specs(base_spec, client_spec)
-        self.assertEqual(base_spec, res)
+        assert base_spec == res
 
         base_spec = None
         client_spec = k8s.V1PodSpec(containers=[])
         res = PodGenerator.reconcile_specs(base_spec, client_spec)
-        self.assertEqual(client_spec, res)
+        assert client_spec == res
 
     def test_reconcile_specs(self):
         base_objs = [k8s.V1Container(name='base_container1', image='base_image')]
@@ -726,13 +727,13 @@ class TestPodGenerator(unittest.TestCase):
         res = PodGenerator.reconcile_specs(base_spec, client_spec)
         client_spec.containers = [k8s.V1Container(name='client_container1', image='base_image')]
         client_spec.active_deadline_seconds = 100
-        self.assertEqual(client_spec, res)
+        assert client_spec == res
 
     def test_deserialize_model_file(self):
         fixture = 'tests/kubernetes/pod.yaml'
         result = PodGenerator.deserialize_model_file(fixture)
         sanitized_res = self.k8s_client.sanitize_for_serialization(result)
-        self.assertEqual(sanitized_res, self.deserialize_result)
+        assert sanitized_res == self.deserialize_result
 
     def test_deserialize_model_string(self):
         fixture = """
@@ -755,14 +756,14 @@ spec:
         """
         result = PodGenerator.deserialize_model_file(fixture)
         sanitized_res = self.k8s_client.sanitize_for_serialization(result)
-        self.assertEqual(sanitized_res, self.deserialize_result)
+        assert sanitized_res == self.deserialize_result
 
     def test_validate_pod_generator(self):
-        with self.assertRaises(AirflowConfigException):
+        with pytest.raises(AirflowConfigException):
             PodGenerator(image='k', pod=k8s.V1Pod())
-        with self.assertRaises(AirflowConfigException):
+        with pytest.raises(AirflowConfigException):
             PodGenerator(pod=k8s.V1Pod(), pod_template_file='k')
-        with self.assertRaises(AirflowConfigException):
+        with pytest.raises(AirflowConfigException):
             PodGenerator(image='k', pod_template_file='k')
 
         PodGenerator(image='k')

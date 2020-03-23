@@ -54,8 +54,8 @@ class TestCloudVideoIntelligenceHook(unittest.TestCase):
             credentials=mock_get_creds.return_value,
             client_info=mock_client_info.return_value
         )
-        self.assertEqual(mock_client.return_value, result)
-        self.assertEqual(self.hook._conn, result)
+        assert mock_client.return_value == result
+        assert self.hook._conn == result
 
     @mock.patch("airflow.providers.google.cloud.hooks.video_intelligence.CloudVideoIntelligenceHook.get_conn")
     def test_annotate_video(self, get_conn):
@@ -67,7 +67,7 @@ class TestCloudVideoIntelligenceHook(unittest.TestCase):
         result = self.hook.annotate_video(input_uri=INPUT_URI, features=FEATURES)
 
         # Then
-        self.assertIs(result, ANNOTATE_VIDEO_RESPONSE)
+        assert result is ANNOTATE_VIDEO_RESPONSE
         annotate_video_method.assert_called_once_with(
             input_uri=INPUT_URI,
             input_content=None,
@@ -90,7 +90,7 @@ class TestCloudVideoIntelligenceHook(unittest.TestCase):
         result = self.hook.annotate_video(input_uri=INPUT_URI, output_uri=OUTPUT_URI, features=FEATURES)
 
         # Then
-        self.assertIs(result, ANNOTATE_VIDEO_RESPONSE)
+        assert result is ANNOTATE_VIDEO_RESPONSE
         annotate_video_method.assert_called_once_with(
             input_uri=INPUT_URI,
             output_uri=OUTPUT_URI,

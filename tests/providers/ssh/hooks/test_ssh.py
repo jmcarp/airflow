@@ -170,9 +170,9 @@ class TestSSHHook(unittest.TestCase):
 
     def test_conn_with_extra_parameters(self):
         ssh_hook = SSHHook(ssh_conn_id=self.CONN_SSH_WITH_EXTRA)
-        self.assertEqual(ssh_hook.compress, True)
-        self.assertEqual(ssh_hook.no_host_key_check, True)
-        self.assertEqual(ssh_hook.allow_host_key_change, False)
+        assert ssh_hook.compress == True
+        assert ssh_hook.no_host_key_check == True
+        assert ssh_hook.allow_host_key_change == False
 
     @mock.patch('airflow.providers.ssh.hooks.ssh.SSHTunnelForwarder')
     def test_tunnel_with_private_key(self, ssh_mock):
@@ -200,13 +200,13 @@ class TestSSHHook(unittest.TestCase):
         with hook.get_conn() as client:
             # Note - Pylint will fail with no-member here due to https://github.com/PyCQA/pylint/issues/1437
             (_, stdout, _) = client.exec_command('ls')  # pylint: disable=no-member
-            self.assertIsNotNone(stdout.read())
+            assert stdout.read() is not None
 
     def test_ssh_connection_old_cm(self):
         with SSHHook(ssh_conn_id='ssh_default') as hook:
             client = hook.get_conn()
             (_, stdout, _) = client.exec_command('ls')
-            self.assertIsNotNone(stdout.read())
+            assert stdout.read() is not None
 
     def test_tunnel(self):
         hook = SSHHook(ssh_conn_id='ssh_default')
@@ -220,14 +220,14 @@ class TestSSHHook(unittest.TestCase):
         )
         with subprocess.Popen(**subprocess_kwargs) as server_handle, hook.create_tunnel(2135, 2134):
             server_output = server_handle.stdout.read(5)
-            self.assertEqual(b"ready", server_output)
+            assert b"ready" == server_output
             socket = socket.socket()
             socket.connect(("localhost", 2135))
             response = socket.recv(5)
-            self.assertEqual(response, b"hello")
+            assert response == b"hello"
             socket.close()
             server_handle.communicate()
-            self.assertEqual(server_handle.returncode, 0)
+            assert server_handle.returncode == 0
 
     @mock.patch('airflow.providers.ssh.hooks.ssh.paramiko.SSHClient')
     def test_ssh_connection_with_private_key_extra(self, ssh_mock):

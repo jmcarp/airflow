@@ -49,7 +49,7 @@ class TestSqlSensor(TestHiveEnvironment):
             dag=self.dag
         )
 
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             op.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE, ignore_ti_state=True)
 
     @pytest.mark.backend("mysql")
@@ -102,25 +102,25 @@ class TestSqlSensor(TestHiveEnvironment):
         mock_get_records = mock_hook.get_connection.return_value.get_hook.return_value.get_records
 
         mock_get_records.return_value = []
-        self.assertFalse(op.poke(None))
+        assert not op.poke(None)
 
         mock_get_records.return_value = [[None]]
-        self.assertFalse(op.poke(None))
+        assert not op.poke(None)
 
         mock_get_records.return_value = [['None']]
-        self.assertTrue(op.poke(None))
+        assert op.poke(None)
 
         mock_get_records.return_value = [[0.0]]
-        self.assertFalse(op.poke(None))
+        assert not op.poke(None)
 
         mock_get_records.return_value = [[0]]
-        self.assertFalse(op.poke(None))
+        assert not op.poke(None)
 
         mock_get_records.return_value = [['0']]
-        self.assertTrue(op.poke(None))
+        assert op.poke(None)
 
         mock_get_records.return_value = [['1']]
-        self.assertTrue(op.poke(None))
+        assert op.poke(None)
 
     @mock.patch('airflow.sensors.sql_sensor.BaseHook')
     def test_sql_sensor_postgres_poke_fail_on_empty(self, mock_hook):
@@ -135,7 +135,8 @@ class TestSqlSensor(TestHiveEnvironment):
         mock_get_records = mock_hook.get_connection.return_value.get_hook.return_value.get_records
 
         mock_get_records.return_value = []
-        self.assertRaises(AirflowException, op.poke, None)
+        with pytest.raises(AirflowException):
+            op.poke(None)
 
     @mock.patch('airflow.sensors.sql_sensor.BaseHook')
     def test_sql_sensor_postgres_poke_success(self, mock_hook):
@@ -150,13 +151,13 @@ class TestSqlSensor(TestHiveEnvironment):
         mock_get_records = mock_hook.get_connection.return_value.get_hook.return_value.get_records
 
         mock_get_records.return_value = []
-        self.assertFalse(op.poke(None))
+        assert not op.poke(None)
 
         mock_get_records.return_value = [[1]]
-        self.assertTrue(op.poke(None))
+        assert op.poke(None)
 
         mock_get_records.return_value = [['1']]
-        self.assertFalse(op.poke(None))
+        assert not op.poke(None)
 
     @mock.patch('airflow.sensors.sql_sensor.BaseHook')
     def test_sql_sensor_postgres_poke_failure(self, mock_hook):
@@ -171,10 +172,11 @@ class TestSqlSensor(TestHiveEnvironment):
         mock_get_records = mock_hook.get_connection.return_value.get_hook.return_value.get_records
 
         mock_get_records.return_value = []
-        self.assertFalse(op.poke(None))
+        assert not op.poke(None)
 
         mock_get_records.return_value = [[1]]
-        self.assertRaises(AirflowException, op.poke, None)
+        with pytest.raises(AirflowException):
+            op.poke(None)
 
     @mock.patch('airflow.sensors.sql_sensor.BaseHook')
     def test_sql_sensor_postgres_poke_failure_success(self, mock_hook):
@@ -190,13 +192,14 @@ class TestSqlSensor(TestHiveEnvironment):
         mock_get_records = mock_hook.get_connection.return_value.get_hook.return_value.get_records
 
         mock_get_records.return_value = []
-        self.assertFalse(op.poke(None))
+        assert not op.poke(None)
 
         mock_get_records.return_value = [[1]]
-        self.assertRaises(AirflowException, op.poke, None)
+        with pytest.raises(AirflowException):
+            op.poke(None)
 
         mock_get_records.return_value = [[2]]
-        self.assertTrue(op.poke(None))
+        assert op.poke(None)
 
     @mock.patch('airflow.sensors.sql_sensor.BaseHook')
     def test_sql_sensor_postgres_poke_failure_success_same(self, mock_hook):
@@ -212,10 +215,11 @@ class TestSqlSensor(TestHiveEnvironment):
         mock_get_records = mock_hook.get_connection.return_value.get_hook.return_value.get_records
 
         mock_get_records.return_value = []
-        self.assertFalse(op.poke(None))
+        assert not op.poke(None)
 
         mock_get_records.return_value = [[1]]
-        self.assertRaises(AirflowException, op.poke, None)
+        with pytest.raises(AirflowException):
+            op.poke(None)
 
     @mock.patch('airflow.sensors.sql_sensor.BaseHook')
     def test_sql_sensor_postgres_poke_invalid_failure(self, mock_hook):
@@ -230,7 +234,8 @@ class TestSqlSensor(TestHiveEnvironment):
         mock_get_records = mock_hook.get_connection.return_value.get_hook.return_value.get_records
 
         mock_get_records.return_value = [[1]]
-        self.assertRaises(AirflowException, op.poke, None)
+        with pytest.raises(AirflowException):
+            op.poke(None)
 
     @mock.patch('airflow.sensors.sql_sensor.BaseHook')
     def test_sql_sensor_postgres_poke_invalid_success(self, mock_hook):
@@ -245,7 +250,8 @@ class TestSqlSensor(TestHiveEnvironment):
         mock_get_records = mock_hook.get_connection.return_value.get_hook.return_value.get_records
 
         mock_get_records.return_value = [[1]]
-        self.assertRaises(AirflowException, op.poke, None)
+        with pytest.raises(AirflowException):
+            op.poke(None)
 
     @unittest.skipIf(
         'AIRFLOW_RUNALL_TESTS' not in os.environ,

@@ -25,6 +25,7 @@ from airflow.exceptions import AirflowException
 from airflow.models import DAG, Connection
 from airflow.providers.qubole.sensors.qubole import QuboleFileSensor, QubolePartitionSensor
 from airflow.utils import db
+import pytest
 
 DAG_ID = "qubole_test_dag"
 TASK_ID = "test_task"
@@ -45,7 +46,7 @@ class TestQuboleSensor(unittest.TestCase):
             task_id='test_qubole_file_sensor',
             data={"files": ["s3://some_bucket/some_file"]}
         )
-        self.assertTrue(sensor.poke({}))
+        assert sensor.poke({})
 
     @patch('airflow.providers.qubole.sensors.qubole.QubolePartitionSensor.poke')
     def test_partition_sensor(self, patched_poke):
@@ -60,7 +61,7 @@ class TestQuboleSensor(unittest.TestCase):
             }
         )
 
-        self.assertTrue(sensor.poke({}))
+        assert sensor.poke({})
 
     @patch('airflow.providers.qubole.sensors.qubole.QubolePartitionSensor.poke')
     def test_partition_sensor_error(self, patched_poke):
@@ -68,7 +69,7 @@ class TestQuboleSensor(unittest.TestCase):
 
         dag = DAG(DAG_ID, start_date=DEFAULT_DATE)
 
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             QubolePartitionSensor(
                 task_id='test_qubole_partition_sensor',
                 poke_interval=1,

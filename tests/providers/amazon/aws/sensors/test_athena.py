@@ -23,6 +23,7 @@ import mock
 from airflow.exceptions import AirflowException
 from airflow.providers.amazon.aws.hooks.athena import AWSAthenaHook
 from airflow.providers.amazon.aws.sensors.athena import AthenaSensor
+import pytest
 
 
 class TestAthenaSensor(unittest.TestCase):
@@ -36,27 +37,27 @@ class TestAthenaSensor(unittest.TestCase):
 
     @mock.patch.object(AWSAthenaHook, 'poll_query_status', side_effect=("SUCCEEDED",))
     def test_poke_success(self, mock_poll_query_status):
-        self.assertTrue(self.sensor.poke(None))
+        assert self.sensor.poke(None)
 
     @mock.patch.object(AWSAthenaHook, 'poll_query_status', side_effect=("RUNNING",))
     def test_poke_running(self, mock_poll_query_status):
-        self.assertFalse(self.sensor.poke(None))
+        assert not self.sensor.poke(None)
 
     @mock.patch.object(AWSAthenaHook, 'poll_query_status', side_effect=("QUEUED",))
     def test_poke_queued(self, mock_poll_query_status):
-        self.assertFalse(self.sensor.poke(None))
+        assert not self.sensor.poke(None)
 
     @mock.patch.object(AWSAthenaHook, 'poll_query_status', side_effect=("FAILED",))
     def test_poke_failed(self, mock_poll_query_status):
-        with self.assertRaises(AirflowException) as context:
+        with pytest.raises(AirflowException) as context:
             self.sensor.poke(None)
-        self.assertIn('Athena sensor failed', str(context.exception))
+        assert 'Athena sensor failed' in str(context.exception)
 
     @mock.patch.object(AWSAthenaHook, 'poll_query_status', side_effect=("CANCELLED",))
     def test_poke_cancelled(self, mock_poll_query_status):
-        with self.assertRaises(AirflowException) as context:
+        with pytest.raises(AirflowException) as context:
             self.sensor.poke(None)
-        self.assertIn('Athena sensor failed', str(context.exception))
+        assert 'Athena sensor failed' in str(context.exception)
 
 
 if __name__ == '__main__':

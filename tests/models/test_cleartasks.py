@@ -28,6 +28,7 @@ from airflow.utils import timezone
 from airflow.utils.session import create_session
 from airflow.utils.state import State
 from tests.models import DEFAULT_DATE
+import pytest
 
 
 class TestClearTasks(unittest.TestCase):
@@ -54,10 +55,10 @@ class TestClearTasks(unittest.TestCase):
         ti0.refresh_from_db()
         ti1.refresh_from_db()
         # Next try to run will be try 2
-        self.assertEqual(ti0.try_number, 2)
-        self.assertEqual(ti0.max_tries, 1)
-        self.assertEqual(ti1.try_number, 2)
-        self.assertEqual(ti1.max_tries, 3)
+        assert ti0.try_number == 2
+        assert ti0.max_tries == 1
+        assert ti1.try_number == 2
+        assert ti1.max_tries == 3
 
     def test_clear_task_instances_without_task(self):
         dag = DAG('test_clear_task_instances_without_task', start_date=DEFAULT_DATE,
@@ -71,8 +72,8 @@ class TestClearTasks(unittest.TestCase):
 
         # Remove the task from dag.
         dag.task_dict = {}
-        self.assertFalse(dag.has_task(task0.task_id))
-        self.assertFalse(dag.has_task(task1.task_id))
+        assert not dag.has_task(task0.task_id)
+        assert not dag.has_task(task1.task_id)
 
         with create_session() as session:
             qry = session.query(TI).filter(
@@ -83,10 +84,10 @@ class TestClearTasks(unittest.TestCase):
         ti0.refresh_from_db()
         ti1.refresh_from_db()
         # Next try to run will be try 2
-        self.assertEqual(ti0.try_number, 2)
-        self.assertEqual(ti0.max_tries, 1)
-        self.assertEqual(ti1.try_number, 2)
-        self.assertEqual(ti1.max_tries, 2)
+        assert ti0.try_number == 2
+        assert ti0.max_tries == 1
+        assert ti1.try_number == 2
+        assert ti1.max_tries == 2
 
     def test_clear_task_instances_without_dag(self):
         dag = DAG('test_clear_task_instances_without_dag', start_date=DEFAULT_DATE,
@@ -107,10 +108,10 @@ class TestClearTasks(unittest.TestCase):
         ti0.refresh_from_db()
         ti1.refresh_from_db()
         # Next try to run will be try 2
-        self.assertEqual(ti0.try_number, 2)
-        self.assertEqual(ti0.max_tries, 1)
-        self.assertEqual(ti1.try_number, 2)
-        self.assertEqual(ti1.max_tries, 2)
+        assert ti0.try_number == 2
+        assert ti0.max_tries == 1
+        assert ti1.try_number == 2
+        assert ti1.max_tries == 2
 
     def test_dag_clear(self):
         dag = DAG('test_dag_clear', start_date=DEFAULT_DATE,
@@ -118,34 +119,34 @@ class TestClearTasks(unittest.TestCase):
         task0 = DummyOperator(task_id='test_dag_clear_task_0', owner='test', dag=dag)
         ti0 = TI(task=task0, execution_date=DEFAULT_DATE)
         # Next try to run will be try 1
-        self.assertEqual(ti0.try_number, 1)
+        assert ti0.try_number == 1
         ti0.run()
-        self.assertEqual(ti0.try_number, 2)
+        assert ti0.try_number == 2
         dag.clear()
         ti0.refresh_from_db()
-        self.assertEqual(ti0.try_number, 2)
-        self.assertEqual(ti0.state, State.NONE)
-        self.assertEqual(ti0.max_tries, 1)
+        assert ti0.try_number == 2
+        assert ti0.state == State.NONE
+        assert ti0.max_tries == 1
 
         task1 = DummyOperator(task_id='test_dag_clear_task_1', owner='test',
                               dag=dag, retries=2)
         ti1 = TI(task=task1, execution_date=DEFAULT_DATE)
-        self.assertEqual(ti1.max_tries, 2)
+        assert ti1.max_tries == 2
         ti1.try_number = 1
         # Next try will be 2
         ti1.run()
-        self.assertEqual(ti1.try_number, 3)
-        self.assertEqual(ti1.max_tries, 2)
+        assert ti1.try_number == 3
+        assert ti1.max_tries == 2
 
         dag.clear()
         ti0.refresh_from_db()
         ti1.refresh_from_db()
         # after clear dag, ti2 should show attempt 3 of 5
-        self.assertEqual(ti1.max_tries, 4)
-        self.assertEqual(ti1.try_number, 3)
+        assert ti1.max_tries == 4
+        assert ti1.try_number == 3
         # after clear dag, ti1 should show attempt 2 of 2
-        self.assertEqual(ti0.try_number, 2)
-        self.assertEqual(ti0.max_tries, 1)
+        assert ti0.try_number == 2
+        assert ti0.max_tries == 1
 
     def test_dags_clear(self):
         # setup
@@ -164,32 +165,32 @@ class TestClearTasks(unittest.TestCase):
         # test clear all dags
         for i in range(num_of_dags):
             tis[i].run()
-            self.assertEqual(tis[i].state, State.SUCCESS)
-            self.assertEqual(tis[i].try_number, 2)
-            self.assertEqual(tis[i].max_tries, 0)
+            assert tis[i].state == State.SUCCESS
+            assert tis[i].try_number == 2
+            assert tis[i].max_tries == 0
 
         DAG.clear_dags(dags)
 
         for i in range(num_of_dags):
             tis[i].refresh_from_db()
-            self.assertEqual(tis[i].state, State.NONE)
-            self.assertEqual(tis[i].try_number, 2)
-            self.assertEqual(tis[i].max_tries, 1)
+            assert tis[i].state == State.NONE
+            assert tis[i].try_number == 2
+            assert tis[i].max_tries == 1
 
         # test dry_run
         for i in range(num_of_dags):
             tis[i].run()
-            self.assertEqual(tis[i].state, State.SUCCESS)
-            self.assertEqual(tis[i].try_number, 3)
-            self.assertEqual(tis[i].max_tries, 1)
+            assert tis[i].state == State.SUCCESS
+            assert tis[i].try_number == 3
+            assert tis[i].max_tries == 1
 
         DAG.clear_dags(dags, dry_run=True)
 
         for i in range(num_of_dags):
             tis[i].refresh_from_db()
-            self.assertEqual(tis[i].state, State.SUCCESS)
-            self.assertEqual(tis[i].try_number, 3)
-            self.assertEqual(tis[i].max_tries, 1)
+            assert tis[i].state == State.SUCCESS
+            assert tis[i].try_number == 3
+            assert tis[i].max_tries == 1
 
         # test only_failed
         from random import randint
@@ -203,13 +204,13 @@ class TestClearTasks(unittest.TestCase):
         for i in range(num_of_dags):
             tis[i].refresh_from_db()
             if i != failed_dag_idx:
-                self.assertEqual(tis[i].state, State.SUCCESS)
-                self.assertEqual(tis[i].try_number, 3)
-                self.assertEqual(tis[i].max_tries, 1)
+                assert tis[i].state == State.SUCCESS
+                assert tis[i].try_number == 3
+                assert tis[i].max_tries == 1
             else:
-                self.assertEqual(tis[i].state, State.NONE)
-                self.assertEqual(tis[i].try_number, 3)
-                self.assertEqual(tis[i].max_tries, 2)
+                assert tis[i].state == State.NONE
+                assert tis[i].try_number == 3
+                assert tis[i].max_tries == 2
 
     def test_operator_clear(self):
         dag = DAG('test_operator_clear', start_date=DEFAULT_DATE,
@@ -223,19 +224,19 @@ class TestClearTasks(unittest.TestCase):
         ti2 = TI(task=op2, execution_date=DEFAULT_DATE)
         ti2.run()
         # Dependency not met
-        self.assertEqual(ti2.try_number, 1)
-        self.assertEqual(ti2.max_tries, 1)
+        assert ti2.try_number == 1
+        assert ti2.max_tries == 1
 
         op2.clear(upstream=True)
         ti1.run()
         ti2.run()
-        self.assertEqual(ti1.try_number, 2)
+        assert ti1.try_number == 2
         # max_tries is 0 because there is no task instance in db for ti1
         # so clear won't change the max_tries.
-        self.assertEqual(ti1.max_tries, 0)
-        self.assertEqual(ti2.try_number, 2)
+        assert ti1.max_tries == 0
+        assert ti2.try_number == 2
         # try_number (0) + retries(1)
-        self.assertEqual(ti2.max_tries, 1)
+        assert ti2.max_tries == 1
 
     def test_xcom_disable_pickle_type(self):
         json_obj = {"key": "value"}
@@ -257,7 +258,7 @@ class TestClearTasks(unittest.TestCase):
                                   task_ids=task_id,
                                   execution_date=execution_date).first().value
 
-        self.assertEqual(ret_value, json_obj)
+        assert ret_value == json_obj
 
         session = settings.Session()
         ret_value = session.query(XCom).filter(XCom.key == key, XCom.dag_id == dag_id,
@@ -265,7 +266,7 @@ class TestClearTasks(unittest.TestCase):
                                                XCom.execution_date == execution_date
                                                ).first().value
 
-        self.assertEqual(ret_value, json_obj)
+        assert ret_value == json_obj
 
     def test_xcom_enable_pickle_type(self):
         json_obj = {"key": "value"}
@@ -287,7 +288,7 @@ class TestClearTasks(unittest.TestCase):
                                   task_ids=task_id,
                                   execution_date=execution_date).first().value
 
-        self.assertEqual(ret_value, json_obj)
+        assert ret_value == json_obj
 
         session = settings.Session()
         ret_value = session.query(XCom).filter(XCom.key == key, XCom.dag_id == dag_id,
@@ -295,7 +296,7 @@ class TestClearTasks(unittest.TestCase):
                                                XCom.execution_date == execution_date
                                                ).first().value
 
-        self.assertEqual(ret_value, json_obj)
+        assert ret_value == json_obj
 
     def test_xcom_disable_pickle_type_fail_on_non_json(self):
         class PickleRce:
@@ -304,8 +305,8 @@ class TestClearTasks(unittest.TestCase):
 
         conf.set("core", "xcom_enable_pickling", "False")
 
-        self.assertRaises(TypeError, XCom.set,
-                          key="xcom_test3",
+        with pytest.raises(TypeError):
+            XCom.set(key="xcom_test3",
                           value=PickleRce(),
                           dag_id="test_dag3",
                           task_id="test_task3",
@@ -337,4 +338,4 @@ class TestClearTasks(unittest.TestCase):
         results = XCom.get_many(key=key, execution_date=execution_date)
 
         for result in results:
-            self.assertEqual(result.value, json_obj)
+            assert result.value == json_obj

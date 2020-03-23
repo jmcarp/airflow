@@ -45,16 +45,16 @@ class TestPagerdutyHook(unittest.TestCase):
         ))
         session.commit()
         hook = PagerdutyHook(pagerduty_conn_id="pagerduty_no_extra")
-        self.assertEqual(hook.token, 'pagerduty_token_without_extra', 'token initialised.')
-        self.assertEqual(hook.routing_key, None, 'default routing key skipped.')
+        assert hook.token == 'pagerduty_token_without_extra', 'token initialised.'
+        assert hook.routing_key == None, 'default routing key skipped.'
 
     def test_get_token_from_password(self):
         hook = PagerdutyHook(pagerduty_conn_id=DEFAULT_CONN_ID)
-        self.assertEqual(hook.token, 'pagerduty_token', 'token initialised.')
+        assert hook.token == 'pagerduty_token', 'token initialised.'
 
     def test_token_parameter_override(self):
         hook = PagerdutyHook(token="pagerduty_param_token", pagerduty_conn_id=DEFAULT_CONN_ID)
-        self.assertEqual(hook.token, 'pagerduty_param_token', 'token initialised.')
+        assert hook.token == 'pagerduty_param_token', 'token initialised.'
 
     @mock.patch('airflow.providers.pagerduty.hooks.pagerduty.pypd.EventV2.create')
     def test_create_event(self, mock_event_create):
@@ -70,7 +70,7 @@ class TestPagerdutyHook(unittest.TestCase):
             source="airflow_test",
             severity="error",
         )
-        self.assertEqual(resp["status"], "success")
+        assert resp["status"] == "success"
         mock_event_create.assert_called_once_with(
             api_key="pagerduty_token",
             data={
@@ -97,7 +97,7 @@ class TestPagerdutyHook(unittest.TestCase):
             severity="error",
             custom_details='{"foo": "bar"}',
         )
-        self.assertEqual(resp["status"], "success")
+        assert resp["status"] == "success"
         mock_event_create.assert_called_once_with(
             api_key="pagerduty_token",
             data={

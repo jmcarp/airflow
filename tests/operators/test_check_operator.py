@@ -24,6 +24,7 @@ import mock
 from airflow.exceptions import AirflowException
 from airflow.models import DAG
 from airflow.operators.check_operator import CheckOperator, IntervalCheckOperator, ValueCheckOperator
+import pytest
 
 
 class TestCheckOperator(unittest.TestCase):
@@ -32,14 +33,14 @@ class TestCheckOperator(unittest.TestCase):
     def test_execute_no_records(self, mock_get_db_hook):
         mock_get_db_hook.return_value.get_first.return_value = []
 
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             CheckOperator(sql='sql').execute()
 
     @mock.patch.object(CheckOperator, 'get_db_hook')
     def test_execute_not_all_records_are_true(self, mock_get_db_hook):
         mock_get_db_hook.return_value.get_first.return_value = ["data", ""]
 
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             CheckOperator(sql='sql').execute()
 
 
@@ -66,8 +67,8 @@ class TestValueCheckOperator(unittest.TestCase):
 
         operator.render_template_fields({'ds': pass_value_str})
 
-        self.assertEqual(operator.task_id, self.task_id)
-        self.assertEqual(operator.pass_value, pass_value_str)
+        assert operator.task_id == self.task_id
+        assert operator.pass_value == pass_value_str
 
     def test_pass_value_template_string_float(self):
         pass_value_float = 4.0
@@ -75,8 +76,8 @@ class TestValueCheckOperator(unittest.TestCase):
 
         operator.render_template_fields({})
 
-        self.assertEqual(operator.task_id, self.task_id)
-        self.assertEqual(operator.pass_value, str(pass_value_float))
+        assert operator.task_id == self.task_id
+        assert operator.pass_value == str(pass_value_float)
 
     @mock.patch.object(ValueCheckOperator, 'get_db_hook')
     def test_execute_pass(self, mock_get_db_hook):
@@ -98,7 +99,7 @@ class TestValueCheckOperator(unittest.TestCase):
 
         operator = self._construct_operator('select value from tab1 limit 1;', 5, 1)
 
-        with self.assertRaisesRegex(AirflowException, 'Tolerance:100.0%'):
+        with pytest.raises(AirflowException, match='Tolerance:100.0%'):
             operator.execute()
 
 
@@ -115,7 +116,7 @@ class TestIntervalCheckOperator(unittest.TestCase):
         )
 
     def test_invalid_ratio_formula(self):
-        with self.assertRaisesRegex(AirflowException, 'Invalid diff_method'):
+        with pytest.raises(AirflowException, match='Invalid diff_method'):
             self._construct_operator(
                 table='test_table',
                 metric_thresholds={
@@ -140,7 +141,7 @@ class TestIntervalCheckOperator(unittest.TestCase):
             ignore_zero=False,
         )
 
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             operator.execute()
 
     @mock.patch.object(IntervalCheckOperator, 'get_db_hook')
@@ -187,7 +188,7 @@ class TestIntervalCheckOperator(unittest.TestCase):
             ignore_zero=True,
         )
 
-        with self.assertRaisesRegex(AirflowException, "f0, f1, f2"):
+        with pytest.raises(AirflowException, match="f0, f1, f2"):
             operator.execute()
 
     @mock.patch.object(IntervalCheckOperator, 'get_db_hook')
@@ -217,5 +218,5 @@ class TestIntervalCheckOperator(unittest.TestCase):
             ignore_zero=True,
         )
 
-        with self.assertRaisesRegex(AirflowException, "f0, f1"):
+        with pytest.raises(AirflowException, match="f0, f1"):
             operator.execute()

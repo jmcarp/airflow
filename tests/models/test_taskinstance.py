@@ -101,12 +101,11 @@ class TestTaskInstance(unittest.TestCase):
 
         op1 = DummyOperator(task_id='op_1', owner='test')
 
-        self.assertTrue(op1.start_date is None and op1.end_date is None)
+        assert op1.start_date is None and op1.end_date is None
 
         # dag should assign its dates to op1 because op1 has no dates
         dag.add_task(op1)
-        self.assertTrue(
-            op1.start_date == dag.start_date and op1.end_date == dag.end_date)
+        assert op1.start_date == dag.start_date and op1.end_date == dag.end_date
 
         op2 = DummyOperator(
             task_id='op_2',
@@ -116,8 +115,7 @@ class TestTaskInstance(unittest.TestCase):
 
         # dag should assign its dates to op2 because they are more restrictive
         dag.add_task(op2)
-        self.assertTrue(
-            op2.start_date == dag.start_date and op2.end_date == dag.end_date)
+        assert op2.start_date == dag.start_date and op2.end_date == dag.end_date
 
         op3 = DummyOperator(
             task_id='op_3',
@@ -126,10 +124,8 @@ class TestTaskInstance(unittest.TestCase):
             end_date=DEFAULT_DATE + datetime.timedelta(days=9))
         # op3 should keep its dates because they are more restrictive
         dag.add_task(op3)
-        self.assertTrue(
-            op3.start_date == DEFAULT_DATE + datetime.timedelta(days=1))
-        self.assertTrue(
-            op3.end_date == DEFAULT_DATE + datetime.timedelta(days=9))
+        assert op3.start_date == DEFAULT_DATE + datetime.timedelta(days=1)
+        assert op3.end_date == DEFAULT_DATE + datetime.timedelta(days=9)
 
     def test_timezone_awareness(self):
         naive_datetime = DEFAULT_DATE.replace(tzinfo=None)
@@ -138,7 +134,7 @@ class TestTaskInstance(unittest.TestCase):
         op_no_dag = DummyOperator(task_id='op_no_dag')
         ti = TI(task=op_no_dag, execution_date=naive_datetime)
 
-        self.assertEqual(ti.execution_date, DEFAULT_DATE)
+        assert ti.execution_date == DEFAULT_DATE
 
         # check with dag without localized execution_date
         dag = DAG('dag', start_date=DEFAULT_DATE)
@@ -146,14 +142,14 @@ class TestTaskInstance(unittest.TestCase):
         dag.add_task(op1)
         ti = TI(task=op1, execution_date=naive_datetime)
 
-        self.assertEqual(ti.execution_date, DEFAULT_DATE)
+        assert ti.execution_date == DEFAULT_DATE
 
         # with dag and localized execution_date
         tzinfo = pendulum.timezone("Europe/Amsterdam")
         execution_date = timezone.datetime(2016, 1, 1, 1, 0, 0, tzinfo=tzinfo)
         utc_date = timezone.convert_to_utc(execution_date)
         ti = TI(task=op1, execution_date=execution_date)
-        self.assertEqual(ti.execution_date, utc_date)
+        assert ti.execution_date == utc_date
 
     def test_task_naive_datetime(self):
         naive_datetime = DEFAULT_DATE.replace(tzinfo=None)
@@ -162,8 +158,8 @@ class TestTaskInstance(unittest.TestCase):
                                   start_date=naive_datetime,
                                   end_date=naive_datetime)
 
-        self.assertTrue(op_no_dag.start_date.tzinfo)
-        self.assertTrue(op_no_dag.end_date.tzinfo)
+        assert op_no_dag.start_date.tzinfo
+        assert op_no_dag.end_date.tzinfo
 
     def test_set_dag(self):
         """
@@ -174,24 +170,25 @@ class TestTaskInstance(unittest.TestCase):
         op = DummyOperator(task_id='op_1', owner='test')
 
         # no dag assigned
-        self.assertFalse(op.has_dag())
-        self.assertRaises(AirflowException, getattr, op, 'dag')
+        assert not op.has_dag()
+        with pytest.raises(AirflowException):
+            getattr(op, 'dag')
 
         # no improper assignment
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             op.dag = 1
 
         op.dag = dag
 
         # no reassignment
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             op.dag = dag2
 
         # but assigning the same dag is ok
         op.dag = dag
 
-        self.assertIs(op.dag, dag)
-        self.assertIn(op, dag.tasks)
+        assert op.dag is dag
+        assert op in dag.tasks
 
     def test_infer_dag(self):
         dag = DAG('dag', start_date=DEFAULT_DATE)
@@ -203,21 +200,23 @@ class TestTaskInstance(unittest.TestCase):
         op4 = DummyOperator(task_id='test_op_4', owner='test', dag=dag2)
 
         # double check dags
-        self.assertEqual(
-            [i.has_dag() for i in [op1, op2, op3, op4]],
-            [False, False, True, True])
+        assert [i.has_dag() for i in [op1, op2, op3, op4]] == \
+            [False, False, True, True]
 
         # can't combine operators with no dags
-        self.assertRaises(AirflowException, op1.set_downstream, op2)
+        with pytest.raises(AirflowException):
+            op1.set_downstream(op2)
 
         # op2 should infer dag from op1
         op1.dag = dag
         op1.set_downstream(op2)
-        self.assertIs(op2.dag, dag)
+        assert op2.dag is dag
 
         # can't assign across multiple DAGs
-        self.assertRaises(AirflowException, op1.set_downstream, op4)
-        self.assertRaises(AirflowException, op1.set_downstream, [op3, op4])
+        with pytest.raises(AirflowException):
+            op1.set_downstream(op4)
+        with pytest.raises(AirflowException):
+            op1.set_downstream([op3, op4])
 
     def test_bitshift_compose_operators(self):
         dag = DAG('dag', start_date=DEFAULT_DATE)
@@ -229,8 +228,8 @@ class TestTaskInstance(unittest.TestCase):
             op1 >> op2 << op3
 
         # op2 should be downstream of both
-        self.assertIn(op2, op1.downstream_list)
-        self.assertIn(op2, op3.downstream_list)
+        assert op2 in op1.downstream_list
+        assert op2 in op3.downstream_list
 
     @patch.object(DAG, 'concurrency_reached')
     def test_requeue_over_dag_concurrency(self, mock_concurrency_reached):
@@ -246,7 +245,7 @@ class TestTaskInstance(unittest.TestCase):
             session.add(ti)
             session.commit()
         ti.run()
-        self.assertEqual(ti.state, State.NONE)
+        assert ti.state == State.NONE
 
     def test_requeue_over_task_concurrency(self):
         dag = DAG(dag_id='test_requeue_over_task_concurrency', start_date=DEFAULT_DATE,
@@ -260,7 +259,7 @@ class TestTaskInstance(unittest.TestCase):
             session.add(ti)
             session.commit()
         ti.run()
-        self.assertEqual(ti.state, State.NONE)
+        assert ti.state == State.NONE
 
     def test_requeue_over_pool_concurrency(self):
         dag = DAG(dag_id='test_requeue_over_pool_concurrency', start_date=DEFAULT_DATE,
@@ -276,7 +275,7 @@ class TestTaskInstance(unittest.TestCase):
             session.add(ti)
             session.commit()
         ti.run()
-        self.assertEqual(ti.state, State.NONE)
+        assert ti.state == State.NONE
 
     def test_not_requeue_non_requeueable_task_instance(self):
         dag = models.DAG(dag_id='test_not_requeue_non_requeueable_task_instance')
@@ -310,7 +309,7 @@ class TestTaskInstance(unittest.TestCase):
             method_patch.return_value = iter(
                 [TIDepStatus('mock_' + class_name, False, 'mock')])
             ti.run()
-            self.assertEqual(ti.state, State.QUEUED)
+            assert ti.state == State.QUEUED
             dep_patch.return_value = TIDepStatus('mock_' + class_name, True, 'mock')
 
         for (dep_patch, method_patch) in patch_dict.values():
@@ -337,7 +336,7 @@ class TestTaskInstance(unittest.TestCase):
             session.add(ti)
             session.commit()
         ti.run(mark_success=True)
-        self.assertEqual(ti.state, State.SUCCESS)
+        assert ti.state == State.SUCCESS
 
     def test_run_pooling_task(self):
         """
@@ -352,7 +351,7 @@ class TestTaskInstance(unittest.TestCase):
         ti.run()
 
         db.clear_db_pools()
-        self.assertEqual(ti.state, State.SUCCESS)
+        assert ti.state == State.SUCCESS
 
     def test_pool_slots_property(self):
         """
@@ -365,7 +364,8 @@ class TestTaskInstance(unittest.TestCase):
                                  start_date=timezone.datetime(2016, 2, 1, 0, 0, 0))
             return TI(task=task, execution_date=timezone.utcnow())
 
-        self.assertRaises(AirflowException, create_task_instance)
+        with pytest.raises(AirflowException):
+            create_task_instance()
 
     @provide_session
     def test_ti_updates_with_task(self, session=None):
@@ -381,7 +381,7 @@ class TestTaskInstance(unittest.TestCase):
 
         ti.run(session=session)
         tis = dag.get_task_instances()
-        self.assertEqual({'foo': 'bar'}, tis[0].executor_config)
+        assert {'foo': 'bar'} == tis[0].executor_config
 
         task2 = DummyOperator(task_id='test_run_pooling_task_op', dag=dag, owner='airflow',
                               executor_config={'bar': 'baz'},
@@ -391,7 +391,7 @@ class TestTaskInstance(unittest.TestCase):
             task=task2, execution_date=timezone.utcnow())
         ti.run(session=session)
         tis = dag.get_task_instances()
-        self.assertEqual({'bar': 'baz'}, tis[1].executor_config)
+        assert {'bar': 'baz'} == tis[1].executor_config
 
     def test_run_pooling_task_with_mark_success(self):
         """
@@ -409,7 +409,7 @@ class TestTaskInstance(unittest.TestCase):
         ti = TI(
             task=task, execution_date=timezone.utcnow())
         ti.run(mark_success=True)
-        self.assertEqual(ti.state, State.SUCCESS)
+        assert ti.state == State.SUCCESS
 
     def test_run_pooling_task_with_skip(self):
         """
@@ -430,7 +430,7 @@ class TestTaskInstance(unittest.TestCase):
         ti = TI(
             task=task, execution_date=timezone.utcnow())
         ti.run()
-        self.assertEqual(State.SKIPPED, ti.state)
+        assert State.SKIPPED == ti.state
 
     def test_retry_delay(self):
         """
@@ -455,20 +455,20 @@ class TestTaskInstance(unittest.TestCase):
         ti = TI(
             task=task, execution_date=timezone.utcnow())
 
-        self.assertEqual(ti.try_number, 1)
+        assert ti.try_number == 1
         # first run -- up for retry
         run_with_error(ti)
-        self.assertEqual(ti.state, State.UP_FOR_RETRY)
-        self.assertEqual(ti.try_number, 2)
+        assert ti.state == State.UP_FOR_RETRY
+        assert ti.try_number == 2
 
         # second run -- still up for retry because retry_delay hasn't expired
         run_with_error(ti)
-        self.assertEqual(ti.state, State.UP_FOR_RETRY)
+        assert ti.state == State.UP_FOR_RETRY
 
         # third run -- failed
         time.sleep(3)
         run_with_error(ti)
-        self.assertEqual(ti.state, State.FAILED)
+        assert ti.state == State.FAILED
 
     def test_retry_handling(self):
         """
@@ -492,19 +492,19 @@ class TestTaskInstance(unittest.TestCase):
 
         ti = TI(
             task=task, execution_date=timezone.utcnow())
-        self.assertEqual(ti.try_number, 1)
+        assert ti.try_number == 1
 
         # first run -- up for retry
         run_with_error(ti)
-        self.assertEqual(ti.state, State.UP_FOR_RETRY)
-        self.assertEqual(ti._try_number, 1)
-        self.assertEqual(ti.try_number, 2)
+        assert ti.state == State.UP_FOR_RETRY
+        assert ti._try_number == 1
+        assert ti.try_number == 2
 
         # second run -- fail
         run_with_error(ti)
-        self.assertEqual(ti.state, State.FAILED)
-        self.assertEqual(ti._try_number, 2)
-        self.assertEqual(ti.try_number, 3)
+        assert ti.state == State.FAILED
+        assert ti._try_number == 2
+        assert ti.try_number == 3
 
         # Clear the TI state since you can't run a task with a FAILED state without
         # clearing it first
@@ -512,16 +512,16 @@ class TestTaskInstance(unittest.TestCase):
 
         # third run -- up for retry
         run_with_error(ti)
-        self.assertEqual(ti.state, State.UP_FOR_RETRY)
-        self.assertEqual(ti._try_number, 3)
-        self.assertEqual(ti.try_number, 4)
+        assert ti.state == State.UP_FOR_RETRY
+        assert ti._try_number == 3
+        assert ti.try_number == 4
 
         # fourth run -- fail
         run_with_error(ti)
         ti.refresh_from_db()
-        self.assertEqual(ti.state, State.FAILED)
-        self.assertEqual(ti._try_number, 4)
-        self.assertEqual(ti.try_number, 5)
+        assert ti.state == State.FAILED
+        assert ti._try_number == 4
+        assert ti.try_number == 5
 
     def test_next_retry_datetime(self):
         delay = datetime.timedelta(seconds=30)
@@ -545,27 +545,27 @@ class TestTaskInstance(unittest.TestCase):
         date = ti.next_retry_datetime()
         # between 30 * 2^0.5 and 30 * 2^1 (15 and 30)
         period = ti.end_date.add(seconds=30) - ti.end_date.add(seconds=15)
-        self.assertTrue(date in period)
+        assert date in period
 
         ti.try_number = 3
         date = ti.next_retry_datetime()
         # between 30 * 2^2 and 30 * 2^3 (120 and 240)
         period = ti.end_date.add(seconds=240) - ti.end_date.add(seconds=120)
-        self.assertTrue(date in period)
+        assert date in period
 
         ti.try_number = 5
         date = ti.next_retry_datetime()
         # between 30 * 2^4 and 30 * 2^5 (480 and 960)
         period = ti.end_date.add(seconds=960) - ti.end_date.add(seconds=480)
-        self.assertTrue(date in period)
+        assert date in period
 
         ti.try_number = 9
         date = ti.next_retry_datetime()
-        self.assertEqual(date, ti.end_date + max_delay)
+        assert date == ti.end_date + max_delay
 
         ti.try_number = 50
         date = ti.next_retry_datetime()
-        self.assertEqual(date, ti.end_date + max_delay)
+        assert date == ti.end_date + max_delay
 
     def test_next_retry_datetime_short_intervals(self):
         delay = datetime.timedelta(seconds=1)
@@ -589,7 +589,7 @@ class TestTaskInstance(unittest.TestCase):
         date = ti.next_retry_datetime()
         # between 1 * 2^0.5 and 1 * 2^1 (15 and 30)
         period = ti.end_date.add(seconds=1) - ti.end_date.add(seconds=15)
-        self.assertTrue(date in period)
+        assert date in period
 
     def test_reschedule_handling(self):
         """
@@ -618,8 +618,8 @@ class TestTaskInstance(unittest.TestCase):
             start_date=timezone.datetime(2016, 2, 1, 0, 0, 0))
 
         ti = TI(task=task, execution_date=timezone.utcnow())
-        self.assertEqual(ti._try_number, 0)
-        self.assertEqual(ti.try_number, 1)
+        assert ti._try_number == 0
+        assert ti.try_number == 1
 
         def run_ti_and_assert(run_date, expected_start_date, expected_end_date,
                               expected_duration,
@@ -632,14 +632,14 @@ class TestTaskInstance(unittest.TestCase):
                     if not fail:
                         raise
             ti.refresh_from_db()
-            self.assertEqual(ti.state, expected_state)
-            self.assertEqual(ti._try_number, expected_try_number)
-            self.assertEqual(ti.try_number, expected_try_number + 1)
-            self.assertEqual(ti.start_date, expected_start_date)
-            self.assertEqual(ti.end_date, expected_end_date)
-            self.assertEqual(ti.duration, expected_duration)
+            assert ti.state == expected_state
+            assert ti._try_number == expected_try_number
+            assert ti.try_number == expected_try_number + 1
+            assert ti.start_date == expected_start_date
+            assert ti.end_date == expected_end_date
+            assert ti.duration == expected_duration
             trs = TaskReschedule.find_for_task_instance(ti)  # pylint: disable=no-value-for-parameter
-            self.assertEqual(len(trs), expected_task_reschedule_count)
+            assert len(trs) == expected_task_reschedule_count
 
         date1 = timezone.utcnow()
         date2 = date1 + datetime.timedelta(minutes=1)
@@ -667,8 +667,8 @@ class TestTaskInstance(unittest.TestCase):
         # Clear the task instance.
         dag.clear()
         ti.refresh_from_db()
-        self.assertEqual(ti.state, State.NONE)
-        self.assertEqual(ti._try_number, 1)
+        assert ti.state == State.NONE
+        assert ti._try_number == 1
 
         # Run again after clearing with reschedules and a retry.
         # The retry increments the try number, and for that try no reschedule is expected.
@@ -713,8 +713,8 @@ class TestTaskInstance(unittest.TestCase):
             start_date=timezone.datetime(2016, 2, 1, 0, 0, 0))
 
         ti = TI(task=task, execution_date=timezone.utcnow())
-        self.assertEqual(ti._try_number, 0)
-        self.assertEqual(ti.try_number, 1)
+        assert ti._try_number == 0
+        assert ti.try_number == 1
 
         def run_ti_and_assert(run_date, expected_start_date, expected_end_date,
                               expected_duration,
@@ -727,14 +727,14 @@ class TestTaskInstance(unittest.TestCase):
                     if not fail:
                         raise
             ti.refresh_from_db()
-            self.assertEqual(ti.state, expected_state)
-            self.assertEqual(ti._try_number, expected_try_number)
-            self.assertEqual(ti.try_number, expected_try_number + 1)
-            self.assertEqual(ti.start_date, expected_start_date)
-            self.assertEqual(ti.end_date, expected_end_date)
-            self.assertEqual(ti.duration, expected_duration)
+            assert ti.state == expected_state
+            assert ti._try_number == expected_try_number
+            assert ti.try_number == expected_try_number + 1
+            assert ti.start_date == expected_start_date
+            assert ti.end_date == expected_end_date
+            assert ti.duration == expected_duration
             trs = TaskReschedule.find_for_task_instance(ti)  # pylint: disable=no-value-for-parameter
-            self.assertEqual(len(trs), expected_task_reschedule_count)
+            assert len(trs) == expected_task_reschedule_count
 
         date1 = timezone.utcnow()
 
@@ -744,11 +744,11 @@ class TestTaskInstance(unittest.TestCase):
         # Clear the task instance.
         dag.clear()
         ti.refresh_from_db()
-        self.assertEqual(ti.state, State.NONE)
-        self.assertEqual(ti._try_number, 0)
+        assert ti.state == State.NONE
+        assert ti._try_number == 0
         # Check that reschedules for ti have also been cleared.
         trs = TaskReschedule.find_for_task_instance(ti)  # pylint: disable=no-value-for-parameter
-        self.assertFalse(trs)
+        assert not trs
 
     def test_depends_on_past(self):
         dag = DAG(
@@ -770,7 +770,7 @@ class TestTaskInstance(unittest.TestCase):
         # depends_on_past prevents the run
         task.run(start_date=run_date, end_date=run_date, ignore_first_depends_on_past=False)
         ti.refresh_from_db()
-        self.assertIs(ti.state, None)
+        assert ti.state is None
 
         # ignore first depends_on_past to allow the run
         task.run(
@@ -778,7 +778,7 @@ class TestTaskInstance(unittest.TestCase):
             end_date=run_date,
             ignore_first_depends_on_past=True)
         ti.refresh_from_db()
-        self.assertEqual(ti.state, State.SUCCESS)
+        assert ti.state == State.SUCCESS
 
     # Parameterized tests to check for the correct firing
     # of the trigger_rule under various circumstances
@@ -851,8 +851,8 @@ class TestTaskInstance(unittest.TestCase):
         )
         completed = all([dep.passed for dep in dep_results])
 
-        self.assertEqual(completed, expect_completed)
-        self.assertEqual(ti.state, expect_state)
+        assert completed == expect_completed
+        assert ti.state == expect_state
 
     def test_xcom_pull(self):
         """
@@ -876,20 +876,20 @@ class TestTaskInstance(unittest.TestCase):
 
         # Pull with no arguments
         result = ti1.xcom_pull()
-        self.assertEqual(result, None)
+        assert result == None
         # Pull the value pushed most recently by any task.
         result = ti1.xcom_pull(key='foo')
-        self.assertIn(result, 'baz')
+        assert result in 'baz'
         # Pull the value pushed by the first task
         result = ti1.xcom_pull(task_ids='test_xcom_1', key='foo')
-        self.assertEqual(result, 'bar')
+        assert result == 'bar'
         # Pull the value pushed by the second task
         result = ti1.xcom_pull(task_ids='test_xcom_2', key='foo')
-        self.assertEqual(result, 'baz')
+        assert result == 'baz'
         # Pull the values pushed by both tasks
         result = ti1.xcom_pull(
             task_ids=['test_xcom_1', 'test_xcom_2'], key='foo')
-        self.assertEqual(result, ['baz', 'bar'])
+        assert result == ['baz', 'bar']
 
     def test_xcom_pull_after_success(self):
         """
@@ -910,19 +910,19 @@ class TestTaskInstance(unittest.TestCase):
             task=task, execution_date=exec_date)
         ti.run(mark_success=True)
         ti.xcom_push(key=key, value=value)
-        self.assertEqual(ti.xcom_pull(task_ids='test_xcom', key=key), value)
+        assert ti.xcom_pull(task_ids='test_xcom', key=key) == value
         ti.run()
         # The second run and assert is to handle AIRFLOW-131 (don't clear on
         # prior success)
-        self.assertEqual(ti.xcom_pull(task_ids='test_xcom', key=key), value)
+        assert ti.xcom_pull(task_ids='test_xcom', key=key) == value
 
         # Test AIRFLOW-703: Xcom shouldn't be cleared if the task doesn't
         # execute, even if dependencies are ignored
         ti.run(ignore_all_deps=True, mark_success=True)
-        self.assertEqual(ti.xcom_pull(task_ids='test_xcom', key=key), value)
+        assert ti.xcom_pull(task_ids='test_xcom', key=key) == value
         # Xcom IS finally cleared once task has executed
         ti.run(ignore_all_deps=True)
-        self.assertEqual(ti.xcom_pull(task_ids='test_xcom', key=key), None)
+        assert ti.xcom_pull(task_ids='test_xcom', key=key) == None
 
     def test_xcom_pull_different_execution_date(self):
         """
@@ -944,7 +944,7 @@ class TestTaskInstance(unittest.TestCase):
             task=task, execution_date=exec_date)
         ti.run(mark_success=True)
         ti.xcom_push(key=key, value=value)
-        self.assertEqual(ti.xcom_pull(task_ids='test_xcom', key=key), value)
+        assert ti.xcom_pull(task_ids='test_xcom', key=key) == value
         ti.run()
         exec_date += datetime.timedelta(days=1)
         ti = TI(
@@ -953,12 +953,12 @@ class TestTaskInstance(unittest.TestCase):
         # We have set a new execution date (and did not pass in
         # 'include_prior_dates'which means this task should now have a cleared
         # xcom value
-        self.assertEqual(ti.xcom_pull(task_ids='test_xcom', key=key), None)
+        assert ti.xcom_pull(task_ids='test_xcom', key=key) == None
         # We *should* get a value using 'include_prior_dates'
-        self.assertEqual(ti.xcom_pull(task_ids='test_xcom',
+        assert ti.xcom_pull(task_ids='test_xcom',
                                       key=key,
-                                      include_prior_dates=True),
-                         value)
+                                      include_prior_dates=True) == \
+                         value
 
     def test_xcom_push_flag(self):
         """
@@ -979,12 +979,10 @@ class TestTaskInstance(unittest.TestCase):
         )
         ti = TI(task=task, execution_date=datetime.datetime(2017, 1, 1))
         ti.run()
-        self.assertEqual(
-            ti.xcom_pull(
+        assert ti.xcom_pull(
                 task_ids=task_id, key=models.XCOM_RETURN_KEY
-            ),
+            ) == \
             None
-        )
 
     def test_post_execute_hook(self):
         """
@@ -1009,7 +1007,7 @@ class TestTaskInstance(unittest.TestCase):
             start_date=timezone.datetime(2017, 2, 1))
         ti = TI(task=task, execution_date=timezone.utcnow())
 
-        with self.assertRaises(TestError):
+        with pytest.raises(TestError):
             ti.run()
 
     def test_check_and_change_state_before_execution(self):
@@ -1017,11 +1015,11 @@ class TestTaskInstance(unittest.TestCase):
         task = DummyOperator(task_id='task', dag=dag, start_date=DEFAULT_DATE)
         ti = TI(
             task=task, execution_date=timezone.utcnow())
-        self.assertEqual(ti._try_number, 0)
-        self.assertTrue(ti.check_and_change_state_before_execution())
+        assert ti._try_number == 0
+        assert ti.check_and_change_state_before_execution()
         # State should be running, and try_number column should be incremented
-        self.assertEqual(ti.state, State.RUNNING)
-        self.assertEqual(ti._try_number, 1)
+        assert ti.state == State.RUNNING
+        assert ti._try_number == 1
 
     def test_check_and_change_state_before_execution_dep_not_met(self):
         dag = models.DAG(dag_id='test_check_and_change_state_before_execution')
@@ -1030,7 +1028,7 @@ class TestTaskInstance(unittest.TestCase):
         task >> task2
         ti = TI(
             task=task2, execution_date=timezone.utcnow())
-        self.assertFalse(ti.check_and_change_state_before_execution())
+        assert not ti.check_and_change_state_before_execution()
 
     def test_try_number(self):
         """
@@ -1039,12 +1037,12 @@ class TestTaskInstance(unittest.TestCase):
         dag = models.DAG(dag_id='test_check_and_change_state_before_execution')
         task = DummyOperator(task_id='task', dag=dag, start_date=DEFAULT_DATE)
         ti = TI(task=task, execution_date=timezone.utcnow())
-        self.assertEqual(1, ti.try_number)
+        assert 1 == ti.try_number
         ti.try_number = 2
         ti.state = State.RUNNING
-        self.assertEqual(2, ti.try_number)
+        assert 2 == ti.try_number
         ti.state = State.SUCCESS
-        self.assertEqual(3, ti.try_number)
+        assert 3 == ti.try_number
 
     def test_get_num_running_task_instances(self):
         session = settings.Session()
@@ -1065,9 +1063,9 @@ class TestTaskInstance(unittest.TestCase):
         session.add(ti3)
         session.commit()
 
-        self.assertEqual(1, ti1.get_num_running_task_instances(session=session))
-        self.assertEqual(1, ti2.get_num_running_task_instances(session=session))
-        self.assertEqual(1, ti3.get_num_running_task_instances(session=session))
+        assert 1 == ti1.get_num_running_task_instances(session=session)
+        assert 1 == ti2.get_num_running_task_instances(session=session)
+        assert 1 == ti3.get_num_running_task_instances(session=session)
 
     # def test_log_url(self):
     #     now = pendulum.now('Europe/Brussels')
@@ -1092,7 +1090,7 @@ class TestTaskInstance(unittest.TestCase):
             '&task_id=op'
             '&dag_id=dag'
         )
-        self.assertEqual(ti.log_url, expected_url)
+        assert ti.log_url == expected_url
 
     def test_mark_success_url(self):
         now = pendulum.now('Europe/Brussels')
@@ -1102,9 +1100,9 @@ class TestTaskInstance(unittest.TestCase):
         query = urllib.parse.parse_qs(
             urllib.parse.urlparse(ti.mark_success_url).query,
             keep_blank_values=True, strict_parsing=True)
-        self.assertEqual(query['dag_id'][0], 'dag')
-        self.assertEqual(query['task_id'][0], 'op')
-        self.assertEqual(pendulum.parse(query['execution_date'][0]), now)
+        assert query['dag_id'][0] == 'dag'
+        assert query['task_id'][0] == 'op'
+        assert pendulum.parse(query['execution_date'][0]) == now
 
     def test_overwrite_params_with_dag_run_conf(self):
         task = DummyOperator(task_id='op')
@@ -1115,7 +1113,7 @@ class TestTaskInstance(unittest.TestCase):
 
         ti.overwrite_params_with_dag_run_conf(params, dag_run)
 
-        self.assertEqual(True, params["override"])
+        assert True == params["override"]
 
     def test_overwrite_params_with_dag_run_none(self):
         task = DummyOperator(task_id='op')
@@ -1124,7 +1122,7 @@ class TestTaskInstance(unittest.TestCase):
 
         ti.overwrite_params_with_dag_run_conf(params, None)
 
-        self.assertEqual(False, params["override"])
+        assert False == params["override"]
 
     def test_overwrite_params_with_dag_run_conf_none(self):
         task = DummyOperator(task_id='op')
@@ -1134,7 +1132,7 @@ class TestTaskInstance(unittest.TestCase):
 
         ti.overwrite_params_with_dag_run_conf(params, dag_run)
 
-        self.assertEqual(False, params["override"])
+        assert False == params["override"]
 
     @patch('airflow.models.taskinstance.send_email')
     def test_email_alert(self, mock_send_email):
@@ -1154,10 +1152,10 @@ class TestTaskInstance(unittest.TestCase):
             pass
 
         (email, title, body), _ = mock_send_email.call_args
-        self.assertEqual(email, 'to')
-        self.assertIn('test_email_alert', title)
-        self.assertIn('test_email_alert', body)
-        self.assertIn('Try 1', body)
+        assert email == 'to'
+        assert 'test_email_alert' in title
+        assert 'test_email_alert' in body
+        assert 'Try 1' in body
 
     @patch('airflow.models.taskinstance.send_email')
     def test_email_alert_with_config(self, mock_send_email):
@@ -1183,9 +1181,9 @@ class TestTaskInstance(unittest.TestCase):
                 pass
 
         (email, title, body), _ = mock_send_email.call_args
-        self.assertEqual(email, 'to')
-        self.assertEqual('template: test_email_alert_with_config', title)
-        self.assertEqual('template: test_email_alert_with_config', body)
+        assert email == 'to'
+        assert 'template: test_email_alert_with_config' == title
+        assert 'template: test_email_alert_with_config' == body
 
     def test_set_duration(self):
         task = DummyOperator(task_id='op', email='test@test.test')
@@ -1196,13 +1194,13 @@ class TestTaskInstance(unittest.TestCase):
         ti.start_date = datetime.datetime(2018, 10, 1, 1)
         ti.end_date = datetime.datetime(2018, 10, 1, 2)
         ti.set_duration()
-        self.assertEqual(ti.duration, 3600)
+        assert ti.duration == 3600
 
     def test_set_duration_empty_dates(self):
         task = DummyOperator(task_id='op', email='test@test.test')
         ti = TI(task=task, execution_date=datetime.datetime.now())
         ti.set_duration()
-        self.assertIsNone(ti.duration)
+        assert ti.duration is None
 
     def test_success_callback_no_race_condition(self):
         callback_wrapper = CallbackWrapper()
@@ -1217,10 +1215,10 @@ class TestTaskInstance(unittest.TestCase):
         session.commit()
         callback_wrapper.wrap_task_instance(ti)
         ti._run_raw_task()
-        self.assertTrue(callback_wrapper.callback_ran)
-        self.assertEqual(callback_wrapper.task_state_in_callback, State.RUNNING)
+        assert callback_wrapper.callback_ran
+        assert callback_wrapper.task_state_in_callback == State.RUNNING
         ti.refresh_from_db()
-        self.assertEqual(ti.state, State.SUCCESS)
+        assert ti.state == State.SUCCESS
 
     @staticmethod
     def _test_previous_dates_setup(schedule_interval: Union[str, datetime.timedelta, None],
@@ -1270,17 +1268,13 @@ class TestTaskInstance(unittest.TestCase):
 
         ti_list = self._test_previous_dates_setup(schedule_interval, catchup, scenario)
 
-        self.assertIsNone(ti_list[0].previous_ti)
+        assert ti_list[0].previous_ti is None
 
-        self.assertEqual(
-            ti_list[2].previous_ti.execution_date,
+        assert ti_list[2].previous_ti.execution_date == \
             ti_list[1].execution_date
-        )
 
-        self.assertNotEqual(
-            ti_list[2].previous_ti.execution_date,
+        assert ti_list[2].previous_ti.execution_date != \
             ti_list[0].execution_date
-        )
 
     @parameterized.expand(_prev_dates_param_list)
     def test_previous_ti_success(self, _, schedule_interval, catchup) -> None:
@@ -1289,18 +1283,14 @@ class TestTaskInstance(unittest.TestCase):
 
         ti_list = self._test_previous_dates_setup(schedule_interval, catchup, scenario)
 
-        self.assertIsNone(ti_list[0].previous_ti_success)
-        self.assertIsNone(ti_list[1].previous_ti_success)
+        assert ti_list[0].previous_ti_success is None
+        assert ti_list[1].previous_ti_success is None
 
-        self.assertEqual(
-            ti_list[3].previous_ti_success.execution_date,
+        assert ti_list[3].previous_ti_success.execution_date == \
             ti_list[1].execution_date
-        )
 
-        self.assertNotEqual(
-            ti_list[3].previous_ti_success.execution_date,
+        assert ti_list[3].previous_ti_success.execution_date != \
             ti_list[2].execution_date
-        )
 
     @parameterized.expand(_prev_dates_param_list)
     def test_previous_execution_date_success(self, _, schedule_interval, catchup) -> None:
@@ -1309,16 +1299,12 @@ class TestTaskInstance(unittest.TestCase):
 
         ti_list = self._test_previous_dates_setup(schedule_interval, catchup, scenario)
 
-        self.assertIsNone(ti_list[0].previous_execution_date_success)
-        self.assertIsNone(ti_list[1].previous_execution_date_success)
-        self.assertEqual(
-            ti_list[3].previous_execution_date_success,
+        assert ti_list[0].previous_execution_date_success is None
+        assert ti_list[1].previous_execution_date_success is None
+        assert ti_list[3].previous_execution_date_success == \
             ti_list[1].execution_date
-        )
-        self.assertNotEqual(
-            ti_list[3].previous_execution_date_success,
+        assert ti_list[3].previous_execution_date_success != \
             ti_list[2].execution_date
-        )
 
     @parameterized.expand(_prev_dates_param_list)
     def test_previous_start_date_success(self, _, schedule_interval, catchup) -> None:
@@ -1327,16 +1313,12 @@ class TestTaskInstance(unittest.TestCase):
 
         ti_list = self._test_previous_dates_setup(schedule_interval, catchup, scenario)
 
-        self.assertIsNone(ti_list[0].previous_start_date_success)
-        self.assertIsNone(ti_list[1].previous_start_date_success)
-        self.assertEqual(
-            ti_list[3].previous_start_date_success,
-            ti_list[1].start_date,
-        )
-        self.assertNotEqual(
-            ti_list[3].previous_start_date_success,
-            ti_list[2].start_date,
-        )
+        assert ti_list[0].previous_start_date_success is None
+        assert ti_list[1].previous_start_date_success is None
+        assert ti_list[3].previous_start_date_success == \
+            ti_list[1].start_date
+        assert ti_list[3].previous_start_date_success != \
+            ti_list[2].start_date
 
     def test_pendulum_template_dates(self):
         dag = models.DAG(
@@ -1348,9 +1330,9 @@ class TestTaskInstance(unittest.TestCase):
 
         template_context = ti.get_template_context()
 
-        self.assertIsInstance(template_context["execution_date"], pendulum.datetime)
-        self.assertIsInstance(template_context["next_execution_date"], pendulum.datetime)
-        self.assertIsInstance(template_context["prev_execution_date"], pendulum.datetime)
+        assert isinstance(template_context["execution_date"], pendulum.datetime)
+        assert isinstance(template_context["next_execution_date"], pendulum.datetime)
+        assert isinstance(template_context["prev_execution_date"], pendulum.datetime)
 
     @parameterized.expand(
         [
@@ -1372,7 +1354,7 @@ class TestTaskInstance(unittest.TestCase):
         ti = TI(task=task, execution_date=DEFAULT_DATE)
         context = ti.get_template_context()
         result = task.render_template(content, context)
-        self.assertEqual(result, expected_output)
+        assert result == expected_output
 
     def test_template_with_variable_missing(self):
         """
@@ -1383,7 +1365,7 @@ class TestTaskInstance(unittest.TestCase):
 
         ti = TI(task=task, execution_date=DEFAULT_DATE)
         context = ti.get_template_context()
-        with self.assertRaises(KeyError):
+        with pytest.raises(KeyError):
             task.render_template('{{ var.value.get("missing_variable") }}', context)
 
     @parameterized.expand(
@@ -1407,7 +1389,7 @@ class TestTaskInstance(unittest.TestCase):
         ti = TI(task=task, execution_date=DEFAULT_DATE)
         context = ti.get_template_context()
         result = task.render_template(content, context)
-        self.assertEqual(result, expected_output)
+        assert result == expected_output
 
     def test_template_with_json_variable_missing(self):
         with DAG('test-dag', start_date=DEFAULT_DATE):
@@ -1415,7 +1397,7 @@ class TestTaskInstance(unittest.TestCase):
 
         ti = TI(task=task, execution_date=DEFAULT_DATE)
         context = ti.get_template_context()
-        with self.assertRaises(KeyError):
+        with pytest.raises(KeyError):
             task.render_template('{{ var.json.get("missing_variable") }}', context)
 
     def test_execute_callback(self):
@@ -1424,10 +1406,8 @@ class TestTaskInstance(unittest.TestCase):
         def on_execute_callable(context):
             nonlocal called
             called = True
-            self.assertEqual(
-                context['dag_run'].dag_id,
+            assert context['dag_run'].dag_id == \
                 'test_dagrun_execute_callback'
-            )
 
         dag = DAG('test_execute_callback', start_date=DEFAULT_DATE,
                   end_date=DEFAULT_DATE + datetime.timedelta(days=10))
@@ -1481,12 +1461,12 @@ class TestTaskInstance(unittest.TestCase):
         assert context_arg_2 and "task_instance" in context_arg_2
 
     def _env_var_check_callback(self):
-        self.assertEqual('test_echo_env_variables', os.environ['AIRFLOW_CTX_DAG_ID'])
-        self.assertEqual('hive_in_python_op', os.environ['AIRFLOW_CTX_TASK_ID'])
-        self.assertEqual(DEFAULT_DATE.isoformat(),
-                         os.environ['AIRFLOW_CTX_EXECUTION_DATE'])
-        self.assertEqual('manual__' + DEFAULT_DATE.isoformat(),
-                         os.environ['AIRFLOW_CTX_DAG_RUN_ID'])
+        assert 'test_echo_env_variables' == os.environ['AIRFLOW_CTX_DAG_ID']
+        assert 'hive_in_python_op' == os.environ['AIRFLOW_CTX_TASK_ID']
+        assert DEFAULT_DATE.isoformat() == \
+                         os.environ['AIRFLOW_CTX_EXECUTION_DATE']
+        assert 'manual__' + DEFAULT_DATE.isoformat() == \
+                         os.environ['AIRFLOW_CTX_DAG_RUN_ID']
 
     def test_echo_env_variables(self):
         dag = DAG('test_echo_env_variables', start_date=DEFAULT_DATE,
@@ -1507,7 +1487,7 @@ class TestTaskInstance(unittest.TestCase):
         session.commit()
         ti._run_raw_task()
         ti.refresh_from_db()
-        self.assertEqual(ti.state, State.SUCCESS)
+        assert ti.state == State.SUCCESS
 
     def test_generate_command_default_param(self):
         dag_id = 'test_generate_command_default_param'
@@ -1548,8 +1528,8 @@ class TestTaskInstance(unittest.TestCase):
         new_ti = TI(task=new_task, execution_date=DEFAULT_DATE)
         new_ti.get_rendered_template_fields()
 
-        self.assertEqual(settings.STORE_SERIALIZED_DAGS, store_serialized_dag)
-        self.assertEqual("op1", ti.task.bash_command)
+        assert settings.STORE_SERIALIZED_DAGS == store_serialized_dag
+        assert "op1" == ti.task.bash_command
 
         # CleanUp
         with create_session() as session:

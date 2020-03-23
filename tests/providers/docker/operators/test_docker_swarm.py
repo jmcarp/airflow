@@ -23,6 +23,7 @@ from docker import APIClient
 
 from airflow.exceptions import AirflowException
 from airflow.providers.docker.operators.docker_swarm import DockerSwarmOperator
+import pytest
 
 
 class TestDockerSwarmOperator(unittest.TestCase):
@@ -71,13 +72,11 @@ class TestDockerSwarmOperator(unittest.TestCase):
         )
 
         csargs, cskwargs = client_mock.create_service.call_args_list[0]
-        self.assertEqual(
-            len(csargs), 1, 'create_service called with different number of arguments than expected'
-        )
-        self.assertEqual(csargs, (mock_obj, ))
-        self.assertEqual(cskwargs['labels'], {'name': 'airflow__adhoc_airflow__unittest'})
-        self.assertTrue(cskwargs['name'].startswith('airflow-'))
-        self.assertEqual(client_mock.tasks.call_count, 3)
+        assert len(csargs) == 1, 'create_service called with different number of arguments than expected'
+        assert csargs == (mock_obj, )
+        assert cskwargs['labels'] == {'name': 'airflow__adhoc_airflow__unittest'}
+        assert cskwargs['name'].startswith('airflow-')
+        assert client_mock.tasks.call_count == 3
         client_mock.remove_service.assert_called_once_with('some_id')
 
     @mock.patch('airflow.providers.docker.operators.docker.APIClient')
@@ -101,10 +100,8 @@ class TestDockerSwarmOperator(unittest.TestCase):
         operator = DockerSwarmOperator(image='', auto_remove=False, task_id='unittest')
         operator.execute(None)
 
-        self.assertEqual(
-            client_mock.remove_service.call_count, 0,
+        assert client_mock.remove_service.call_count == 0, \
             'Docker service being removed even when `auto_remove` set to `False`'
-        )
 
     @mock.patch('airflow.providers.docker.operators.docker.APIClient')
     @mock.patch('airflow.providers.docker.operators.docker_swarm.types')
@@ -126,9 +123,9 @@ class TestDockerSwarmOperator(unittest.TestCase):
 
         operator = DockerSwarmOperator(image='', auto_remove=False, task_id='unittest')
         msg = "Service failed: {'ID': 'some_id'}"
-        with self.assertRaises(AirflowException) as error:
+        with pytest.raises(AirflowException) as error:
             operator.execute(None)
-        self.assertEqual(str(error.exception), msg)
+        assert str(error.exception) == msg
 
     def test_on_kill(self):
         client_mock = mock.Mock(spec=APIClient)

@@ -28,6 +28,7 @@ from airflow.models import DAG
 from airflow.providers.presto.operators.presto_check import (
     PrestoCheckOperator, PrestoIntervalCheckOperator, PrestoValueCheckOperator,
 )
+import pytest
 
 DEFAULT_DATE = datetime(2015, 1, 1)
 
@@ -37,14 +38,14 @@ class TestPrestoCheckOperator(unittest.TestCase):
     def test_execute_no_records(self, mock_get_db_hook):
         mock_get_db_hook.return_value.get_first.return_value = []
 
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             PrestoCheckOperator(sql="sql").execute()
 
     @mock.patch.object(PrestoCheckOperator, "get_db_hook")
     def test_execute_not_all_records_are_true(self, mock_get_db_hook):
         mock_get_db_hook.return_value.get_first.return_value = ["data", ""]
 
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             PrestoCheckOperator(sql="sql").execute()
 
     @unittest.skipIf(
@@ -84,8 +85,8 @@ class TestPrestoValueCheckOperator(unittest.TestCase):
 
         operator.render_template_fields({"ds": pass_value_str})
 
-        self.assertEqual(operator.task_id, self.task_id)
-        self.assertEqual(operator.pass_value, pass_value_str)
+        assert operator.task_id == self.task_id
+        assert operator.pass_value == pass_value_str
 
     def test_pass_value_template_string_float(self):
         pass_value_float = 4.0
@@ -93,8 +94,8 @@ class TestPrestoValueCheckOperator(unittest.TestCase):
 
         operator.render_template_fields({})
 
-        self.assertEqual(operator.task_id, self.task_id)
-        self.assertEqual(operator.pass_value, str(pass_value_float))
+        assert operator.task_id == self.task_id
+        assert operator.pass_value == str(pass_value_float)
 
     @mock.patch.object(PrestoValueCheckOperator, "get_db_hook")
     def test_execute_pass(self, mock_get_db_hook):
@@ -116,7 +117,7 @@ class TestPrestoValueCheckOperator(unittest.TestCase):
 
         operator = self._construct_operator("select value from tab1 limit 1;", 5, 1)
 
-        with self.assertRaisesRegex(AirflowException, "Tolerance:100.0%"):
+        with pytest.raises(AirflowException, match="Tolerance:100.0%"):
             operator.execute()
 
 
@@ -131,7 +132,7 @@ class TestPrestoIntervalCheckOperator(unittest.TestCase):
         )
 
     def test_invalid_ratio_formula(self):
-        with self.assertRaisesRegex(AirflowException, "Invalid diff_method"):
+        with pytest.raises(AirflowException, match="Invalid diff_method"):
             self._construct_operator(
                 table="test_table",
                 metric_thresholds={"f1": 1},
@@ -152,7 +153,7 @@ class TestPrestoIntervalCheckOperator(unittest.TestCase):
             ignore_zero=False,
         )
 
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             operator.execute()
 
     @mock.patch.object(PrestoIntervalCheckOperator, "get_db_hook")
@@ -192,7 +193,7 @@ class TestPrestoIntervalCheckOperator(unittest.TestCase):
             ignore_zero=True,
         )
 
-        with self.assertRaisesRegex(AirflowException, "f0, f1, f2"):
+        with pytest.raises(AirflowException, match="f0, f1, f2"):
             operator.execute()
 
     @mock.patch.object(PrestoIntervalCheckOperator, "get_db_hook")
@@ -217,5 +218,5 @@ class TestPrestoIntervalCheckOperator(unittest.TestCase):
             ignore_zero=True,
         )
 
-        with self.assertRaisesRegex(AirflowException, "f0, f1"):
+        with pytest.raises(AirflowException, match="f0, f1"):
             operator.execute()

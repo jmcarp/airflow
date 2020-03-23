@@ -108,17 +108,16 @@ class TestRenderedTaskInstanceFields(unittest.TestCase):
 
         ti = TI(task=task, execution_date=EXECUTION_DATE)
         rtif = RTIF(ti=ti)
-        self.assertEqual(ti.dag_id, rtif.dag_id)
-        self.assertEqual(ti.task_id, rtif.task_id)
-        self.assertEqual(ti.execution_date, rtif.execution_date)
-        self.assertEqual(expected_rendered_field, rtif.rendered_fields.get("bash_command"))
+        assert ti.dag_id == rtif.dag_id
+        assert ti.task_id == rtif.task_id
+        assert ti.execution_date == rtif.execution_date
+        assert expected_rendered_field == rtif.rendered_fields.get("bash_command")
 
         with create_session() as session:
             session.add(rtif)
 
-        self.assertEqual(
-            {"bash_command": expected_rendered_field, "env": None},
-            RTIF.get_templated_fields(ti=ti))
+        assert {"bash_command": expected_rendered_field, "env": None} == \
+            RTIF.get_templated_fields(ti=ti)
 
         # Test the else part of get_templated_fields
         # i.e. for the TIs that are not stored in RTIF table
@@ -127,7 +126,7 @@ class TestRenderedTaskInstanceFields(unittest.TestCase):
             task_2 = BashOperator(task_id="test2", bash_command=templated_field)
 
         ti2 = TI(task_2, EXECUTION_DATE)
-        self.assertIsNone(RTIF.get_templated_fields(ti=ti2))
+        assert RTIF.get_templated_fields(ti=ti2) is None
 
     def test_delete_old_records(self):
         """
@@ -151,17 +150,17 @@ class TestRenderedTaskInstanceFields(unittest.TestCase):
         result = session.query(RTIF)\
             .filter(RTIF.dag_id == dag.dag_id, RTIF.task_id == task.task_id).all()
 
-        self.assertIn(rtif_1, result)
-        self.assertIn(rtif_2, result)
-        self.assertIn(rtif_3, result)
-        self.assertEqual(3, len(result))
+        assert rtif_1 in result
+        assert rtif_2 in result
+        assert rtif_3 in result
+        assert 3 == len(result)
 
         # Verify old records are deleted and only 1 record is kept
         RTIF.delete_old_records(task_id=task.task_id, dag_id=task.dag_id, num_to_keep=1)
         result = session.query(RTIF) \
             .filter(RTIF.dag_id == dag.dag_id, RTIF.task_id == task.task_id).all()
-        self.assertEqual(1, len(result))
-        self.assertEqual(rtif_3.execution_date, result[0].execution_date)
+        assert 1 == len(result)
+        assert rtif_3.execution_date == result[0].execution_date
 
     def test_write(self):
         """
@@ -171,7 +170,7 @@ class TestRenderedTaskInstanceFields(unittest.TestCase):
 
         session = settings.Session()
         result = session.query(RTIF).all()
-        self.assertEqual([], result)
+        assert [] == result
 
         with DAG("test_write", start_date=START_DATE):
             task = BashOperator(task_id="test", bash_command="echo {{ var.value.test_key }}")
@@ -183,12 +182,11 @@ class TestRenderedTaskInstanceFields(unittest.TestCase):
             RTIF.task_id == rtif.task_id,
             RTIF.execution_date == rtif.execution_date
         ).first()
-        self.assertEqual(
-            (
+        assert (
                 'test_write', 'test', {
                     'bash_command': 'echo test_val', 'env': None
                 }
-            ), result)
+            ) == result
 
         # Test that overwrite saves new values to the DB
         Variable.delete("test_key")
@@ -205,9 +203,8 @@ class TestRenderedTaskInstanceFields(unittest.TestCase):
             RTIF.task_id == rtif_updated.task_id,
             RTIF.execution_date == rtif_updated.execution_date
         ).first()
-        self.assertEqual(
-            (
+        assert (
                 'test_write', 'test', {
                     'bash_command': 'echo test_val_updated', 'env': None
                 }
-            ), result_updated)
+            ) == result_updated

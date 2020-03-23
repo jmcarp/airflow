@@ -23,6 +23,7 @@ import mock
 from airflow.exceptions import AirflowException
 from airflow.providers.amazon.aws.hooks.sagemaker import SageMakerHook
 from airflow.providers.amazon.aws.sensors.sagemaker_transform import SageMakerTransformSensor
+import pytest
 
 DESCRIBE_TRANSFORM_INPROGRESS_RESPONSE = {
     'TransformJobStatus': 'InProgress',
@@ -62,7 +63,8 @@ class TestSageMakerTransformSensor(unittest.TestCase):
             aws_conn_id='aws_test',
             job_name='test_job_name'
         )
-        self.assertRaises(AirflowException, sensor.execute, None)
+        with pytest.raises(AirflowException):
+            sensor.execute(None)
         mock_describe_job.assert_called_once_with('test_job_name')
 
     @mock.patch.object(SageMakerHook, 'get_conn')
@@ -86,7 +88,7 @@ class TestSageMakerTransformSensor(unittest.TestCase):
         sensor.execute(None)
 
         # make sure we called 3 times(terminated when its completed)
-        self.assertEqual(mock_describe_job.call_count, 3)
+        assert mock_describe_job.call_count == 3
 
         # make sure the hook was initialized with the specific params
         calls = [

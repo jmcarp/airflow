@@ -39,24 +39,18 @@ class TestHelper(unittest.TestCase):
     def test_build_gcp_conn_path(self):
         value = "test"
         conn = build_gcp_conn(key_file_path=value)
-        self.assertEqual(
-            "google-cloud-platform://?extra__google_cloud_platform__key_path=test", conn
-        )
+        assert "google-cloud-platform://?extra__google_cloud_platform__key_path=test" == conn
 
     def test_build_gcp_conn_scopes(self):
         value = ["test", "test2"]
         conn = build_gcp_conn(scopes=value)
-        self.assertEqual(
-            "google-cloud-platform://?extra__google_cloud_platform__scope=test%2Ctest2",
-            conn,
-        )
+        assert "google-cloud-platform://?extra__google_cloud_platform__scope=test%2Ctest2" == \
+            conn
 
     def test_build_gcp_conn_project(self):
         value = "test"
         conn = build_gcp_conn(project_id=value)
-        self.assertEqual(
-            "google-cloud-platform://?extra__google_cloud_platform__projects=test", conn
-        )
+        assert "google-cloud-platform://?extra__google_cloud_platform__projects=test" == conn
 
 
 class TestProvideGcpCredentials(unittest.TestCase):
@@ -72,16 +66,16 @@ class TestProvideGcpCredentials(unittest.TestCase):
         mock_file_handler.write = string_file.write
 
         with provide_gcp_credentials(key_file_dict=file_dict):
-            self.assertEqual(os.environ[CREDENTIALS], file_name)
-            self.assertEqual(file_content, string_file.getvalue())
-        self.assertEqual(os.environ[CREDENTIALS], ENV_VALUE)
+            assert os.environ[CREDENTIALS] == file_name
+            assert file_content == string_file.getvalue()
+        assert os.environ[CREDENTIALS] == ENV_VALUE
 
     @mock.patch.dict(os.environ, {CREDENTIALS: ENV_VALUE})
     def test_provide_gcp_credentials_keep_environment(self):
         key_path = "/test/key-path"
         with provide_gcp_credentials(key_file_path=key_path):
-            self.assertEqual(os.environ[CREDENTIALS], key_path)
-        self.assertEqual(os.environ[CREDENTIALS], ENV_VALUE)
+            assert os.environ[CREDENTIALS] == key_path
+        assert os.environ[CREDENTIALS] == ENV_VALUE
 
 
 class TestProvideGcpConnection(unittest.TestCase):
@@ -96,10 +90,8 @@ class TestProvideGcpConnection(unittest.TestCase):
             mock_builder.assert_called_once_with(
                 key_file_path=path, scopes=scopes, project_id=project_id
             )
-            self.assertEqual(
-                os.environ[AIRFLOW_CONN_GOOGLE_CLOUD_DEFAULT], TEMP_VARIABLE
-            )
-        self.assertEqual(os.environ[AIRFLOW_CONN_GOOGLE_CLOUD_DEFAULT], ENV_VALUE)
+            assert os.environ[AIRFLOW_CONN_GOOGLE_CLOUD_DEFAULT] == TEMP_VARIABLE
+        assert os.environ[AIRFLOW_CONN_GOOGLE_CLOUD_DEFAULT] == ENV_VALUE
 
 
 class TestProvideGcpConnAndCredentials(unittest.TestCase):
@@ -117,9 +109,7 @@ class TestProvideGcpConnAndCredentials(unittest.TestCase):
             mock_builder.assert_called_once_with(
                 key_file_path=path, scopes=scopes, project_id=project_id
             )
-            self.assertEqual(
-                os.environ[AIRFLOW_CONN_GOOGLE_CLOUD_DEFAULT], TEMP_VARIABLE
-            )
-            self.assertEqual(os.environ[CREDENTIALS], path)
-        self.assertEqual(os.environ[AIRFLOW_CONN_GOOGLE_CLOUD_DEFAULT], ENV_VALUE)
-        self.assertEqual(os.environ[CREDENTIALS], ENV_VALUE)
+            assert os.environ[AIRFLOW_CONN_GOOGLE_CLOUD_DEFAULT] == TEMP_VARIABLE
+            assert os.environ[CREDENTIALS] == path
+        assert os.environ[AIRFLOW_CONN_GOOGLE_CLOUD_DEFAULT] == ENV_VALUE
+        assert os.environ[CREDENTIALS] == ENV_VALUE

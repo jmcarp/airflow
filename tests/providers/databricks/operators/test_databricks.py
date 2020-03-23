@@ -29,6 +29,7 @@ from airflow.providers.databricks.hooks.databricks import RunState
 from airflow.providers.databricks.operators.databricks import (
     DatabricksRunNowOperator, DatabricksSubmitRunOperator,
 )
+import pytest
 
 DATE = '2017-04-20'
 TASK_ID = 'databricks-operator'
@@ -86,7 +87,7 @@ class TestDatabricksOperatorSharedFunctions(unittest.TestCase):
             'test_list': ['1', '1.0', 'a', 'b'],
             'test_tuple': ['1', '1.0', 'a', 'b']
         }
-        self.assertDictEqual(databricks_operator._deep_string_coerce(test_json), expected)
+        assert databricks_operator._deep_string_coerce(test_json) == expected
 
 
 class TestDatabricksSubmitRunOperator(unittest.TestCase):
@@ -103,7 +104,7 @@ class TestDatabricksSubmitRunOperator(unittest.TestCase):
             'run_name': TASK_ID
         })
 
-        self.assertDictEqual(expected, op.json)
+        assert expected == op.json
 
     def test_init_with_json(self):
         """
@@ -119,7 +120,7 @@ class TestDatabricksSubmitRunOperator(unittest.TestCase):
             'notebook_task': NOTEBOOK_TASK,
             'run_name': TASK_ID
         })
-        self.assertDictEqual(expected, op.json)
+        assert expected == op.json
 
     def test_init_with_specified_run_name(self):
         """
@@ -136,7 +137,7 @@ class TestDatabricksSubmitRunOperator(unittest.TestCase):
             'notebook_task': NOTEBOOK_TASK,
             'run_name': RUN_NAME
         })
-        self.assertDictEqual(expected, op.json)
+        assert expected == op.json
 
     def test_init_with_merging(self):
         """
@@ -157,7 +158,7 @@ class TestDatabricksSubmitRunOperator(unittest.TestCase):
             'notebook_task': NOTEBOOK_TASK,
             'run_name': TASK_ID,
         })
-        self.assertDictEqual(expected, op.json)
+        assert expected == op.json
 
     def test_init_with_templating(self):
         json = {
@@ -172,7 +173,7 @@ class TestDatabricksSubmitRunOperator(unittest.TestCase):
             'notebook_task': RENDERED_TEMPLATED_NOTEBOOK_TASK,
             'run_name': TASK_ID,
         })
-        self.assertDictEqual(expected, op.json)
+        assert expected == op.json
 
     def test_init_with_bad_type(self):
         json = {
@@ -181,7 +182,7 @@ class TestDatabricksSubmitRunOperator(unittest.TestCase):
         # Looks a bit weird since we have to escape regex reserved symbols.
         exception_message = r'Type \<(type|class) \'datetime.datetime\'\> used ' + \
                             r'for parameter json\[test\] is not a number or a string'
-        with self.assertRaisesRegex(AirflowException, exception_message):
+        with pytest.raises(AirflowException, match=exception_message):
             DatabricksSubmitRunOperator(task_id=TASK_ID, json=json)
 
     @mock.patch('airflow.providers.databricks.operators.databricks.DatabricksHook')
@@ -213,7 +214,7 @@ class TestDatabricksSubmitRunOperator(unittest.TestCase):
         db_mock.submit_run.assert_called_once_with(expected)
         db_mock.get_run_page_url.assert_called_once_with(RUN_ID)
         db_mock.get_run_state.assert_called_once_with(RUN_ID)
-        self.assertEqual(RUN_ID, op.run_id)
+        assert RUN_ID == op.run_id
 
     @mock.patch('airflow.providers.databricks.operators.databricks.DatabricksHook')
     def test_exec_failure(self, db_mock_class):
@@ -229,7 +230,7 @@ class TestDatabricksSubmitRunOperator(unittest.TestCase):
         db_mock.submit_run.return_value = 1
         db_mock.get_run_state.return_value = RunState('TERMINATED', 'FAILED', '')
 
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             op.execute(None)
 
         expected = databricks_operator._deep_string_coerce({
@@ -244,7 +245,7 @@ class TestDatabricksSubmitRunOperator(unittest.TestCase):
         db_mock.submit_run.assert_called_once_with(expected)
         db_mock.get_run_page_url.assert_called_once_with(RUN_ID)
         db_mock.get_run_state.assert_called_once_with(RUN_ID)
-        self.assertEqual(RUN_ID, op.run_id)
+        assert RUN_ID == op.run_id
 
     @mock.patch('airflow.providers.databricks.operators.databricks.DatabricksHook')
     def test_on_kill(self, db_mock_class):
@@ -272,7 +273,7 @@ class TestDatabricksRunNowOperator(unittest.TestCase):
             'job_id': 42
         })
 
-        self.assertDictEqual(expected, op.json)
+        assert expected == op.json
 
     def test_init_with_json(self):
         """
@@ -295,7 +296,7 @@ class TestDatabricksRunNowOperator(unittest.TestCase):
             'job_id': JOB_ID
         })
 
-        self.assertDictEqual(expected, op.json)
+        assert expected == op.json
 
     def test_init_with_merging(self):
         """
@@ -324,7 +325,7 @@ class TestDatabricksRunNowOperator(unittest.TestCase):
             'job_id': JOB_ID
         })
 
-        self.assertDictEqual(expected, op.json)
+        assert expected == op.json
 
     def test_init_with_templating(self):
         json = {
@@ -340,7 +341,7 @@ class TestDatabricksRunNowOperator(unittest.TestCase):
             'jar_params': RENDERED_TEMPLATED_JAR_PARAMS,
             'job_id': JOB_ID
         })
-        self.assertDictEqual(expected, op.json)
+        assert expected == op.json
 
     def test_init_with_bad_type(self):
         json = {
@@ -349,7 +350,7 @@ class TestDatabricksRunNowOperator(unittest.TestCase):
         # Looks a bit weird since we have to escape regex reserved symbols.
         exception_message = r'Type \<(type|class) \'datetime.datetime\'\> used ' + \
                             r'for parameter json\[test\] is not a number or a string'
-        with self.assertRaisesRegex(AirflowException, exception_message):
+        with pytest.raises(AirflowException, match=exception_message):
             DatabricksRunNowOperator(task_id=TASK_ID, job_id=JOB_ID, json=json)
 
     @mock.patch('airflow.providers.databricks.operators.databricks.DatabricksHook')
@@ -383,7 +384,7 @@ class TestDatabricksRunNowOperator(unittest.TestCase):
         db_mock.run_now.assert_called_once_with(expected)
         db_mock.get_run_page_url.assert_called_once_with(RUN_ID)
         db_mock.get_run_state.assert_called_once_with(RUN_ID)
-        self.assertEqual(RUN_ID, op.run_id)
+        assert RUN_ID == op.run_id
 
     @mock.patch('airflow.providers.databricks.operators.databricks.DatabricksHook')
     def test_exec_failure(self, db_mock_class):
@@ -400,7 +401,7 @@ class TestDatabricksRunNowOperator(unittest.TestCase):
         db_mock.run_now.return_value = 1
         db_mock.get_run_state.return_value = RunState('TERMINATED', 'FAILED', '')
 
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             op.execute(None)
 
         expected = databricks_operator._deep_string_coerce({
@@ -416,7 +417,7 @@ class TestDatabricksRunNowOperator(unittest.TestCase):
         db_mock.run_now.assert_called_once_with(expected)
         db_mock.get_run_page_url.assert_called_once_with(RUN_ID)
         db_mock.get_run_state.assert_called_once_with(RUN_ID)
-        self.assertEqual(RUN_ID, op.run_id)
+        assert RUN_ID == op.run_id
 
     @mock.patch('airflow.providers.databricks.operators.databricks.DatabricksHook')
     def test_on_kill(self, db_mock_class):

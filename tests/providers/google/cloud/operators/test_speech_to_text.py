@@ -22,6 +22,7 @@ from mock import MagicMock, Mock, patch
 
 from airflow.exceptions import AirflowException
 from airflow.providers.google.cloud.operators.speech_to_text import CloudSpeechToTextRecognizeSpeechOperator
+import pytest
 
 PROJECT_ID = "project-id"
 GCP_CONN_ID = "gcp-conn-id"
@@ -47,24 +48,24 @@ class TestCloudSql(unittest.TestCase):
     def test_missing_config(self, mock_hook):
         mock_hook.return_value.recognize_speech.return_value = True
 
-        with self.assertRaises(AirflowException) as e:
+        with pytest.raises(AirflowException) as e:
             CloudSpeechToTextRecognizeSpeechOperator(  # pylint: disable=no-value-for-parameter
                 project_id=PROJECT_ID, gcp_conn_id=GCP_CONN_ID, audio=AUDIO, task_id="id"
             ).execute(context={"task_instance": Mock()})
 
         err = e.exception
-        self.assertIn("config", str(err))
+        assert "config" in str(err)
         mock_hook.assert_not_called()
 
     @patch("airflow.providers.google.cloud.operators.speech_to_text.CloudSpeechToTextHook")
     def test_missing_audio(self, mock_hook):
         mock_hook.return_value.recognize_speech.return_value = True
 
-        with self.assertRaises(AirflowException) as e:
+        with pytest.raises(AirflowException) as e:
             CloudSpeechToTextRecognizeSpeechOperator(  # pylint: disable=no-value-for-parameter
                 project_id=PROJECT_ID, gcp_conn_id=GCP_CONN_ID, config=CONFIG, task_id="id"
             ).execute(context={"task_instance": Mock()})
 
         err = e.exception
-        self.assertIn("audio", str(err))
+        assert "audio" in str(err)
         mock_hook.assert_not_called()

@@ -27,6 +27,7 @@ from airflow.providers.ssh.operators.ssh import SSHOperator
 from airflow.utils import timezone
 from airflow.utils.timezone import datetime
 from tests.test_utils.config import conf_vars
+import pytest
 
 TEST_DAG_ID = 'unit_tests_ssh_test_op'
 TEST_CONN_ID = "conn_id_for_testing"
@@ -60,12 +61,12 @@ class TestSSHOperator(unittest.TestCase):
             timeout=timeout,
             ssh_conn_id="ssh_default"
         )
-        self.assertIsNotNone(task)
+        assert task is not None
 
         task.execute(None)
 
-        self.assertEqual(timeout, task.ssh_hook.timeout)
-        self.assertEqual(ssh_id, task.ssh_hook.ssh_conn_id)
+        assert timeout == task.ssh_hook.timeout
+        assert ssh_id == task.ssh_hook.ssh_conn_id
 
     @conf_vars({('core', 'enable_xcom_pickling'): 'False'})
     def test_json_command_execution(self):
@@ -77,14 +78,14 @@ class TestSSHOperator(unittest.TestCase):
             dag=self.dag,
         )
 
-        self.assertIsNotNone(task)
+        assert task is not None
 
         ti = TaskInstance(
             task=task, execution_date=timezone.utcnow())
         ti.run()
-        self.assertIsNotNone(ti.duration)
-        self.assertEqual(ti.xcom_pull(task_ids='test', key='return_value'),
-                         b64encode(b'airflow').decode('utf-8'))
+        assert ti.duration is not None
+        assert ti.xcom_pull(task_ids='test', key='return_value') == \
+                         b64encode(b'airflow').decode('utf-8')
 
     @conf_vars({('core', 'enable_xcom_pickling'): 'True'})
     def test_pickle_command_execution(self):
@@ -96,13 +97,13 @@ class TestSSHOperator(unittest.TestCase):
             dag=self.dag,
         )
 
-        self.assertIsNotNone(task)
+        assert task is not None
 
         ti = TaskInstance(
             task=task, execution_date=timezone.utcnow())
         ti.run()
-        self.assertIsNotNone(ti.duration)
-        self.assertEqual(ti.xcom_pull(task_ids='test', key='return_value'), b'airflow')
+        assert ti.duration is not None
+        assert ti.xcom_pull(task_ids='test', key='return_value') == b'airflow'
 
     def test_command_execution_with_env(self):
         task = SSHOperator(
@@ -114,14 +115,14 @@ class TestSSHOperator(unittest.TestCase):
             environment={'TEST': 'value'}
         )
 
-        self.assertIsNotNone(task)
+        assert task is not None
 
         with conf_vars({('core', 'enable_xcom_pickling'): 'True'}):
             ti = TaskInstance(
                 task=task, execution_date=timezone.utcnow())
             ti.run()
-            self.assertIsNotNone(ti.duration)
-            self.assertEqual(ti.xcom_pull(task_ids='test', key='return_value'), b'airflow')
+            assert ti.duration is not None
+            assert ti.xcom_pull(task_ids='test', key='return_value') == b'airflow'
 
     def test_no_output_command(self):
         task = SSHOperator(
@@ -132,22 +133,21 @@ class TestSSHOperator(unittest.TestCase):
             dag=self.dag,
         )
 
-        self.assertIsNotNone(task)
+        assert task is not None
 
         with conf_vars({('core', 'enable_xcom_pickling'): 'True'}):
             ti = TaskInstance(
                 task=task, execution_date=timezone.utcnow())
             ti.run()
-            self.assertIsNotNone(ti.duration)
-            self.assertEqual(ti.xcom_pull(task_ids='test', key='return_value'), b'')
+            assert ti.duration is not None
+            assert ti.xcom_pull(task_ids='test', key='return_value') == b''
 
     @unittest.mock.patch('os.environ', {
         'AIRFLOW_CONN_' + TEST_CONN_ID.upper(): "ssh://test_id@localhost"
     })
     def test_arg_checking(self):
         # Exception should be raised if neither ssh_hook nor ssh_conn_id is provided
-        with self.assertRaisesRegex(AirflowException,
-                                    "Cannot operate without ssh_hook or ssh_conn_id."):
+        with pytest.raises(AirflowException, match="Cannot operate without ssh_hook or ssh_conn_id."):
             task_0 = SSHOperator(task_id="test", command=COMMAND,
                                  timeout=TIMEOUT, dag=self.dag)
             task_0.execute(None)
@@ -165,7 +165,7 @@ class TestSSHOperator(unittest.TestCase):
             task_1.execute(None)
         except Exception:  # pylint: disable=broad-except
             pass
-        self.assertEqual(task_1.ssh_hook.ssh_conn_id, TEST_CONN_ID)
+        assert task_1.ssh_hook.ssh_conn_id == TEST_CONN_ID
 
         task_2 = SSHOperator(
             task_id="test_2",
@@ -178,7 +178,7 @@ class TestSSHOperator(unittest.TestCase):
             task_2.execute(None)
         except Exception:  # pylint: disable=broad-except
             pass
-        self.assertEqual(task_2.ssh_hook.ssh_conn_id, TEST_CONN_ID)
+        assert task_2.ssh_hook.ssh_conn_id == TEST_CONN_ID
 
         # if both valid ssh_hook and ssh_conn_id are provided, ignore ssh_conn_id
         task_3 = SSHOperator(
@@ -193,7 +193,7 @@ class TestSSHOperator(unittest.TestCase):
             task_3.execute(None)
         except Exception:  # pylint: disable=broad-except
             pass
-        self.assertEqual(task_3.ssh_hook.ssh_conn_id, self.hook.ssh_conn_id)
+        assert task_3.ssh_hook.ssh_conn_id == self.hook.ssh_conn_id
 
     @parameterized.expand([
         (COMMAND, False, False),
@@ -214,7 +214,7 @@ class TestSSHOperator(unittest.TestCase):
             task.execute(None)
         except Exception:  # pylint: disable=broad-except
             pass
-        self.assertEqual(task.get_pty, get_pty_out)
+        assert task.get_pty == get_pty_out
 
 
 if __name__ == '__main__':

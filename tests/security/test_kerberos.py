@@ -24,6 +24,7 @@ from airflow.configuration import conf
 from airflow.security import kerberos
 from airflow.security.kerberos import renew_from_kt
 from tests.test_utils.config import conf_vars
+import pytest
 
 
 @unittest.skipIf('KRB5_KTNAME' not in os.environ,
@@ -43,8 +44,8 @@ class TestKerberos(unittest.TestCase):
         """
         We expect no result, but a successful run. No more TypeError
         """
-        self.assertIsNone(renew_from_kt(principal=self.args.principal,  # pylint: disable=no-member
-                                        keytab=self.args.keytab))
+        assert renew_from_kt(principal=self.args.principal,  # pylint: disable=no-member
+                                        keytab=self.args.keytab) is None
 
     def test_args_from_cli(self):
         """
@@ -53,14 +54,13 @@ class TestKerberos(unittest.TestCase):
         self.args.keytab = "test_keytab"
 
         with conf_vars({('kerberos', 'keytab'): ''}):
-            with self.assertRaises(SystemExit) as err:
+            with pytest.raises(SystemExit) as err:
                 renew_from_kt(principal=self.args.principal,  # pylint: disable=no-member
                               keytab=self.args.keytab)
 
                 with self.assertLogs(kerberos.log) as log:
-                    self.assertIn(
-                        'kinit: krb5_init_creds_set_keytab: Failed to find '
-                        'airflow@LUPUS.GRIDDYNAMICS.NET in keytab FILE:{} '
-                        '(unknown enctype)'.format(self.args.keytab), log.output)
+                    assert 'kinit: krb5_init_creds_set_keytab: Failed to find ' \
+                        'airflow@LUPUS.GRIDDYNAMICS.NET in keytab FILE:{} ' \
+                        '(unknown enctype)'.format(self.args.keytab) in log.output
 
-                self.assertEqual(err.exception.code, 1)
+                assert err.exception.code == 1

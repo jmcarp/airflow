@@ -1612,9 +1612,7 @@ class TestMovingCoreToContrib(TestCase):
         assert any(msg in str(w) for w in warning.warnings), error
 
     def assert_is_subclass(self, clazz, other):
-        self.assertTrue(
-            issubclass(clazz, other), "{} is not subclass of {}".format(clazz, other)
-        )
+        assert issubclass(clazz, other), "{} is not subclass of {}".format(clazz, other)
 
     def assert_proper_import(self, old_resource, new_resource):
         new_path, _, _ = new_resource.rpartition(".")
@@ -1650,7 +1648,7 @@ class TestMovingCoreToContrib(TestCase):
         deprecation_warning_msg = "This class is deprecated."
         old_module_class = self.get_class_from_path(old_module)
         with self.assertWarnsRegex(DeprecationWarning, deprecation_warning_msg) as wrn:
-            self.assertTrue(deprecation_warning_msg, wrn)
+            assert deprecation_warning_msg, wrn
             old_module_class()
 
     @parameterized.expand(RENAMED_HOOKS)
@@ -1660,7 +1658,7 @@ class TestMovingCoreToContrib(TestCase):
         with self.assertWarnsRegex(DeprecationWarning, deprecation_warning_msg) as wrn:
             with mock.patch("{}.__init__".format(new_module)) as init_mock:
                 init_mock.return_value = None
-                self.assertTrue(deprecation_warning_msg, wrn)
+                assert deprecation_warning_msg, wrn
                 old_module_class()
                 init_mock.assert_called_once_with()
 

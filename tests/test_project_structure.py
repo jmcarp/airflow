@@ -109,7 +109,7 @@ class TestProjectStructure(unittest.TestCase):
         current_test_files = set(current_test_files)
 
         missing_tests_files = expected_test_files - expected_test_files.intersection(current_test_files)
-        self.assertEqual(set(), missing_tests_files - MISSING_TEST_FILES)
+        assert set() == missing_tests_files - MISSING_TEST_FILES
 
     def test_keep_missing_test_files_update(self):
         new_test_files = []
@@ -195,7 +195,7 @@ class TestGoogleProviderProjectStructure(unittest.TestCase):
         with self.subTest("Detect missing example dags"):
             missing_example = set(s for s in operator_sets if not has_example_dag(s))
             missing_example -= self.MISSING_EXAMPLE_DAGS
-            self.assertEqual(set(), missing_example)
+            assert set() == missing_example
 
         with self.subTest("Keep update missing example dags list"):
             new_example_dag = set(example_sets).intersection(set(self.MISSING_EXAMPLE_DAGS))
@@ -221,7 +221,7 @@ class TestGoogleProviderProjectStructure(unittest.TestCase):
             missing_guide = operator_names - doc_names
             missing_guide -= self.MISSING_DOC_GUIDES
 
-            self.assertEqual(missing_guide, set())
+            assert missing_guide == set()
 
         with self.subTest("Keep update missing missing guide list"):
             new_guides = set(doc_names).intersection(set(self.MISSING_DOC_GUIDES))
@@ -261,4 +261,4 @@ class TestOperatorsHooks(unittest.TestCase):
             if any(f.endswith(suffix) for suffix in illegal_suffixes)
         ]
 
-        self.assertEqual([], invalid_files)
+        assert [] == invalid_files

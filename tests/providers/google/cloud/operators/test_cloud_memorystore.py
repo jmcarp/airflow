@@ -48,284 +48,80 @@ TEST_PAGE_SIZE = 100  # type: int
 TEST_UPDATE_MASK = {"paths": ["memory_size_gb"]}  # TODO: Fill missing value
 TEST_PARENT = "test-parent"
 TEST_NAME = "test-name"
+@mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
+deftest_assert_valid_hook_call(self,mock_hook):
+    task = CloudMemorystoreCreateInstanceOperator(    task_id=TEST_TASK_ID,    location=TEST_LOCATION,    instance_id=TEST_INSTANCE_ID,    instance=TEST_INSTANCE,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    gcp_conn_id=TEST_GCP_CONN_ID,    )
+    task.execute(mock.MagicMock())
+    mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
+    mock_hook.return_value.create_instance.assert_called_once_with(    location=TEST_LOCATION,    instance_id=TEST_INSTANCE_ID,    instance=TEST_INSTANCE,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    )
 
 
-class TestCloudMemorystoreCreateInstanceOperator(TestCase):
-    @mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
-    def test_assert_valid_hook_call(self, mock_hook):
-        task = CloudMemorystoreCreateInstanceOperator(
-            task_id=TEST_TASK_ID,
-            location=TEST_LOCATION,
-            instance_id=TEST_INSTANCE_ID,
-            instance=TEST_INSTANCE,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-            gcp_conn_id=TEST_GCP_CONN_ID,
-        )
-        task.execute(mock.MagicMock())
-        mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
-        mock_hook.return_value.create_instance.assert_called_once_with(
-            location=TEST_LOCATION,
-            instance_id=TEST_INSTANCE_ID,
-            instance=TEST_INSTANCE,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-        )
+@mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
+deftest_assert_valid_hook_call(self,mock_hook):
+    task = CloudMemorystoreDeleteInstanceOperator(    task_id=TEST_TASK_ID,    location=TEST_LOCATION,    instance=TEST_INSTANCE_NAME,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    gcp_conn_id=TEST_GCP_CONN_ID,    )
+    task.execute(mock.MagicMock())
+    mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
+    mock_hook.return_value.delete_instance.assert_called_once_with(    location=TEST_LOCATION,    instance=TEST_INSTANCE_NAME,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    )
 
 
-class TestCloudMemorystoreDeleteInstanceOperator(TestCase):
-    @mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
-    def test_assert_valid_hook_call(self, mock_hook):
-        task = CloudMemorystoreDeleteInstanceOperator(
-            task_id=TEST_TASK_ID,
-            location=TEST_LOCATION,
-            instance=TEST_INSTANCE_NAME,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-            gcp_conn_id=TEST_GCP_CONN_ID,
-        )
-        task.execute(mock.MagicMock())
-        mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
-        mock_hook.return_value.delete_instance.assert_called_once_with(
-            location=TEST_LOCATION,
-            instance=TEST_INSTANCE_NAME,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-        )
+@mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
+deftest_assert_valid_hook_call(self,mock_hook):
+    task = CloudMemorystoreExportInstanceOperator(    task_id=TEST_TASK_ID,    location=TEST_LOCATION,    instance=TEST_INSTANCE_NAME,    output_config=TEST_OUTPUT_CONFIG,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    gcp_conn_id=TEST_GCP_CONN_ID,    )
+    task.execute(context=mock.MagicMock())
+    mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
+    mock_hook.return_value.export_instance.assert_called_once_with(    location=TEST_LOCATION,    instance=TEST_INSTANCE_NAME,    output_config=TEST_OUTPUT_CONFIG,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    )
 
 
-class TestCloudMemorystoreExportInstanceOperator(TestCase):
-    @mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
-    def test_assert_valid_hook_call(self, mock_hook):
-        task = CloudMemorystoreExportInstanceOperator(
-            task_id=TEST_TASK_ID,
-            location=TEST_LOCATION,
-            instance=TEST_INSTANCE_NAME,
-            output_config=TEST_OUTPUT_CONFIG,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-            gcp_conn_id=TEST_GCP_CONN_ID,
-        )
-        task.execute(context=mock.MagicMock())
-        mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
-        mock_hook.return_value.export_instance.assert_called_once_with(
-            location=TEST_LOCATION,
-            instance=TEST_INSTANCE_NAME,
-            output_config=TEST_OUTPUT_CONFIG,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-        )
+@mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
+deftest_assert_valid_hook_call(self,mock_hook):
+    task = CloudMemorystoreFailoverInstanceOperator(    task_id=TEST_TASK_ID,    location=TEST_LOCATION,    instance=TEST_INSTANCE_NAME,    data_protection_mode=TEST_DATA_PROTECTION_MODE,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    gcp_conn_id=TEST_GCP_CONN_ID,    )
+    task.execute(context=mock.MagicMock())
+    mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
+    mock_hook.return_value.failover_instance.assert_called_once_with(    location=TEST_LOCATION,    instance=TEST_INSTANCE_NAME,    data_protection_mode=TEST_DATA_PROTECTION_MODE,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    )
 
 
-class TestCloudMemorystoreFailoverInstanceOperator(TestCase):
-    @mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
-    def test_assert_valid_hook_call(self, mock_hook):
-        task = CloudMemorystoreFailoverInstanceOperator(
-            task_id=TEST_TASK_ID,
-            location=TEST_LOCATION,
-            instance=TEST_INSTANCE_NAME,
-            data_protection_mode=TEST_DATA_PROTECTION_MODE,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-            gcp_conn_id=TEST_GCP_CONN_ID,
-        )
-        task.execute(context=mock.MagicMock())
-        mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
-        mock_hook.return_value.failover_instance.assert_called_once_with(
-            location=TEST_LOCATION,
-            instance=TEST_INSTANCE_NAME,
-            data_protection_mode=TEST_DATA_PROTECTION_MODE,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-        )
+@mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
+deftest_assert_valid_hook_call(self,mock_hook):
+    task = CloudMemorystoreGetInstanceOperator(    task_id=TEST_TASK_ID,    location=TEST_LOCATION,    instance=TEST_INSTANCE_NAME,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    gcp_conn_id=TEST_GCP_CONN_ID,    )
+    task.execute(mock.MagicMock())
+    mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
+    mock_hook.return_value.get_instance.assert_called_once_with(    location=TEST_LOCATION,    instance=TEST_INSTANCE_NAME,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    )
 
 
-class TestCloudMemorystoreGetInstanceOperator(TestCase):
-    @mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
-    def test_assert_valid_hook_call(self, mock_hook):
-        task = CloudMemorystoreGetInstanceOperator(
-            task_id=TEST_TASK_ID,
-            location=TEST_LOCATION,
-            instance=TEST_INSTANCE_NAME,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-            gcp_conn_id=TEST_GCP_CONN_ID,
-        )
-        task.execute(mock.MagicMock())
-        mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
-        mock_hook.return_value.get_instance.assert_called_once_with(
-            location=TEST_LOCATION,
-            instance=TEST_INSTANCE_NAME,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-        )
+@mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
+deftest_assert_valid_hook_call(self,mock_hook):
+    task = CloudMemorystoreImportOperator(    task_id=TEST_TASK_ID,    location=TEST_LOCATION,    instance=TEST_INSTANCE_NAME,    input_config=TEST_INPUT_CONFIG,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    gcp_conn_id=TEST_GCP_CONN_ID,    )
+    task.execute(context=mock.MagicMock())
+    mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
+    mock_hook.return_value.import_instance.assert_called_once_with(    location=TEST_LOCATION,    instance=TEST_INSTANCE_NAME,    input_config=TEST_INPUT_CONFIG,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    )
 
 
-class TestCloudMemorystoreImportOperator(TestCase):
-    @mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
-    def test_assert_valid_hook_call(self, mock_hook):
-        task = CloudMemorystoreImportOperator(
-            task_id=TEST_TASK_ID,
-            location=TEST_LOCATION,
-            instance=TEST_INSTANCE_NAME,
-            input_config=TEST_INPUT_CONFIG,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-            gcp_conn_id=TEST_GCP_CONN_ID,
-        )
-        task.execute(context=mock.MagicMock())
-        mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
-        mock_hook.return_value.import_instance.assert_called_once_with(
-            location=TEST_LOCATION,
-            instance=TEST_INSTANCE_NAME,
-            input_config=TEST_INPUT_CONFIG,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-        )
+@mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
+deftest_assert_valid_hook_call(self,mock_hook):
+    task = CloudMemorystoreListInstancesOperator(    task_id=TEST_TASK_ID,    location=TEST_LOCATION,    page_size=TEST_PAGE_SIZE,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    gcp_conn_id=TEST_GCP_CONN_ID,    )
+    task.execute(mock.MagicMock())
+    mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
+    mock_hook.return_value.list_instances.assert_called_once_with(    location=TEST_LOCATION,    page_size=TEST_PAGE_SIZE,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    )
 
 
-class TestCloudMemorystoreListInstancesOperator(TestCase):
-    @mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
-    def test_assert_valid_hook_call(self, mock_hook):
-        task = CloudMemorystoreListInstancesOperator(
-            task_id=TEST_TASK_ID,
-            location=TEST_LOCATION,
-            page_size=TEST_PAGE_SIZE,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-            gcp_conn_id=TEST_GCP_CONN_ID,
-        )
-        task.execute(mock.MagicMock())
-        mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
-        mock_hook.return_value.list_instances.assert_called_once_with(
-            location=TEST_LOCATION,
-            page_size=TEST_PAGE_SIZE,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-        )
+@mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
+deftest_assert_valid_hook_call(self,mock_hook):
+    task = CloudMemorystoreUpdateInstanceOperator(    task_id=TEST_TASK_ID,    update_mask=TEST_UPDATE_MASK,    instance=TEST_INSTANCE,    location=TEST_LOCATION,    instance_id=TEST_INSTANCE_ID,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    gcp_conn_id=TEST_GCP_CONN_ID,    )
+    task.execute(mock.MagicMock())
+    mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
+    mock_hook.return_value.update_instance.assert_called_once_with(    update_mask=TEST_UPDATE_MASK,    instance=TEST_INSTANCE,    location=TEST_LOCATION,    instance_id=TEST_INSTANCE_ID,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    )
 
 
-class TestCloudMemorystoreUpdateInstanceOperator(TestCase):
-    @mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
-    def test_assert_valid_hook_call(self, mock_hook):
-        task = CloudMemorystoreUpdateInstanceOperator(
-            task_id=TEST_TASK_ID,
-            update_mask=TEST_UPDATE_MASK,
-            instance=TEST_INSTANCE,
-            location=TEST_LOCATION,
-            instance_id=TEST_INSTANCE_ID,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-            gcp_conn_id=TEST_GCP_CONN_ID,
-        )
-        task.execute(mock.MagicMock())
-        mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
-        mock_hook.return_value.update_instance.assert_called_once_with(
-            update_mask=TEST_UPDATE_MASK,
-            instance=TEST_INSTANCE,
-            location=TEST_LOCATION,
-            instance_id=TEST_INSTANCE_ID,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-        )
+@mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
+deftest_assert_valid_hook_call(self,mock_hook):
+    task = CloudMemorystoreScaleInstanceOperator(    task_id=TEST_TASK_ID,    memory_size_gb=TEST_INSTANCE_SIZE,    location=TEST_LOCATION,    instance_id=TEST_INSTANCE_ID,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    gcp_conn_id=TEST_GCP_CONN_ID,    )
+    task.execute(mock.MagicMock())
+    mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
+    mock_hook.return_value.update_instance.assert_called_once_with(    update_mask={"paths": ["memory_size_gb"]},    instance={"memory_size_gb": 4},    location=TEST_LOCATION,    instance_id=TEST_INSTANCE_ID,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    )
 
 
-class TestCloudMemorystoreScaleInstanceOperator(TestCase):
-    @mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
-    def test_assert_valid_hook_call(self, mock_hook):
-        task = CloudMemorystoreScaleInstanceOperator(
-            task_id=TEST_TASK_ID,
-            memory_size_gb=TEST_INSTANCE_SIZE,
-            location=TEST_LOCATION,
-            instance_id=TEST_INSTANCE_ID,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-            gcp_conn_id=TEST_GCP_CONN_ID,
-        )
-        task.execute(mock.MagicMock())
-        mock_hook.assert_called_once_with(gcp_conn_id=TEST_GCP_CONN_ID)
-        mock_hook.return_value.update_instance.assert_called_once_with(
-            update_mask={"paths": ["memory_size_gb"]},
-            instance={"memory_size_gb": 4},
-            location=TEST_LOCATION,
-            instance_id=TEST_INSTANCE_ID,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-        )
-
-
-class TestCloudMemorystoreCreateInstanceAndImportOperatorOperator(TestCase):
-    @mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
-    def test_assert_valid_hook_call(self, mock_hook):
-        task = CloudMemorystoreCreateInstanceAndImportOperator(
-            task_id=TEST_TASK_ID,
-            location=TEST_LOCATION,
-            instance_id=TEST_INSTANCE_ID,
-            instance=TEST_INSTANCE,
-            input_config=TEST_INPUT_CONFIG,
-            project_id=TEST_PROJECT_ID,
-            retry=TEST_RETRY,
-            timeout=TEST_TIMEOUT,
-            metadata=TEST_METADATA,
-            gcp_conn_id=TEST_GCP_CONN_ID,
-        )
-        task.execute(mock.MagicMock())
-        mock_hook.assert_has_calls(
-            [
-                mock.call(gcp_conn_id=TEST_GCP_CONN_ID),
-                mock.call().create_instance(
-                    location=TEST_LOCATION,
-                    instance_id=TEST_INSTANCE_ID,
-                    instance=TEST_INSTANCE,
-                    project_id=TEST_PROJECT_ID,
-                    retry=TEST_RETRY,
-                    timeout=TEST_TIMEOUT,
-                    metadata=TEST_METADATA,
-                ),
-                mock.call().import_instance(
-                    input_config=TEST_INPUT_CONFIG,
-                    instance=TEST_INSTANCE,
-                    location=TEST_LOCATION,
-                    metadata=TEST_METADATA,
-                    project_id=TEST_PROJECT_ID,
-                    retry=TEST_RETRY,
-                    timeout=TEST_TIMEOUT,
-                ),
-            ]
-        )
+@mock.patch("airflow.providers.google.cloud.operators.cloud_memorystore.CloudMemorystoreHook")
+deftest_assert_valid_hook_call(self,mock_hook):
+    task = CloudMemorystoreCreateInstanceAndImportOperator(    task_id=TEST_TASK_ID,    location=TEST_LOCATION,    instance_id=TEST_INSTANCE_ID,    instance=TEST_INSTANCE,    input_config=TEST_INPUT_CONFIG,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    gcp_conn_id=TEST_GCP_CONN_ID,    )
+    task.execute(mock.MagicMock())
+    mock_hook.assert_has_calls(    [    mock.call(gcp_conn_id=TEST_GCP_CONN_ID),    mock.call().create_instance(    location=TEST_LOCATION,    instance_id=TEST_INSTANCE_ID,    instance=TEST_INSTANCE,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    metadata=TEST_METADATA,    ),    mock.call().import_instance(    input_config=TEST_INPUT_CONFIG,    instance=TEST_INSTANCE,    location=TEST_LOCATION,    metadata=TEST_METADATA,    project_id=TEST_PROJECT_ID,    retry=TEST_RETRY,    timeout=TEST_TIMEOUT,    ),    ]    )

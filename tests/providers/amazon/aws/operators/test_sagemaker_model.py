@@ -23,6 +23,7 @@ import mock
 from airflow.exceptions import AirflowException
 from airflow.providers.amazon.aws.hooks.sagemaker import SageMakerHook
 from airflow.providers.amazon.aws.operators.sagemaker_model import SageMakerModelOperator
+import pytest
 
 role = 'arn:aws:iam:role/test-role'
 
@@ -67,7 +68,8 @@ class TestSageMakerModelOperator(unittest.TestCase):
         mock_model.return_value = {'ModelArn': 'testarn',
                                    'ResponseMetadata':
                                        {'HTTPStatusCode': 404}}
-        self.assertRaises(AirflowException, self.sagemaker.execute, None)
+        with pytest.raises(AirflowException):
+            self.sagemaker.execute(None)
 
 
 if __name__ == '__main__':

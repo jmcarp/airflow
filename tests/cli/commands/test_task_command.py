@@ -34,6 +34,7 @@ from airflow.utils import timezone
 from airflow.utils.cli import get_dag
 from airflow.utils.state import State
 from tests.test_utils.db import clear_db_pools, clear_db_runs
+import pytest
 
 DEFAULT_DATE = timezone.make_aware(datetime(2016, 1, 1))
 
@@ -70,7 +71,7 @@ class TestCliTasks(unittest.TestCase):
         with redirect_stdout(io.StringIO()) as stdout:
             task_command.task_test(args)
         # Check that prints, and log messages, are shown
-        self.assertIn("'example_python_operator__print_the_context__20180101'", stdout.getvalue())
+        assert "'example_python_operator__print_the_context__20180101'" in stdout.getvalue()
 
     @mock.patch("airflow.cli.commands.task_command.LocalTaskJob")
     def test_run_naive_taskinstance(self, mock_local_job):
@@ -125,8 +126,8 @@ class TestCliTasks(unittest.TestCase):
                 'tasks', 'test', 'example_passing_params_via_test_command', 'env_var_test_task',
                 '--env-vars', '{"foo":"bar"}', DEFAULT_DATE.isoformat()]))
         output = stdout.getvalue()
-        self.assertIn('foo=bar', output)
-        self.assertIn('AIRFLOW_TEST_MODE=True', output)
+        assert 'foo=bar' in output
+        assert 'AIRFLOW_TEST_MODE=True' in output
 
     def test_cli_run(self):
         task_command.task_run(self.parser.parse_args([
@@ -143,19 +144,13 @@ class TestCliTasks(unittest.TestCase):
 
     )
     def test_cli_run_invalid_raw_option(self, option: str):
-        with self.assertRaisesRegex(
-            AirflowException,
-            "Option --raw does not work with some of the other options on this command."
-        ):
+        with pytest.raises(AirflowException, match="Option --raw does not work with some of the other options on this command."):
             task_command.task_run(self.parser.parse_args([  # type: ignore
                 'tasks', 'run', 'example_bash_operator', 'runme_0', DEFAULT_DATE.isoformat(), '--raw', option
             ]))
 
     def test_cli_run_mutually_exclusive(self):
-        with self.assertRaisesRegex(
-            AirflowException,
-            "Option --raw and --local are mutually exclusive."
-        ):
+        with pytest.raises(AirflowException, match="Option --raw and --local are mutually exclusive."):
             task_command.task_run(self.parser.parse_args([  # type: ignore
                 'tasks', 'run', 'example_bash_operator', 'runme_0', DEFAULT_DATE.isoformat(), '--raw',
                 '--local'
@@ -200,7 +195,7 @@ class TestCliTasks(unittest.TestCase):
                             tablefmt="fancy_grid")
 
         # Check that prints, and log messages, are shown
-        self.assertEqual(expected.replace("\n", ""), actual_out.replace("\n", ""))
+        assert expected.replace("\n", "") == actual_out.replace("\n", "")
 
     def test_subdag_clear(self):
         args = self.parser.parse_args([
@@ -239,7 +234,7 @@ class TestCliTasks(unittest.TestCase):
         ti = TaskInstance(task, args.execution_date)
         ti.refresh_from_db()
         state = ti.current_state()
-        self.assertEqual(state, State.SUCCESS)
+        assert state == State.SUCCESS
 
 
 class TestCliTaskBackfill(unittest.TestCase):
@@ -275,7 +270,7 @@ class TestCliTaskBackfill(unittest.TestCase):
             execution_date=DEFAULT_DATE)
 
         ti_dependent0.refresh_from_db()
-        self.assertEqual(ti_dependent0.state, State.FAILED)
+        assert ti_dependent0.state == State.FAILED
 
         task1_id = 'test_run_dependency_task'
         args1 = ['tasks',
@@ -290,7 +285,7 @@ class TestCliTaskBackfill(unittest.TestCase):
             task=dag.get_task(task1_id),
             execution_date=DEFAULT_DATE + timedelta(days=1))
         ti_dependency.refresh_from_db()
-        self.assertEqual(ti_dependency.state, State.FAILED)
+        assert ti_dependency.state == State.FAILED
 
         task2_id = 'test_run_dependent_task'
         args2 = ['tasks',
@@ -305,4 +300,4 @@ class TestCliTaskBackfill(unittest.TestCase):
             task=dag.get_task(task2_id),
             execution_date=DEFAULT_DATE + timedelta(days=1))
         ti_dependent.refresh_from_db()
-        self.assertEqual(ti_dependent.state, State.SUCCESS)
+        assert ti_dependent.state == State.SUCCESS

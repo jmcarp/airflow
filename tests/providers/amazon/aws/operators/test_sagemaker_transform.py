@@ -23,6 +23,7 @@ import mock
 from airflow.exceptions import AirflowException
 from airflow.providers.amazon.aws.hooks.sagemaker import SageMakerHook
 from airflow.providers.amazon.aws.operators.sagemaker_transform import SageMakerTransformOperator
+import pytest
 
 role = 'arn:aws:iam:role/test-role'
 
@@ -91,12 +92,12 @@ class TestSageMakerTransformOperator(unittest.TestCase):
     def test_parse_config_integers(self):
         self.sagemaker.parse_config_integers()
         test_config = self.sagemaker.config['Transform']
-        self.assertEqual(test_config['TransformResources']['InstanceCount'],
-                         int(test_config['TransformResources']['InstanceCount']))
-        self.assertEqual(test_config['MaxConcurrentTransforms'],
-                         int(test_config['MaxConcurrentTransforms']))
-        self.assertEqual(test_config['MaxPayloadInMB'],
-                         int(test_config['MaxPayloadInMB']))
+        assert test_config['TransformResources']['InstanceCount'] == \
+                         int(test_config['TransformResources']['InstanceCount'])
+        assert test_config['MaxConcurrentTransforms'] == \
+                         int(test_config['MaxConcurrentTransforms'])
+        assert test_config['MaxPayloadInMB'] == \
+                         int(test_config['MaxPayloadInMB'])
 
     @mock.patch.object(SageMakerHook, 'get_conn')
     @mock.patch.object(SageMakerHook, 'create_model')
@@ -120,7 +121,8 @@ class TestSageMakerTransformOperator(unittest.TestCase):
         mock_transform.return_value = {'TransformJobArn': 'testarn',
                                        'ResponseMetadata':
                                        {'HTTPStatusCode': 404}}
-        self.assertRaises(AirflowException, self.sagemaker.execute, None)
+        with pytest.raises(AirflowException):
+            self.sagemaker.execute(None)
 
 
 if __name__ == '__main__':

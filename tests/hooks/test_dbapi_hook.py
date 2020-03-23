@@ -22,6 +22,7 @@ from unittest import mock
 
 from airflow.hooks.dbapi_hook import DbApiHook
 from airflow.models import Connection
+import pytest
 
 
 class TestDbApiHook(unittest.TestCase):
@@ -49,7 +50,7 @@ class TestDbApiHook(unittest.TestCase):
 
         self.cur.fetchall.return_value = rows
 
-        self.assertEqual(rows, self.db_hook.get_records(statement))
+        assert rows == self.db_hook.get_records(statement)
 
         assert self.conn.close.call_count == 1
         assert self.cur.close.call_count == 1
@@ -63,7 +64,7 @@ class TestDbApiHook(unittest.TestCase):
 
         self.cur.fetchall.return_value = rows
 
-        self.assertEqual(rows, self.db_hook.get_records(statement, parameters))
+        assert rows == self.db_hook.get_records(statement, parameters)
 
         assert self.conn.close.call_count == 1
         assert self.cur.close.call_count == 1
@@ -73,7 +74,7 @@ class TestDbApiHook(unittest.TestCase):
         statement = "SQL"
         self.cur.fetchall.side_effect = RuntimeError('Great Problems')
 
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError):
             self.db_hook.get_records(statement)
 
         self.conn.close.call_count == 1
@@ -91,7 +92,7 @@ class TestDbApiHook(unittest.TestCase):
         assert self.cur.close.call_count == 1
 
         commit_count = 2  # The first and last commit
-        self.assertEqual(commit_count, self.conn.commit.call_count)
+        assert commit_count == self.conn.commit.call_count
 
         sql = "INSERT INTO {}  VALUES (%s)".format(table)
         for row in rows:
@@ -108,7 +109,7 @@ class TestDbApiHook(unittest.TestCase):
         assert self.cur.close.call_count == 1
 
         commit_count = 2  # The first and last commit
-        self.assertEqual(commit_count, self.conn.commit.call_count)
+        assert commit_count == self.conn.commit.call_count
 
         sql = "REPLACE INTO {}  VALUES (%s)".format(table)
         for row in rows:
@@ -126,7 +127,7 @@ class TestDbApiHook(unittest.TestCase):
         assert self.cur.close.call_count == 1
 
         commit_count = 2  # The first and last commit
-        self.assertEqual(commit_count, self.conn.commit.call_count)
+        assert commit_count == self.conn.commit.call_count
 
         sql = "INSERT INTO {} ({}) VALUES (%s)".format(table, target_fields[0])
         for row in rows:
@@ -144,7 +145,7 @@ class TestDbApiHook(unittest.TestCase):
         assert self.cur.close.call_count == 1
 
         commit_count = 2 + divmod(len(rows), commit_every)[0]
-        self.assertEqual(commit_count, self.conn.commit.call_count)
+        assert commit_count == self.conn.commit.call_count
 
         sql = "INSERT INTO {}  VALUES (%s)".format(table)
         for row in rows:
@@ -159,7 +160,7 @@ class TestDbApiHook(unittest.TestCase):
             schema="schema",
             port=1
         ))
-        self.assertEqual("conn_type://login:password@host:1/schema", self.db_hook.get_uri())
+        assert "conn_type://login:password@host:1/schema" == self.db_hook.get_uri()
 
     def test_get_uri_schema_none(self):
         self.db_hook.get_connection = mock.MagicMock(return_value=Connection(
@@ -170,4 +171,4 @@ class TestDbApiHook(unittest.TestCase):
             schema=None,
             port=1
         ))
-        self.assertEqual("conn_type://login:password@host:1/", self.db_hook.get_uri())
+        assert "conn_type://login:password@host:1/" == self.db_hook.get_uri()

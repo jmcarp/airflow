@@ -30,6 +30,7 @@ from airflow.utils.log.logging_mixin import set_context
 from airflow.utils.session import create_session
 from airflow.utils.state import State
 from airflow.utils.timezone import datetime
+import re
 
 DEFAULT_DATE = datetime(2016, 1, 1)
 TASK_LOGGER = 'airflow.task'
@@ -58,9 +59,9 @@ class TestFileTaskLogHandler(unittest.TestCase):
         # file task handler is used by default.
         logger = logging.getLogger(TASK_LOGGER)
         handlers = logger.handlers
-        self.assertEqual(len(handlers), 1)
+        assert len(handlers) == 1
         handler = handlers[0]
-        self.assertEqual(handler.name, FILE_TASK_HANDLER)
+        assert handler.name == FILE_TASK_HANDLER
 
     def test_file_task_handler(self):
         def task_callable(ti, **kwargs):
@@ -78,37 +79,34 @@ class TestFileTaskLogHandler(unittest.TestCase):
 
         file_handler = next((handler for handler in logger.handlers
                              if handler.name == FILE_TASK_HANDLER), None)
-        self.assertIsNotNone(file_handler)
+        assert file_handler is not None
 
         set_context(logger, ti)
-        self.assertIsNotNone(file_handler.handler)
+        assert file_handler.handler is not None
         # We expect set_context generates a file locally.
         log_filename = file_handler.handler.baseFilename
-        self.assertTrue(os.path.isfile(log_filename))
-        self.assertTrue(log_filename.endswith("1.log"), log_filename)
+        assert os.path.isfile(log_filename)
+        assert log_filename.endswith("1.log"), log_filename
 
         ti.run(ignore_ti_state=True)
 
         file_handler.flush()
         file_handler.close()
 
-        self.assertTrue(hasattr(file_handler, 'read'))
+        assert hasattr(file_handler, 'read')
         # Return value of read must be a tuple of list and list.
         logs, metadatas = file_handler.read(ti)
-        self.assertTrue(isinstance(logs, list))
-        self.assertTrue(isinstance(metadatas, list))
-        self.assertEqual(len(logs), 1)
-        self.assertEqual(len(logs), len(metadatas))
-        self.assertTrue(isinstance(metadatas[0], dict))
+        assert isinstance(logs, list)
+        assert isinstance(metadatas, list)
+        assert len(logs) == 1
+        assert len(logs) == len(metadatas)
+        assert isinstance(metadatas[0], dict)
         target_re = r'\n\[[^\]]+\] {test_log_handlers.py:\d+} INFO - test\n'
 
         # We should expect our log line from the callable above to appear in
         # the logs we read back
-        self.assertRegex(
-            logs[0],
-            target_re,
+        assert re.search(target_re, logs[0]), \
             "Logs were " + str(logs)
-        )
 
         # Remove the generated tmp log file.
         os.remove(log_filename)
@@ -131,26 +129,26 @@ class TestFileTaskLogHandler(unittest.TestCase):
 
         file_handler = next((handler for handler in logger.handlers
                              if handler.name == FILE_TASK_HANDLER), None)
-        self.assertIsNotNone(file_handler)
+        assert file_handler is not None
 
         set_context(logger, ti)
-        self.assertIsNotNone(file_handler.handler)
+        assert file_handler.handler is not None
         # We expect set_context generates a file locally.
         log_filename = file_handler.handler.baseFilename
-        self.assertTrue(os.path.isfile(log_filename))
-        self.assertTrue(log_filename.endswith("2.log"), log_filename)
+        assert os.path.isfile(log_filename)
+        assert log_filename.endswith("2.log"), log_filename
 
         logger.info("Test")
 
         # Return value of read must be a tuple of list and list.
         logs, metadatas = file_handler.read(ti)
-        self.assertTrue(isinstance(logs, list))
+        assert isinstance(logs, list)
         # Logs for running tasks should show up too.
-        self.assertTrue(isinstance(logs, list))
-        self.assertTrue(isinstance(metadatas, list))
-        self.assertEqual(len(logs), 2)
-        self.assertEqual(len(logs), len(metadatas))
-        self.assertTrue(isinstance(metadatas[0], dict))
+        assert isinstance(logs, list)
+        assert isinstance(metadatas, list)
+        assert len(logs) == 2
+        assert len(logs) == len(metadatas)
+        assert isinstance(metadatas[0], dict)
 
         # Remove the generated tmp log file.
         os.remove(log_filename)
@@ -170,7 +168,7 @@ class TestFilenameRendering(unittest.TestCase):
 
         fth = FileTaskHandler('', '{dag_id}/{task_id}/{execution_date}/{try_number}.log')
         rendered_filename = fth._render_filename(self.ti, 42)
-        self.assertEqual(expected_filename, rendered_filename)
+        assert expected_filename == rendered_filename
 
     def test_jinja_rendering(self):
         expected_filename = \
@@ -179,4 +177,4 @@ class TestFilenameRendering(unittest.TestCase):
 
         fth = FileTaskHandler('', '{{ ti.dag_id }}/{{ ti.task_id }}/{{ ts }}/{{ try_number }}.log')
         rendered_filename = fth._render_filename(self.ti, 42)
-        self.assertEqual(expected_filename, rendered_filename)
+        assert expected_filename == rendered_filename

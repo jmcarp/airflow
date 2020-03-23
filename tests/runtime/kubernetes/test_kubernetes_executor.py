@@ -60,7 +60,7 @@ class TestKubernetesExecutor(unittest.TestCase):
             timeout=1,
         )
 
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
     def setUp(self):
         self.session = self._get_session_with_retries()
@@ -92,7 +92,7 @@ class TestKubernetesExecutor(unittest.TestCase):
                     check_call(["echo", "api returned 404."])
                     tries += 1
                     continue
-                self.assertEqual(result.status_code, 200, "Could not get the status")
+                assert result.status_code == 200, "Could not get the status"
                 result_json = result.json()
                 state = result_json['state']
                 print("Attempt {}: Current state of operator is {}".format(tries, state))
@@ -104,7 +104,7 @@ class TestKubernetesExecutor(unittest.TestCase):
                 check_call(["echo", "api call failed. trying again. error {}".format(e)])
         if state != expected_final_state:
             print("The expected state is wrong {} != {} (expected)!".format(state, expected_final_state))
-        self.assertEqual(state, expected_final_state)
+        assert state == expected_final_state
 
     def ensure_dag_expected_state(self, host, execution_date, dag_id,
                                   expected_final_state,
@@ -125,7 +125,7 @@ class TestKubernetesExecutor(unittest.TestCase):
                         execution_date=execution_date)
             )
             print(result)
-            self.assertEqual(result.status_code, 200, "Could not get the status")
+            assert result.status_code == 200, "Could not get the status"
             result_json = result.json()
             print(result_json)
             state = result_json['state']
@@ -137,7 +137,7 @@ class TestKubernetesExecutor(unittest.TestCase):
                 break
             tries += 1
 
-        self.assertEqual(state, expected_final_state)
+        assert state == expected_final_state
 
         # Maybe check if we can retrieve the logs, but then we need to extend the API
 
@@ -151,8 +151,8 @@ class TestKubernetesExecutor(unittest.TestCase):
         except ValueError:
             result_json = str(result)
 
-        self.assertEqual(result.status_code, 200, "Could not enable DAG: {result}"
-                         .format(result=result_json))
+        assert result.status_code == 200, "Could not enable DAG: {result}" \
+                         .format(result=result_json)
 
         # Trigger a new dagrun
         result = self.session.post(
@@ -165,17 +165,17 @@ class TestKubernetesExecutor(unittest.TestCase):
         except ValueError:
             result_json = str(result)
 
-        self.assertEqual(result.status_code, 200, "Could not trigger a DAG-run: {result}"
-                         .format(result=result_json))
+        assert result.status_code == 200, "Could not trigger a DAG-run: {result}" \
+                         .format(result=result_json)
 
         time.sleep(1)
 
         result = self.session.get(
             'http://{}/api/experimental/latest_runs'.format(host)
         )
-        self.assertEqual(result.status_code, 200, "Could not get the latest DAG-run:"
-                                                  " {result}"
-                         .format(result=result.json()))
+        assert result.status_code == 200, "Could not get the latest DAG-run:" \
+                                                  " {result}" \
+                         .format(result=result.json())
         result_json = result.json()
         return result_json
 
@@ -185,7 +185,7 @@ class TestKubernetesExecutor(unittest.TestCase):
 
         result_json = self.start_dag(dag_id=dag_id, host=host)
 
-        self.assertGreater(len(result_json['items']), 0)
+        assert len(result_json['items']) > 0
 
         execution_date = result_json['items'][0]['execution_date']
         print("Found the job with execution date {}".format(execution_date))
@@ -208,7 +208,7 @@ class TestKubernetesExecutor(unittest.TestCase):
 
         result_json = self.start_dag(dag_id=dag_id, host=host)
 
-        self.assertGreater(len(result_json['items']), 0)
+        assert len(result_json['items']) > 0
 
         execution_date = result_json['items'][0]['execution_date']
         print("Found the job with execution date {}".format(execution_date))
@@ -235,9 +235,9 @@ class TestKubernetesExecutor(unittest.TestCase):
                                        dag_id=dag_id,
                                        expected_final_state='success', timeout=100)
 
-        self.assertEqual(self._num_pods_in_namespace('test-namespace'),
-                         0,
-                         "failed to delete pods in other namespace")
+        assert self._num_pods_in_namespace('test-namespace') == \
+                         0, \
+                         "failed to delete pods in other namespace"
 
 
 if __name__ == '__main__':

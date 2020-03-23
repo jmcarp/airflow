@@ -23,6 +23,7 @@ from sqlalchemy.pool import NullPool
 
 from airflow import settings
 from tests.test_utils.config import conf_vars
+import pytest
 
 SQL_ALCHEMY_CONNECT_ARGS = {
     'test': 43503,
@@ -100,6 +101,6 @@ class TestSqlAlchemySettings(unittest.TestCase):
             ('core', 'sql_alchemy_connect_args'): 'does.not.exist',
             ('core', 'sql_alchemy_pool_enabled'): 'False'
         }
-        with self.assertRaises(ImportError):
+        with pytest.raises(ImportError):
             with conf_vars(config):
                 settings.configure_orm()

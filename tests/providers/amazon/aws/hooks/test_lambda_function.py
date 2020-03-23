@@ -38,7 +38,7 @@ class TestAwsLambdaHook(unittest.TestCase):
     def test_get_conn_returns_a_boto3_connection(self):
         hook = AwsLambdaHook(aws_conn_id='aws_default',
                              function_name="test_function", region_name="us-east-1")
-        self.assertIsNotNone(hook.get_conn())
+        assert hook.get_conn() is not None
 
     @staticmethod
     def lambda_function():
@@ -77,7 +77,7 @@ def lambda_handler(event, context):
         payload = {'hello': 'airflow'}
         response = hook.invoke_lambda(payload=json.dumps(payload))
 
-        self.assertEqual(response["StatusCode"], 202)
+        assert response["StatusCode"] == 202
 
 
 if __name__ == '__main__':

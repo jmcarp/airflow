@@ -50,13 +50,13 @@ class TestDiscordWebhookOperator(unittest.TestCase):
             **self._config
         )
 
-        self.assertEqual(self._config['http_conn_id'], operator.http_conn_id)
-        self.assertEqual(self._config['webhook_endpoint'], operator.webhook_endpoint)
-        self.assertEqual(self._config['message'], operator.message)
-        self.assertEqual(self._config['username'], operator.username)
-        self.assertEqual(self._config['avatar_url'], operator.avatar_url)
-        self.assertEqual(self._config['tts'], operator.tts)
-        self.assertEqual(self._config['proxy'], operator.proxy)
+        assert self._config['http_conn_id'] == operator.http_conn_id
+        assert self._config['webhook_endpoint'] == operator.webhook_endpoint
+        assert self._config['message'] == operator.message
+        assert self._config['username'] == operator.username
+        assert self._config['avatar_url'] == operator.avatar_url
+        assert self._config['tts'] == operator.tts
+        assert self._config['proxy'] == operator.proxy
 
 
 if __name__ == '__main__':

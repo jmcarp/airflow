@@ -52,6 +52,7 @@ from airflow.utils.weight_rule import WeightRule
 from tests.models import DEFAULT_DATE
 from tests.test_utils.asserts import assert_queries_count
 from tests.test_utils.db import clear_db_dags, clear_db_runs
+import pytest
 
 
 class TestDag(unittest.TestCase):
@@ -92,8 +93,8 @@ class TestDag(unittest.TestCase):
         """
         dag = models.DAG('test-dag')
 
-        self.assertEqual(dict, type(dag.params))
-        self.assertEqual(0, len(dag.params))
+        assert dict == type(dag.params)
+        assert 0 == len(dag.params)
 
     def test_params_passed_and_params_in_default_args_no_override(self):
         """
@@ -111,14 +112,13 @@ class TestDag(unittest.TestCase):
 
         params_combined = params1.copy()
         params_combined.update(params2)
-        self.assertEqual(params_combined, dag.params)
+        assert params_combined == dag.params
 
     def test_dag_invalid_default_view(self):
         """
         Test invalid `default_view` of DAG initialization
         """
-        with self.assertRaisesRegex(AirflowException,
-                                    'Invalid values of dag.default_view: only support'):
+        with pytest.raises(AirflowException, match='Invalid values of dag.default_view: only support'):
             models.DAG(
                 dag_id='test-invalid-default_view',
                 default_view='airflow'
@@ -131,15 +131,14 @@ class TestDag(unittest.TestCase):
         dag = models.DAG(
             dag_id='test-default_default_view'
         )
-        self.assertEqual(conf.get('webserver', 'dag_default_view').lower(),
-                         dag.default_view)
+        assert conf.get('webserver', 'dag_default_view').lower() == \
+                         dag.default_view
 
     def test_dag_invalid_orientation(self):
         """
         Test invalid `orientation` of DAG initialization
         """
-        with self.assertRaisesRegex(AirflowException,
-                                    'Invalid values of dag.orientation: only support'):
+        with pytest.raises(AirflowException, match='Invalid values of dag.orientation: only support'):
             models.DAG(
                 dag_id='test-invalid-orientation',
                 orientation='airflow'
@@ -152,8 +151,8 @@ class TestDag(unittest.TestCase):
         dag = models.DAG(
             dag_id='test-default_orientation'
         )
-        self.assertEqual(conf.get('webserver', 'dag_orientation'),
-                         dag.orientation)
+        assert conf.get('webserver', 'dag_orientation') == \
+                         dag.orientation
 
     def test_dag_as_context_manager(self):
         """
@@ -174,32 +173,32 @@ class TestDag(unittest.TestCase):
             op1 = DummyOperator(task_id='op1')
             op2 = DummyOperator(task_id='op2', dag=dag2)
 
-        self.assertIs(op1.dag, dag)
-        self.assertEqual(op1.owner, 'owner1')
-        self.assertIs(op2.dag, dag2)
-        self.assertEqual(op2.owner, 'owner2')
+        assert op1.dag is dag
+        assert op1.owner == 'owner1'
+        assert op2.dag is dag2
+        assert op2.owner == 'owner2'
 
         with dag2:
             op3 = DummyOperator(task_id='op3')
 
-        self.assertIs(op3.dag, dag2)
-        self.assertEqual(op3.owner, 'owner2')
+        assert op3.dag is dag2
+        assert op3.owner == 'owner2'
 
         with dag:
             with dag2:
                 op4 = DummyOperator(task_id='op4')
             op5 = DummyOperator(task_id='op5')
 
-        self.assertIs(op4.dag, dag2)
-        self.assertIs(op5.dag, dag)
-        self.assertEqual(op4.owner, 'owner2')
-        self.assertEqual(op5.owner, 'owner1')
+        assert op4.dag is dag2
+        assert op5.dag is dag
+        assert op4.owner == 'owner2'
+        assert op5.owner == 'owner1'
 
         with DAG('creating_dag_in_cm', start_date=DEFAULT_DATE) as dag:
             DummyOperator(task_id='op6')
 
-        self.assertEqual(dag.dag_id, 'creating_dag_in_cm')
-        self.assertEqual(dag.tasks[0].task_id, 'op6')
+        assert dag.dag_id == 'creating_dag_in_cm'
+        assert dag.tasks[0].task_id == 'op6'
 
         with dag:
             with dag:
@@ -208,9 +207,9 @@ class TestDag(unittest.TestCase):
         op9 = DummyOperator(task_id='op8')
         op9.dag = dag2
 
-        self.assertEqual(op7.dag, dag)
-        self.assertEqual(op8.dag, dag)
-        self.assertEqual(op9.dag, dag2)
+        assert op7.dag == dag
+        assert op8.dag == dag
+        assert op9.dag == dag2
 
     def test_dag_topological_sort_include_subdag_tasks(self):
         child_dag = DAG(
@@ -239,11 +238,11 @@ class TestDag(unittest.TestCase):
 
         topological_list = parent_dag.topological_sort(include_subdag_tasks=True)
 
-        self.assertTrue(self._occur_before('a_parent', 'child_dag', topological_list))
-        self.assertTrue(self._occur_before('child_dag', 'a_child', topological_list))
-        self.assertTrue(self._occur_before('child_dag', 'b_child', topological_list))
-        self.assertTrue(self._occur_before('a_child', 'b_parent', topological_list))
-        self.assertTrue(self._occur_before('b_child', 'b_parent', topological_list))
+        assert self._occur_before('a_parent', 'child_dag', topological_list)
+        assert self._occur_before('child_dag', 'a_child', topological_list)
+        assert self._occur_before('child_dag', 'b_child', topological_list)
+        assert self._occur_before('a_child', 'b_parent', topological_list)
+        assert self._occur_before('b_child', 'b_parent', topological_list)
 
     def test_dag_topological_sort1(self):
         dag = DAG(
@@ -266,13 +265,13 @@ class TestDag(unittest.TestCase):
         logging.info(topological_list)
 
         tasks = [op2, op3, op4]
-        self.assertTrue(topological_list[0] in tasks)
+        assert topological_list[0] in tasks
         tasks.remove(topological_list[0])
-        self.assertTrue(topological_list[1] in tasks)
+        assert topological_list[1] in tasks
         tasks.remove(topological_list[1])
-        self.assertTrue(topological_list[2] in tasks)
+        assert topological_list[2] in tasks
         tasks.remove(topological_list[2])
-        self.assertTrue(topological_list[3] == op1)
+        assert topological_list[3] == op1
 
     def test_dag_topological_sort2(self):
         dag = DAG(
@@ -299,20 +298,20 @@ class TestDag(unittest.TestCase):
         logging.info(topological_list)
 
         set1 = [op4, op5]
-        self.assertTrue(topological_list[0] in set1)
+        assert topological_list[0] in set1
         set1.remove(topological_list[0])
 
         set2 = [op1, op2]
         set2.extend(set1)
-        self.assertTrue(topological_list[1] in set2)
+        assert topological_list[1] in set2
         set2.remove(topological_list[1])
 
-        self.assertTrue(topological_list[2] in set2)
+        assert topological_list[2] in set2
         set2.remove(topological_list[2])
 
-        self.assertTrue(topological_list[3] in set2)
+        assert topological_list[3] in set2
 
-        self.assertTrue(topological_list[4] == op3)
+        assert topological_list[4] == op3
 
     def test_dag_topological_sort_dag_without_tasks(self):
         dag = DAG(
@@ -320,7 +319,7 @@ class TestDag(unittest.TestCase):
             start_date=DEFAULT_DATE,
             default_args={'owner': 'owner1'})
 
-        self.assertEqual(tuple(), dag.topological_sort())
+        assert tuple() == dag.topological_sort()
 
     def test_dag_naive_start_date_string(self):
         DAG('DAG', default_args={'start_date': '2019-06-01'})
@@ -341,14 +340,14 @@ class TestDag(unittest.TestCase):
         """
         dag = DAG('DAG', default_args={'start_date': '2019-06-05T00:00:00+05:00',
                                        'end_date': '2019-06-05T00:00:00'})
-        self.assertEqual(dag.default_args['start_date'], dag.default_args['end_date'])
-        self.assertEqual(dag.default_args['start_date'].tzinfo, dag.default_args['end_date'].tzinfo)
+        assert dag.default_args['start_date'] == dag.default_args['end_date']
+        assert dag.default_args['start_date'].tzinfo == dag.default_args['end_date'].tzinfo
 
     def test_dag_naive_default_args_start_date(self):
         dag = DAG('DAG', default_args={'start_date': datetime.datetime(2018, 1, 1)})
-        self.assertEqual(dag.timezone, settings.TIMEZONE)
+        assert dag.timezone == settings.TIMEZONE
         dag = DAG('DAG', start_date=datetime.datetime(2018, 1, 1))
-        self.assertEqual(dag.timezone, settings.TIMEZONE)
+        assert dag.timezone == settings.TIMEZONE
 
     def test_dag_none_default_args_start_date(self):
         """
@@ -356,7 +355,7 @@ class TestDag(unittest.TestCase):
         works.
         """
         dag = DAG('DAG', default_args={'start_date': None})
-        self.assertEqual(dag.timezone, settings.TIMEZONE)
+        assert dag.timezone == settings.TIMEZONE
 
     def test_dag_task_priority_weight_total(self):
         width = 5
@@ -387,7 +386,7 @@ class TestDag(unittest.TestCase):
                 correct_weight = ((depth - (task_depth + 1)) * width + 1) * weight
 
                 calculated_weight = task.priority_weight_total
-                self.assertEqual(calculated_weight, correct_weight)
+                assert calculated_weight == correct_weight
 
     def test_dag_task_priority_weight_total_using_upstream(self):
         # Same test as above except use 'upstream' for weight calculation
@@ -417,7 +416,7 @@ class TestDag(unittest.TestCase):
                 correct_weight = (task_depth * width + 1) * weight
 
                 calculated_weight = task.priority_weight_total
-                self.assertEqual(calculated_weight, correct_weight)
+                assert calculated_weight == correct_weight
 
     def test_dag_task_priority_weight_total_using_absolute(self):
         # Same test as above except use 'absolute' for weight calculation
@@ -443,12 +442,12 @@ class TestDag(unittest.TestCase):
                 # the sum of each stages after this task + itself
                 correct_weight = weight
                 calculated_weight = task.priority_weight_total
-                self.assertEqual(calculated_weight, correct_weight)
+                assert calculated_weight == correct_weight
 
     def test_dag_task_invalid_weight_rule(self):
         # Test if we enter an invalid weight rule
         with DAG('dag', start_date=DEFAULT_DATE, default_args={'owner': 'owner1'}):
-            with self.assertRaises(AirflowException):
+            with pytest.raises(AirflowException):
                 DummyOperator(task_id='should_fail', weight_rule='no rule')
 
     def test_get_num_task_instances(self):
@@ -473,41 +472,27 @@ class TestDag(unittest.TestCase):
         session.merge(ti4)
         session.commit()
 
-        self.assertEqual(
-            0,
+        assert 0 == \
             DAG.get_num_task_instances(test_dag_id, ['fakename'], session=session)
-        )
-        self.assertEqual(
-            4,
+        assert 4 == \
             DAG.get_num_task_instances(test_dag_id, [test_task_id], session=session)
-        )
-        self.assertEqual(
-            4,
+        assert 4 == \
             DAG.get_num_task_instances(
                 test_dag_id, ['fakename', test_task_id], session=session)
-        )
-        self.assertEqual(
-            1,
+        assert 1 == \
             DAG.get_num_task_instances(
                 test_dag_id, [test_task_id], states=[None], session=session)
-        )
-        self.assertEqual(
-            2,
+        assert 2 == \
             DAG.get_num_task_instances(
                 test_dag_id, [test_task_id], states=[State.RUNNING], session=session)
-        )
-        self.assertEqual(
-            3,
+        assert 3 == \
             DAG.get_num_task_instances(
                 test_dag_id, [test_task_id],
                 states=[None, State.RUNNING], session=session)
-        )
-        self.assertEqual(
-            4,
+        assert 4 == \
             DAG.get_num_task_instances(
                 test_dag_id, [test_task_id],
                 states=[None, State.QUEUED, State.RUNNING], session=session)
-        )
         session.close()
 
     def test_user_defined_filters(self):
@@ -517,8 +502,8 @@ class TestDag(unittest.TestCase):
         dag = models.DAG('test-dag', start_date=DEFAULT_DATE, user_defined_filters={"hello": jinja_udf})
         jinja_env = dag.get_template_env()
 
-        self.assertIn('hello', jinja_env.filters)
-        self.assertEqual(jinja_env.filters['hello'], jinja_udf)
+        assert 'hello' in jinja_env.filters
+        assert jinja_env.filters['hello'] == jinja_udf
 
     def test_resolve_template_files_value(self):
 
@@ -536,7 +521,7 @@ class TestDag(unittest.TestCase):
             task.template_ext = ('.template',)
             task.resolve_template_files()
 
-        self.assertEqual(task.test_field, '{{ ds }}')
+        assert task.test_field == '{{ ds }}'
 
     def test_resolve_template_files_list(self):
 
@@ -554,7 +539,7 @@ class TestDag(unittest.TestCase):
             task.template_ext = ('.template',)
             task.resolve_template_files()
 
-        self.assertEqual(task.test_field, ['{{ ds }}', 'some_string'])
+        assert task.test_field == ['{{ ds }}', 'some_string']
 
     def test_cycle_empty(self):
         # test empty
@@ -563,7 +548,7 @@ class TestDag(unittest.TestCase):
             start_date=DEFAULT_DATE,
             default_args={'owner': 'owner1'})
 
-        self.assertFalse(dag.test_cycle())
+        assert not dag.test_cycle()
 
     def test_cycle_single_task(self):
         # test single task
@@ -575,7 +560,7 @@ class TestDag(unittest.TestCase):
         with dag:
             DummyOperator(task_id='A')
 
-        self.assertFalse(dag.test_cycle())
+        assert not dag.test_cycle()
 
     def test_cycle_no_cycle(self):
         # test no cycle
@@ -599,7 +584,7 @@ class TestDag(unittest.TestCase):
             op2.set_downstream(op4)
             op5.set_downstream(op6)
 
-        self.assertFalse(dag.test_cycle())
+        assert not dag.test_cycle()
 
     def test_cycle_loop(self):
         # test self loop
@@ -613,7 +598,7 @@ class TestDag(unittest.TestCase):
             op1 = DummyOperator(task_id='A')
             op1.set_downstream(op1)
 
-        with self.assertRaises(AirflowDagCycleException):
+        with pytest.raises(AirflowDagCycleException):
             dag.test_cycle()
 
     def test_cycle_downstream_loop(self):
@@ -636,7 +621,7 @@ class TestDag(unittest.TestCase):
             op4.set_downstream(op5)
             op5.set_downstream(op5)
 
-        with self.assertRaises(AirflowDagCycleException):
+        with pytest.raises(AirflowDagCycleException):
             dag.test_cycle()
 
     def test_cycle_large_loop(self):
@@ -659,7 +644,7 @@ class TestDag(unittest.TestCase):
             op4.set_downstream(op5)
             op5.set_downstream(op1)
 
-        with self.assertRaises(AirflowDagCycleException):
+        with pytest.raises(AirflowDagCycleException):
             dag.test_cycle()
 
     def test_cycle_arbitrary_loop(self):
@@ -684,7 +669,7 @@ class TestDag(unittest.TestCase):
             op2.set_downstream(op5)
             op5.set_downstream(op1)
 
-        with self.assertRaises(AirflowDagCycleException):
+        with pytest.raises(AirflowDagCycleException):
             dag.test_cycle()
 
     def test_following_previous_schedule(self):
@@ -694,8 +679,8 @@ class TestDag(unittest.TestCase):
         local_tz = pendulum.timezone('Europe/Zurich')
         start = local_tz.convert(datetime.datetime(2018, 10, 28, 2, 55),
                                  dst_rule=pendulum.PRE_TRANSITION)
-        self.assertEqual(start.isoformat(), "2018-10-28T02:55:00+02:00",
-                         "Pre-condition: start date is in DST")
+        assert start.isoformat() == "2018-10-28T02:55:00+02:00", \
+                         "Pre-condition: start date is in DST"
 
         utc = timezone.convert_to_utc(start)
 
@@ -703,19 +688,19 @@ class TestDag(unittest.TestCase):
         _next = dag.following_schedule(utc)
         next_local = local_tz.convert(_next)
 
-        self.assertEqual(_next.isoformat(), "2018-10-28T01:00:00+00:00")
-        self.assertEqual(next_local.isoformat(), "2018-10-28T02:00:00+01:00")
+        assert _next.isoformat() == "2018-10-28T01:00:00+00:00"
+        assert next_local.isoformat() == "2018-10-28T02:00:00+01:00"
 
         prev = dag.previous_schedule(utc)
         prev_local = local_tz.convert(prev)
 
-        self.assertEqual(prev_local.isoformat(), "2018-10-28T02:50:00+02:00")
+        assert prev_local.isoformat() == "2018-10-28T02:50:00+02:00"
 
         prev = dag.previous_schedule(_next)
         prev_local = local_tz.convert(prev)
 
-        self.assertEqual(prev_local.isoformat(), "2018-10-28T02:55:00+02:00")
-        self.assertEqual(prev, utc)
+        assert prev_local.isoformat() == "2018-10-28T02:55:00+02:00"
+        assert prev == utc
 
     def test_following_previous_schedule_daily_dag_cest_to_cet(self):
         """
@@ -732,20 +717,20 @@ class TestDag(unittest.TestCase):
         prev = dag.previous_schedule(utc)
         prev_local = local_tz.convert(prev)
 
-        self.assertEqual(prev_local.isoformat(), "2018-10-26T03:00:00+02:00")
-        self.assertEqual(prev.isoformat(), "2018-10-26T01:00:00+00:00")
+        assert prev_local.isoformat() == "2018-10-26T03:00:00+02:00"
+        assert prev.isoformat() == "2018-10-26T01:00:00+00:00"
 
         _next = dag.following_schedule(utc)
         next_local = local_tz.convert(_next)
 
-        self.assertEqual(next_local.isoformat(), "2018-10-28T03:00:00+01:00")
-        self.assertEqual(_next.isoformat(), "2018-10-28T02:00:00+00:00")
+        assert next_local.isoformat() == "2018-10-28T03:00:00+01:00"
+        assert _next.isoformat() == "2018-10-28T02:00:00+00:00"
 
         prev = dag.previous_schedule(_next)
         prev_local = local_tz.convert(prev)
 
-        self.assertEqual(prev_local.isoformat(), "2018-10-27T03:00:00+02:00")
-        self.assertEqual(prev.isoformat(), "2018-10-27T01:00:00+00:00")
+        assert prev_local.isoformat() == "2018-10-27T03:00:00+02:00"
+        assert prev.isoformat() == "2018-10-27T01:00:00+00:00"
 
     def test_following_previous_schedule_daily_dag_cet_to_cest(self):
         """
@@ -762,20 +747,20 @@ class TestDag(unittest.TestCase):
         prev = dag.previous_schedule(utc)
         prev_local = local_tz.convert(prev)
 
-        self.assertEqual(prev_local.isoformat(), "2018-03-24T03:00:00+01:00")
-        self.assertEqual(prev.isoformat(), "2018-03-24T02:00:00+00:00")
+        assert prev_local.isoformat() == "2018-03-24T03:00:00+01:00"
+        assert prev.isoformat() == "2018-03-24T02:00:00+00:00"
 
         _next = dag.following_schedule(utc)
         next_local = local_tz.convert(_next)
 
-        self.assertEqual(next_local.isoformat(), "2018-03-25T03:00:00+02:00")
-        self.assertEqual(_next.isoformat(), "2018-03-25T01:00:00+00:00")
+        assert next_local.isoformat() == "2018-03-25T03:00:00+02:00"
+        assert _next.isoformat() == "2018-03-25T01:00:00+00:00"
 
         prev = dag.previous_schedule(_next)
         prev_local = local_tz.convert(prev)
 
-        self.assertEqual(prev_local.isoformat(), "2018-03-24T03:00:00+01:00")
-        self.assertEqual(prev.isoformat(), "2018-03-24T02:00:00+00:00")
+        assert prev_local.isoformat() == "2018-03-24T03:00:00+01:00"
+        assert prev.isoformat() == "2018-03-24T02:00:00+00:00"
 
     def test_bulk_sync_to_db(self):
         clear_db_dags()
@@ -786,19 +771,15 @@ class TestDag(unittest.TestCase):
         with assert_queries_count(3):
             DAG.bulk_sync_to_db(dags)
         with create_session() as session:
-            self.assertEqual(
-                {'dag-bulk-sync-0', 'dag-bulk-sync-1', 'dag-bulk-sync-2', 'dag-bulk-sync-3'},
+            assert {'dag-bulk-sync-0', 'dag-bulk-sync-1', 'dag-bulk-sync-2', 'dag-bulk-sync-3'} == \
                 {row[0] for row in session.query(DagModel.dag_id).all()}
-            )
-            self.assertEqual(
-                {
+            assert {
                     ('dag-bulk-sync-0', 'test-dag'),
                     ('dag-bulk-sync-1', 'test-dag'),
                     ('dag-bulk-sync-2', 'test-dag'),
                     ('dag-bulk-sync-3', 'test-dag'),
-                },
+                } == \
                 set(session.query(DagTag.dag_id, DagTag.name).all())
-            )
         # Re-sync should do fewer queries
         with assert_queries_count(2):
             DAG.bulk_sync_to_db(dags)
@@ -810,12 +791,9 @@ class TestDag(unittest.TestCase):
         with assert_queries_count(3):
             DAG.bulk_sync_to_db(dags)
         with create_session() as session:
-            self.assertEqual(
-                {'dag-bulk-sync-0', 'dag-bulk-sync-1', 'dag-bulk-sync-2', 'dag-bulk-sync-3'},
+            assert {'dag-bulk-sync-0', 'dag-bulk-sync-1', 'dag-bulk-sync-2', 'dag-bulk-sync-3'} == \
                 {row[0] for row in session.query(DagModel.dag_id).all()}
-            )
-            self.assertEqual(
-                {
+            assert {
                     ('dag-bulk-sync-0', 'test-dag'),
                     ('dag-bulk-sync-0', 'test-dag2'),
                     ('dag-bulk-sync-1', 'test-dag'),
@@ -824,28 +802,23 @@ class TestDag(unittest.TestCase):
                     ('dag-bulk-sync-2', 'test-dag2'),
                     ('dag-bulk-sync-3', 'test-dag'),
                     ('dag-bulk-sync-3', 'test-dag2'),
-                },
+                } == \
                 set(session.query(DagTag.dag_id, DagTag.name).all())
-            )
         # Removing tags
         for dag in dags:
             dag.tags.remove("test-dag")
         with assert_queries_count(3):
             DAG.bulk_sync_to_db(dags)
         with create_session() as session:
-            self.assertEqual(
-                {'dag-bulk-sync-0', 'dag-bulk-sync-1', 'dag-bulk-sync-2', 'dag-bulk-sync-3'},
+            assert {'dag-bulk-sync-0', 'dag-bulk-sync-1', 'dag-bulk-sync-2', 'dag-bulk-sync-3'} == \
                 {row[0] for row in session.query(DagModel.dag_id).all()}
-            )
-            self.assertEqual(
-                {
+            assert {
                     ('dag-bulk-sync-0', 'test-dag2'),
                     ('dag-bulk-sync-1', 'test-dag2'),
                     ('dag-bulk-sync-2', 'test-dag2'),
                     ('dag-bulk-sync-3', 'test-dag2'),
-                },
+                } == \
                 set(session.query(DagTag.dag_id, DagTag.name).all())
-            )
 
     @patch('airflow.models.dag.timezone.utcnow')
     def test_sync_to_db(self, mock_now):
@@ -870,21 +843,21 @@ class TestDag(unittest.TestCase):
         dag.sync_to_db(session=session)
 
         orm_dag = session.query(DagModel).filter(DagModel.dag_id == 'dag').one()
-        self.assertEqual(set(orm_dag.owners.split(', ')), {'owner1', 'owner2'})
-        self.assertEqual(orm_dag.last_scheduler_run, now)
-        self.assertTrue(orm_dag.is_active)
-        self.assertIsNotNone(orm_dag.default_view)
-        self.assertEqual(orm_dag.default_view,
-                         conf.get('webserver', 'dag_default_view').lower())
-        self.assertEqual(orm_dag.safe_dag_id, 'dag')
+        assert set(orm_dag.owners.split(', ')) == {'owner1', 'owner2'}
+        assert orm_dag.last_scheduler_run == now
+        assert orm_dag.is_active
+        assert orm_dag.default_view is not None
+        assert orm_dag.default_view == \
+                         conf.get('webserver', 'dag_default_view').lower()
+        assert orm_dag.safe_dag_id == 'dag'
 
         orm_subdag = session.query(DagModel).filter(
             DagModel.dag_id == 'dag.subtask').one()
-        self.assertEqual(set(orm_subdag.owners.split(', ')), {'owner1', 'owner2'})
-        self.assertEqual(orm_subdag.last_scheduler_run, now)
-        self.assertTrue(orm_subdag.is_active)
-        self.assertEqual(orm_subdag.safe_dag_id, 'dag__dot__subtask')
-        self.assertEqual(orm_subdag.fileloc, orm_dag.fileloc)
+        assert set(orm_subdag.owners.split(', ')) == {'owner1', 'owner2'}
+        assert orm_subdag.last_scheduler_run == now
+        assert orm_subdag.is_active
+        assert orm_subdag.safe_dag_id == 'dag__dot__subtask'
+        assert orm_subdag.fileloc == orm_dag.fileloc
         session.close()
 
     @patch('airflow.models.dag.timezone.utcnow')
@@ -910,8 +883,8 @@ class TestDag(unittest.TestCase):
         dag.sync_to_db(session=session)
 
         orm_dag = session.query(DagModel).filter(DagModel.dag_id == 'dag').one()
-        self.assertIsNotNone(orm_dag.default_view)
-        self.assertEqual(orm_dag.default_view, "graph")
+        assert orm_dag.default_view is not None
+        assert orm_dag.default_view == "graph"
         session.close()
 
     @patch('airflow.models.dag.DagBag')
@@ -951,7 +924,7 @@ class TestDag(unittest.TestCase):
             DagModel.is_paused.is_(False)
         ).count()
 
-        self.assertEqual(2, unpaused_dags)
+        assert 2 == unpaused_dags
 
         DagModel.get_dagmodel(dag.dag_id).set_is_paused(is_paused=True)
 
@@ -963,7 +936,7 @@ class TestDag(unittest.TestCase):
             DagModel.is_paused.is_(True)
         ).count()
 
-        self.assertEqual(2, paused_dags)
+        assert 2 == paused_dags
         session.close()
 
     def test_existing_dag_is_paused_upon_creation(self):
@@ -971,7 +944,7 @@ class TestDag(unittest.TestCase):
             'dag_paused'
         )
         dag.sync_to_db()
-        self.assertFalse(dag.is_paused)
+        assert not dag.is_paused
 
         dag = DAG(
             'dag_paused',
@@ -979,7 +952,7 @@ class TestDag(unittest.TestCase):
         )
         dag.sync_to_db()
         # Since the dag existed before, it should not follow the pause flag upon creation
-        self.assertFalse(dag.is_paused)
+        assert not dag.is_paused
 
     def test_new_dag_is_paused_upon_creation(self):
         dag = DAG(
@@ -991,7 +964,7 @@ class TestDag(unittest.TestCase):
 
         orm_dag = session.query(DagModel).filter(DagModel.dag_id == 'new_nonexisting_dag').one()
         # Since the dag didn't exist before, it should follow the pause flag upon creation
-        self.assertTrue(orm_dag.is_paused)
+        assert orm_dag.is_paused
         session.close()
 
     def test_dag_is_deactivated_upon_dagfile_deletion(self):
@@ -1007,13 +980,13 @@ class TestDag(unittest.TestCase):
 
         orm_dag = session.query(DagModel).filter(DagModel.dag_id == dag_id).one()
 
-        self.assertTrue(orm_dag.is_active)
-        self.assertEqual(orm_dag.fileloc, dag_fileloc)
+        assert orm_dag.is_active
+        assert orm_dag.fileloc == dag_fileloc
 
         DagModel.deactivate_deleted_dags(list_py_file_paths(settings.DAGS_FOLDER))
 
         orm_dag = session.query(DagModel).filter(DagModel.dag_id == dag_id).one()
-        self.assertFalse(orm_dag.is_active)
+        assert not orm_dag.is_active
 
         # CleanUp
         session.execute(DagModel.__table__.delete().where(DagModel.dag_id == dag_id))
@@ -1024,10 +997,10 @@ class TestDag(unittest.TestCase):
         default_args = {'start_date': datetime.datetime(2018, 1, 1, tzinfo=local_tz)}
 
         dag = DAG('DAG', default_args=default_args)
-        self.assertEqual(dag.timezone.name, local_tz.name)
+        assert dag.timezone.name == local_tz.name
 
         dag = DAG('DAG', default_args=default_args)
-        self.assertEqual(dag.timezone.name, local_tz.name)
+        assert dag.timezone.name == local_tz.name
 
     def test_roots(self):
         """Verify if dag.roots returns the root tasks of a DAG."""
@@ -1066,21 +1039,19 @@ class TestDag(unittest.TestCase):
                 stdout = stdout.getvalue()
 
             stdout_lines = stdout.split("\n")
-            self.assertIn('t1', stdout_lines[0])
-            self.assertIn('t2', stdout_lines[1])
-            self.assertIn('t3', stdout_lines[2])
+            assert 't1' in stdout_lines[0]
+            assert 't2' in stdout_lines[1]
+            assert 't3' in stdout_lines[2]
 
     def test_duplicate_task_ids_not_allowed_with_dag_context_manager(self):
         """Verify tasks with Duplicate task_id raises error"""
-        with self.assertRaisesRegex(
-            DuplicateTaskIdFound, "Task id 't1' has already been added to the DAG"
-        ):
+        with pytest.raises(DuplicateTaskIdFound, match="Task id 't1' has already been added to the DAG"):
             with DAG("test_dag", start_date=DEFAULT_DATE) as dag:
                 op1 = DummyOperator(task_id="t1")
                 op2 = BashOperator(task_id="t1", bash_command="sleep 1")
                 op1 >> op2
 
-        self.assertEqual(dag.task_dict, {op1.task_id: op1})
+        assert dag.task_dict == {op1.task_id: op1}
 
         # Also verify that DAGs with duplicate task_ids don't raise errors
         with DAG("test_dag_1", start_date=DEFAULT_DATE) as dag1:
@@ -1088,19 +1059,17 @@ class TestDag(unittest.TestCase):
             op4 = BashOperator(task_id="t4", bash_command="sleep 1")
             op3 >> op4
 
-        self.assertEqual(dag1.task_dict, {op3.task_id: op3, op4.task_id: op4})
+        assert dag1.task_dict == {op3.task_id: op3, op4.task_id: op4}
 
     def test_duplicate_task_ids_not_allowed_without_dag_context_manager(self):
         """Verify tasks with Duplicate task_id raises error"""
-        with self.assertRaisesRegex(
-            DuplicateTaskIdFound, "Task id 't1' has already been added to the DAG"
-        ):
+        with pytest.raises(DuplicateTaskIdFound, match="Task id 't1' has already been added to the DAG"):
             dag = DAG("test_dag", start_date=DEFAULT_DATE)
             op1 = DummyOperator(task_id="t1", dag=dag)
             op2 = BashOperator(task_id="t1", bash_command="sleep 1", dag=dag)
             op1 >> op2
 
-        self.assertEqual(dag.task_dict, {op1.task_id: op1})
+        assert dag.task_dict == {op1.task_id: op1}
 
         # Also verify that DAGs with duplicate task_ids don't raise errors
         dag1 = DAG("test_dag_1", start_date=DEFAULT_DATE)
@@ -1108,7 +1077,7 @@ class TestDag(unittest.TestCase):
         op4 = DummyOperator(task_id="t4", dag=dag1)
         op3 >> op4
 
-        self.assertEqual(dag1.task_dict, {op3.task_id: op3, op4.task_id: op4})
+        assert dag1.task_dict == {op3.task_id: op3, op4.task_id: op4}
 
     def test_duplicate_task_ids_for_same_task_is_allowed(self):
         """Verify that same tasks with Duplicate task_id do not raise error"""
@@ -1118,9 +1087,9 @@ class TestDag(unittest.TestCase):
             op1 >> op3
             op2 >> op3
 
-        self.assertEqual(op1, op2)
-        self.assertEqual(dag.task_dict, {op1.task_id: op1, op3.task_id: op3})
-        self.assertEqual(dag.task_dict, {op2.task_id: op2, op3.task_id: op3})
+        assert op1 == op2
+        assert dag.task_dict == {op1.task_id: op1, op3.task_id: op3}
+        assert dag.task_dict == {op2.task_id: op2, op3.task_id: op3}
 
     def test_sub_dag_updates_all_references_while_deepcopy(self):
         with DAG("test_dag", start_date=DEFAULT_DATE) as dag:
@@ -1131,7 +1100,7 @@ class TestDag(unittest.TestCase):
             op2 >> op3
 
         sub_dag = dag.sub_dag('t2', include_upstream=True, include_downstream=False)
-        self.assertEqual(id(sub_dag.task_dict['t1'].downstream_list[0].dag), id(sub_dag))
+        assert id(sub_dag.task_dict['t1'].downstream_list[0].dag) == id(sub_dag)
 
     def test_schedule_dag_no_previous_runs(self):
         """
@@ -1146,18 +1115,16 @@ class TestDag(unittest.TestCase):
 
         dag_file_processor = DagFileProcessor(dag_ids=[], log=mock.MagicMock())
         dag_run = dag_file_processor.create_dag_run(dag)
-        self.assertIsNotNone(dag_run)
-        self.assertEqual(dag.dag_id, dag_run.dag_id)
-        self.assertIsNotNone(dag_run.run_id)
-        self.assertNotEqual('', dag_run.run_id)
-        self.assertEqual(
-            datetime_tz(2015, 1, 2, 0, 0),
-            dag_run.execution_date,
-            msg='dag_run.execution_date did not match expectation: {0}'
+        assert dag_run is not None
+        assert dag.dag_id == dag_run.dag_id
+        assert dag_run.run_id is not None
+        assert '' != dag_run.run_id
+        assert datetime_tz(2015, 1, 2, 0, 0) == \
+            dag_run.execution_date, \
+            'dag_run.execution_date did not match expectation: {0}' \
             .format(dag_run.execution_date)
-        )
-        self.assertEqual(State.RUNNING, dag_run.state)
-        self.assertFalse(dag_run.external_trigger)
+        assert State.RUNNING == dag_run.state
+        assert not dag_run.external_trigger
         dag.clear()
         self._clean_up(dag_id)
 
@@ -1176,31 +1143,27 @@ class TestDag(unittest.TestCase):
 
         dag_file_processor = DagFileProcessor(dag_ids=[], log=mock.MagicMock())
         dag_run = dag_file_processor.create_dag_run(dag)
-        self.assertIsNotNone(dag_run)
-        self.assertEqual(dag.dag_id, dag_run.dag_id)
-        self.assertIsNotNone(dag_run.run_id)
-        self.assertNotEqual('', dag_run.run_id)
-        self.assertEqual(
-            datetime_tz(2015, 1, 2, 0, 0),
-            dag_run.execution_date,
-            msg='dag_run.execution_date did not match expectation: {0}'
+        assert dag_run is not None
+        assert dag.dag_id == dag_run.dag_id
+        assert dag_run.run_id is not None
+        assert '' != dag_run.run_id
+        assert datetime_tz(2015, 1, 2, 0, 0) == \
+            dag_run.execution_date, \
+            'dag_run.execution_date did not match expectation: {0}' \
             .format(dag_run.execution_date)
-        )
-        self.assertEqual(State.RUNNING, dag_run.state)
-        self.assertFalse(dag_run.external_trigger)
+        assert State.RUNNING == dag_run.state
+        assert not dag_run.external_trigger
         dag_run2 = dag_file_processor.create_dag_run(dag)
-        self.assertIsNotNone(dag_run2)
-        self.assertEqual(dag.dag_id, dag_run2.dag_id)
-        self.assertIsNotNone(dag_run2.run_id)
-        self.assertNotEqual('', dag_run2.run_id)
-        self.assertEqual(
-            datetime_tz(2015, 1, 2, 0, 0) + delta,
-            dag_run2.execution_date,
-            msg='dag_run2.execution_date did not match expectation: {0}'
+        assert dag_run2 is not None
+        assert dag.dag_id == dag_run2.dag_id
+        assert dag_run2.run_id is not None
+        assert '' != dag_run2.run_id
+        assert datetime_tz(2015, 1, 2, 0, 0) + delta == \
+            dag_run2.execution_date, \
+            'dag_run2.execution_date did not match expectation: {0}' \
             .format(dag_run2.execution_date)
-        )
-        self.assertEqual(State.RUNNING, dag_run2.state)
-        self.assertFalse(dag_run2.external_trigger)
+        assert State.RUNNING == dag_run2.state
+        assert not dag_run2.external_trigger
         dag.clear()
         self._clean_up(dag_id)
 
@@ -1226,18 +1189,16 @@ class TestDag(unittest.TestCase):
                           state=State.SUCCESS,
                           external_trigger=True)
         dag_run = dag_file_processor.create_dag_run(dag)
-        self.assertIsNotNone(dag_run)
-        self.assertEqual(dag.dag_id, dag_run.dag_id)
-        self.assertIsNotNone(dag_run.run_id)
-        self.assertNotEqual('', dag_run.run_id)
-        self.assertEqual(
-            DEFAULT_DATE + delta,
-            dag_run.execution_date,
-            msg='dag_run.execution_date did not match expectation: {0}'
+        assert dag_run is not None
+        assert dag.dag_id == dag_run.dag_id
+        assert dag_run.run_id is not None
+        assert '' != dag_run.run_id
+        assert DEFAULT_DATE + delta == \
+            dag_run.execution_date, \
+            'dag_run.execution_date did not match expectation: {0}' \
             .format(dag_run.execution_date)
-        )
-        self.assertEqual(State.RUNNING, dag_run.state)
-        self.assertFalse(dag_run.external_trigger)
+        assert State.RUNNING == dag_run.state
+        assert not dag_run.external_trigger
         self._clean_up(dag_id)
 
     def test_schedule_dag_once(self):
@@ -1255,8 +1216,8 @@ class TestDag(unittest.TestCase):
         dag_run = DagFileProcessor(dag_ids=[], log=mock.MagicMock()).create_dag_run(dag)
         dag_run2 = DagFileProcessor(dag_ids=[], log=mock.MagicMock()).create_dag_run(dag)
 
-        self.assertIsNotNone(dag_run)
-        self.assertIsNone(dag_run2)
+        assert dag_run is not None
+        assert dag_run2 is None
         dag.clear()
         self._clean_up(dag_id)
 
@@ -1284,10 +1245,10 @@ class TestDag(unittest.TestCase):
 
         run.refresh_from_db()
 
-        self.assertEqual(start_date, run.execution_date,
-                         "dag run execution_date loses precision")
-        self.assertEqual(start_date, run.start_date,
-                         "dag run start_date loses precision ")
+        assert start_date == run.execution_date, \
+                         "dag run execution_date loses precision"
+        assert start_date == run.start_date, \
+                         "dag run start_date loses precision "
         self._clean_up(dag_id)
 
     def test_schedule_dag_start_end_dates(self):
@@ -1315,9 +1276,9 @@ class TestDag(unittest.TestCase):
         additional_dag_run = dag_file_processor.create_dag_run(dag)
 
         for dag_run in dag_runs:
-            self.assertIsNotNone(dag_run)
+            assert dag_run is not None
 
-        self.assertIsNone(additional_dag_run)
+        assert additional_dag_run is None
         self._clean_up(dag_id)
 
     def test_schedule_dag_no_end_date_up_to_today_only(self):
@@ -1356,9 +1317,9 @@ class TestDag(unittest.TestCase):
         additional_dag_run = dag_file_processor.create_dag_run(dag)
 
         for dag_run in dag_runs:
-            self.assertIsNotNone(dag_run)
+            assert dag_run is not None
 
-        self.assertIsNone(additional_dag_run)
+        assert additional_dag_run is None
         self._clean_up(dag_id)
 
     def test_pickling(self):
@@ -1366,7 +1327,7 @@ class TestDag(unittest.TestCase):
         args = {'owner': 'airflow', 'start_date': DEFAULT_DATE}
         dag = DAG(test_dag_id, default_args=args)
         dag_pickle = dag.pickle()
-        self.assertEqual(dag_pickle.pickle.dag_id, dag.dag_id)
+        assert dag_pickle.pickle.dag_id == dag.dag_id
 
     def test_rich_comparison_ops(self):
         test_dag_id = 'test_rich_comparison_ops'
@@ -1390,42 +1351,42 @@ class TestDag(unittest.TestCase):
             dag_.last_loaded = dag.last_loaded
 
         # test identity equality
-        self.assertEqual(dag, dag)
+        assert dag == dag
 
         # test dag (in)equality based on _comps
-        self.assertEqual(dag_eq, dag)
-        self.assertNotEqual(dag_diff_name, dag)
-        self.assertNotEqual(dag_diff_load_time, dag)
+        assert dag_eq == dag
+        assert dag_diff_name != dag
+        assert dag_diff_load_time != dag
 
         # test dag inequality based on type even if _comps happen to match
-        self.assertNotEqual(dag_subclass, dag)
+        assert dag_subclass != dag
 
         # a dag should equal an unpickled version of itself
         dump = pickle.dumps(dag)
-        self.assertEqual(pickle.loads(dump), dag)
+        assert pickle.loads(dump) == dag
 
         # dags are ordered based on dag_id no matter what the type is
-        self.assertLess(dag, dag_diff_name)
-        self.assertGreater(dag, dag_diff_load_time)
-        self.assertLess(dag, dag_subclass_diff_name)
+        assert dag < dag_diff_name
+        assert dag > dag_diff_load_time
+        assert dag < dag_subclass_diff_name
 
         # greater than should have been created automatically by functools
-        self.assertGreater(dag_diff_name, dag)
+        assert dag_diff_name > dag
 
         # hashes are non-random and match equality
-        self.assertEqual(hash(dag), hash(dag))
-        self.assertEqual(hash(dag_eq), hash(dag))
-        self.assertNotEqual(hash(dag_diff_name), hash(dag))
-        self.assertNotEqual(hash(dag_subclass), hash(dag))
+        assert hash(dag) == hash(dag)
+        assert hash(dag_eq) == hash(dag)
+        assert hash(dag_diff_name) != hash(dag)
+        assert hash(dag_subclass) != hash(dag)
 
     def test_get_paused_dag_ids(self):
         dag_id = "test_get_paused_dag_ids"
         dag = DAG(dag_id, is_paused_upon_creation=True)
         dag.sync_to_db()
-        self.assertIsNotNone(DagModel.get_dagmodel(dag_id))
+        assert DagModel.get_dagmodel(dag_id) is not None
 
         paused_dag_ids = DagModel.get_paused_dag_ids([dag_id])
-        self.assertEqual(paused_dag_ids, {dag_id})
+        assert paused_dag_ids == {dag_id}
 
         with create_session() as session:
             session.query(DagModel).filter(

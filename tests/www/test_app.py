@@ -29,17 +29,17 @@ class TestApp(unittest.TestCase):
     @conf_vars({('webserver', 'enable_proxy_fix'): 'False'})
     def test_constructor_no_proxyfix(self):
         app, _ = application.create_app(session=Session, testing=True)
-        self.assertFalse(isinstance(app.wsgi_app, ProxyFix))
+        assert not isinstance(app.wsgi_app, ProxyFix)
 
     @conf_vars({('webserver', 'enable_proxy_fix'): 'True'})
     def test_constructor_proxyfix(self):
         app, _ = application.create_app(session=Session, testing=True)
-        self.assertTrue(isinstance(app.wsgi_app, ProxyFix))
-        self.assertEqual(app.wsgi_app.x_for, 1)
-        self.assertEqual(app.wsgi_app.x_proto, 1)
-        self.assertEqual(app.wsgi_app.x_host, 1)
-        self.assertEqual(app.wsgi_app.x_port, 1)
-        self.assertEqual(app.wsgi_app.x_prefix, 1)
+        assert isinstance(app.wsgi_app, ProxyFix)
+        assert app.wsgi_app.x_for == 1
+        assert app.wsgi_app.x_proto == 1
+        assert app.wsgi_app.x_host == 1
+        assert app.wsgi_app.x_port == 1
+        assert app.wsgi_app.x_prefix == 1
 
     @conf_vars({('webserver', 'enable_proxy_fix'): 'True',
                 ('webserver', 'proxy_fix_x_for'): '3',
@@ -49,9 +49,9 @@ class TestApp(unittest.TestCase):
                 ('webserver', 'proxy_fix_x_prefix'): '7'})
     def test_constructor_proxyfix_args(self):
         app, _ = application.create_app(session=Session, testing=True)
-        self.assertTrue(isinstance(app.wsgi_app, ProxyFix))
-        self.assertEqual(app.wsgi_app.x_for, 3)
-        self.assertEqual(app.wsgi_app.x_proto, 4)
-        self.assertEqual(app.wsgi_app.x_host, 5)
-        self.assertEqual(app.wsgi_app.x_port, 6)
-        self.assertEqual(app.wsgi_app.x_prefix, 7)
+        assert isinstance(app.wsgi_app, ProxyFix)
+        assert app.wsgi_app.x_for == 3
+        assert app.wsgi_app.x_proto == 4
+        assert app.wsgi_app.x_host == 5
+        assert app.wsgi_app.x_port == 6
+        assert app.wsgi_app.x_prefix == 7

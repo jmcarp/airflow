@@ -44,24 +44,24 @@ class TestMsSqlToHiveTransfer(unittest.TestCase):
         mapped_type = MsSqlToHiveTransfer(
             **self.kwargs).type_map(pymssql.BINARY.value)  # pylint: disable=c-extension-no-member
 
-        self.assertEqual(mapped_type, 'INT')
+        assert mapped_type == 'INT'
 
     def test_type_map_decimal(self):
         mapped_type = MsSqlToHiveTransfer(
             **self.kwargs).type_map(pymssql.DECIMAL.value)  # pylint: disable=c-extension-no-member
 
-        self.assertEqual(mapped_type, 'FLOAT')
+        assert mapped_type == 'FLOAT'
 
     def test_type_map_number(self):
         mapped_type = MsSqlToHiveTransfer(
             **self.kwargs).type_map(pymssql.NUMBER.value)  # pylint: disable=c-extension-no-member
 
-        self.assertEqual(mapped_type, 'INT')
+        assert mapped_type == 'INT'
 
     def test_type_map_string(self):
         mapped_type = MsSqlToHiveTransfer(**self.kwargs).type_map(None)
 
-        self.assertEqual(mapped_type, 'STRING')
+        assert mapped_type == 'STRING'
 
     @patch('airflow.providers.apache.hive.operators.mssql_to_hive.csv')
     @patch('airflow.providers.apache.hive.operators.mssql_to_hive.NamedTemporaryFile')

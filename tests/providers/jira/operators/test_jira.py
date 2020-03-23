@@ -75,8 +75,8 @@ class TestJiraOperator(unittest.TestCase):
         jira_ticket_search_operator.run(start_date=DEFAULT_DATE,
                                         end_date=DEFAULT_DATE, ignore_ti_state=True)
 
-        self.assertTrue(jira_mock.called)
-        self.assertTrue(jira_mock.return_value.search_issues.called)
+        assert jira_mock.called
+        assert jira_mock.return_value.search_issues.called
 
     @patch("airflow.providers.jira.hooks.jira.JIRA",
            autospec=True, return_value=jira_client_mock)
@@ -94,8 +94,8 @@ class TestJiraOperator(unittest.TestCase):
         add_comment_operator.run(start_date=DEFAULT_DATE,
                                  end_date=DEFAULT_DATE, ignore_ti_state=True)
 
-        self.assertTrue(jira_mock.called)
-        self.assertTrue(jira_mock.return_value.add_comment.called)
+        assert jira_mock.called
+        assert jira_mock.return_value.add_comment.called
 
 
 if __name__ == '__main__':

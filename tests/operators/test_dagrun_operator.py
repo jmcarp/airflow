@@ -40,103 +40,73 @@ DAG_SCRIPT = (
     ")\n"
     'task = DummyOperator(task_id="test", dag=dag)'
 ).format(dag_id=TRIGGERED_DAG_ID)
-
-
-class TestDagRunOperator(TestCase):
-    def setUp(self):
+def setUp(self):
         # Airflow relies on reading the DAG from disk when triggering it.
         # Therefore write a temp file holding the DAG to trigger.
-        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
-            self._tmpfile = f.name
-            f.write(DAG_SCRIPT)
-            f.flush()
+    with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
+        self._tmpfile = f.name
+        f.write(DAG_SCRIPT)
+        f.flush()
 
         with create_session() as session:
-            session.add(DagModel(dag_id=TRIGGERED_DAG_ID, fileloc=self._tmpfile))
-            session.commit()
+        session.add(DagModel(dag_id=TRIGGERED_DAG_ID, fileloc=self._tmpfile))
+        session.commit()
 
         self.dag = DAG(TEST_DAG_ID, default_args={"owner": "airflow", "start_date": DEFAULT_DATE})
 
     def tearDown(self):
-        """Cleanup state after testing in DB."""
-        with create_session() as session:
-            session.query(Log).filter(Log.dag_id == TEST_DAG_ID).delete(synchronize_session=False)
-            for dbmodel in [DagModel, DagRun, TaskInstance]:
-                session.query(dbmodel).filter(dbmodel.dag_id == TRIGGERED_DAG_ID).delete(
-                    synchronize_session=False
-                )
+    """Cleanup state after testing in DB."""
+    with create_session() as session:
+        session.query(Log).filter(Log.dag_id == TEST_DAG_ID).delete(synchronize_session=False)
+        for dbmodel in [DagModel, DagRun, TaskInstance]:
+            session.query(dbmodel).filter(dbmodel.dag_id == TRIGGERED_DAG_ID).delete(            synchronize_session=False            )
 
         pathlib.Path(self._tmpfile).unlink()
 
     def test_trigger_dagrun(self):
-        """Test TriggerDagRunOperator."""
-        task = TriggerDagRunOperator(task_id="test_task", trigger_dag_id=TRIGGERED_DAG_ID, dag=self.dag)
-        task.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE, ignore_ti_state=True)
-
-        with create_session() as session:
-            dagruns = session.query(DagRun).filter(DagRun.dag_id == TRIGGERED_DAG_ID).all()
-            self.assertEqual(len(dagruns), 1)
-            self.assertTrue(dagruns[0].external_trigger)
+    """Test TriggerDagRunOperator."""
+    task = TriggerDagRunOperator(task_id="test_task", trigger_dag_id=TRIGGERED_DAG_ID, dag=self.dag)
+    task.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE, ignore_ti_state=True)
+    with create_session() as session:
+        dagruns = session.query(DagRun).filter(DagRun.dag_id == TRIGGERED_DAG_ID).all()
+        assert len(dagruns) == 1
+        assert dagruns[0].external_trigger
 
     def test_trigger_dagrun_with_execution_date(self):
-        """Test TriggerDagRunOperator with custom execution_date."""
-        utc_now = timezone.utcnow()
-        task = TriggerDagRunOperator(
-            task_id="test_trigger_dagrun_with_execution_date",
-            trigger_dag_id=TRIGGERED_DAG_ID,
-            execution_date=utc_now,
-            dag=self.dag,
-        )
-        task.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE, ignore_ti_state=True)
-
-        with create_session() as session:
-            dagruns = session.query(DagRun).filter(DagRun.dag_id == TRIGGERED_DAG_ID).all()
-            self.assertEqual(len(dagruns), 1)
-            self.assertTrue(dagruns[0].external_trigger)
-            self.assertEqual(dagruns[0].execution_date, utc_now)
+    """Test TriggerDagRunOperator with custom execution_date."""
+    utc_now = timezone.utcnow()
+    task = TriggerDagRunOperator(    task_id="test_trigger_dagrun_with_execution_date",    trigger_dag_id=TRIGGERED_DAG_ID,    execution_date=utc_now,    dag=self.dag,    )
+    task.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE, ignore_ti_state=True)
+    with create_session() as session:
+        dagruns = session.query(DagRun).filter(DagRun.dag_id == TRIGGERED_DAG_ID).all()
+        assert len(dagruns) == 1
+        assert dagruns[0].external_trigger
+        assert dagruns[0].execution_date == utc_now
 
     def test_trigger_dagrun_with_templated_execution_date(self):
-        """Test TriggerDagRunOperator with templated execution_date."""
-        task = TriggerDagRunOperator(
-            task_id="test_trigger_dagrun_with_str_execution_date",
-            trigger_dag_id=TRIGGERED_DAG_ID,
-            execution_date="{{ execution_date }}",
-            dag=self.dag,
-        )
-        task.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE, ignore_ti_state=True)
-
-        with create_session() as session:
-            dagruns = session.query(DagRun).filter(DagRun.dag_id == TRIGGERED_DAG_ID).all()
-            self.assertEqual(len(dagruns), 1)
-            self.assertTrue(dagruns[0].external_trigger)
-            self.assertEqual(dagruns[0].execution_date, DEFAULT_DATE)
+    """Test TriggerDagRunOperator with templated execution_date."""
+    task = TriggerDagRunOperator(    task_id="test_trigger_dagrun_with_str_execution_date",    trigger_dag_id=TRIGGERED_DAG_ID,    execution_date="{{ execution_date }}",    dag=self.dag,    )
+    task.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE, ignore_ti_state=True)
+    with create_session() as session:
+        dagruns = session.query(DagRun).filter(DagRun.dag_id == TRIGGERED_DAG_ID).all()
+        assert len(dagruns) == 1
+        assert dagruns[0].external_trigger
+        assert dagruns[0].execution_date == DEFAULT_DATE
 
     def test_trigger_dagrun_operator_conf(self):
-        """Test passing conf to the triggered DagRun."""
-        task = TriggerDagRunOperator(
-            task_id="test_trigger_dagrun_with_str_execution_date",
-            trigger_dag_id=TRIGGERED_DAG_ID,
-            conf={"foo": "bar"},
-            dag=self.dag,
-        )
-        task.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE, ignore_ti_state=True)
-
-        with create_session() as session:
-            dagruns = session.query(DagRun).filter(DagRun.dag_id == TRIGGERED_DAG_ID).all()
-            self.assertEqual(len(dagruns), 1)
-            self.assertTrue(dagruns[0].conf, {"foo": "bar"})
+    """Test passing conf to the triggered DagRun."""
+    task = TriggerDagRunOperator(    task_id="test_trigger_dagrun_with_str_execution_date",    trigger_dag_id=TRIGGERED_DAG_ID,    conf={"foo": "bar"},    dag=self.dag,    )
+    task.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE, ignore_ti_state=True)
+    with create_session() as session:
+        dagruns = session.query(DagRun).filter(DagRun.dag_id == TRIGGERED_DAG_ID).all()
+        assert len(dagruns) == 1
+        assert dagruns[0].conf, {"foo": "bar"}
 
     def test_trigger_dagrun_operator_templated_conf(self):
-        """Test passing a templated conf to the triggered DagRun."""
-        task = TriggerDagRunOperator(
-            task_id="test_trigger_dagrun_with_str_execution_date",
-            trigger_dag_id=TRIGGERED_DAG_ID,
-            conf={"foo": "{{ dag.dag_id }}"},
-            dag=self.dag,
-        )
-        task.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE, ignore_ti_state=True)
-
-        with create_session() as session:
-            dagruns = session.query(DagRun).filter(DagRun.dag_id == TRIGGERED_DAG_ID).all()
-            self.assertEqual(len(dagruns), 1)
-            self.assertTrue(dagruns[0].conf, {"foo": TEST_DAG_ID})
+    """Test passing a templated conf to the triggered DagRun."""
+    task = TriggerDagRunOperator(    task_id="test_trigger_dagrun_with_str_execution_date",    trigger_dag_id=TRIGGERED_DAG_ID,    conf={"foo": "{{ dag.dag_id }}"},    dag=self.dag,    )
+    task.run(start_date=DEFAULT_DATE, end_date=DEFAULT_DATE, ignore_ti_state=True)
+    with create_session() as session:
+        dagruns = session.query(DagRun).filter(DagRun.dag_id == TRIGGERED_DAG_ID).all()
+        assert len(dagruns) == 1
+        assert dagruns[0].conf, {"foo": TEST_DAG_ID}

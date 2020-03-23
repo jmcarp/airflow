@@ -23,6 +23,7 @@ import mock
 from airflow.exceptions import AirflowException
 from airflow.models import Connection
 from airflow.utils import db
+import pytest
 
 try:
     from airflow.providers.docker.hooks.docker import DockerHook
@@ -55,7 +56,7 @@ class TestDockerHook(unittest.TestCase):
         )
 
     def test_init_fails_when_no_base_url_given(self, _):
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             DockerHook(
                 docker_conn_id='docker_default',
                 version='auto',
@@ -63,7 +64,7 @@ class TestDockerHook(unittest.TestCase):
             )
 
     def test_init_fails_when_no_api_version_given(self, _):
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             DockerHook(
                 docker_conn_id='docker_default',
                 base_url='unix://var/run/docker.sock',
@@ -92,7 +93,7 @@ class TestDockerHook(unittest.TestCase):
                 version='auto'
             )
             client = hook.get_conn()
-            self.assertIsNotNone(client)
+            assert client is not None
         except Exception:  # pylint: disable=broad-except
             self.fail('Could not get connection from Airflow')
 
@@ -104,7 +105,7 @@ class TestDockerHook(unittest.TestCase):
                 version='auto'
             )
             client = hook.get_conn()
-            self.assertIsNotNone(client)
+            assert client is not None
         except Exception:  # pylint: disable=broad-except
             self.fail('Could not get connection from Airflow')
 
@@ -148,7 +149,7 @@ class TestDockerHook(unittest.TestCase):
                 extra='{"email": "some@example.com"}'
             )
         )
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             DockerHook(
                 docker_conn_id='docker_without_username',
                 base_url='unix://var/run/docker.sock',
@@ -164,7 +165,7 @@ class TestDockerHook(unittest.TestCase):
                 password='some_p4$$w0rd'
             )
         )
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             DockerHook(
                 docker_conn_id='docker_without_host',
                 base_url='unix://var/run/docker.sock',

@@ -26,6 +26,7 @@ from airflow.models import DAG
 from airflow.settings import Session
 from airflow.utils.state import State
 from airflow.utils.timezone import utcnow
+import pytest
 
 
 class TestSqlAlchemyUtils(unittest.TestCase):
@@ -63,14 +64,14 @@ class TestSqlAlchemyUtils(unittest.TestCase):
             session=self.session,
         )
 
-        self.assertEqual(execution_date, run.execution_date)
-        self.assertEqual(start_date, run.start_date)
+        assert execution_date == run.execution_date
+        assert start_date == run.start_date
 
-        self.assertEqual(execution_date.utcoffset().total_seconds(), 0.0)
-        self.assertEqual(start_date.utcoffset().total_seconds(), 0.0)
+        assert execution_date.utcoffset().total_seconds() == 0.0
+        assert start_date.utcoffset().total_seconds() == 0.0
 
-        self.assertEqual(iso_date, run.run_id)
-        self.assertEqual(run.start_date.isoformat(), run.run_id)
+        assert iso_date == run.run_id
+        assert run.start_date.isoformat() == run.run_id
 
         dag.clear()
 
@@ -85,7 +86,7 @@ class TestSqlAlchemyUtils(unittest.TestCase):
         dag = DAG(dag_id=dag_id, start_date=start_date)
         dag.clear()
 
-        with self.assertRaises((ValueError, StatementError)):
+        with pytest.raises((ValueError, StatementError)):
             dag.create_dagrun(
                 run_id=start_date.isoformat,
                 state=State.NONE,

@@ -26,6 +26,7 @@ from airflow.models.dagcode import DagCode
 from airflow.utils.file import open_maybe_zipped
 from airflow.utils.session import create_session
 from tests.test_utils.db import clear_db_dag_code
+import pytest
 
 
 def make_example_dags(module):
@@ -92,13 +93,13 @@ class TestDagCode(unittest.TestCase):
         """Dag code detects duplicate key."""
         mock_hash.return_value = 0
 
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             self._write_two_example_dags()
 
     def _compare_example_dags(self, example_dags):
         with create_session() as session:
             for dag in example_dags.values():
-                self.assertTrue(DagCode.has_dag(dag.fileloc))
+                assert DagCode.has_dag(dag.fileloc)
                 dag_fileloc_hash = DagCode.dag_fileloc_hash(dag.fileloc)
                 result = session.query(
                     DagCode.fileloc, DagCode.fileloc_hash, DagCode.source_code) \
@@ -106,7 +107,7 @@ class TestDagCode(unittest.TestCase):
                     .filter(DagCode.fileloc_hash == dag_fileloc_hash) \
                     .one()
 
-                self.assertEqual(result.fileloc, dag.fileloc)
+                assert result.fileloc == dag.fileloc
                 with open_maybe_zipped(dag.fileloc, 'r') as source:
                     source_code = source.read()
-                self.assertEqual(result.source_code, source_code)
+                assert result.source_code == source_code

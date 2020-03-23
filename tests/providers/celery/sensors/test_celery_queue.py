@@ -49,7 +49,7 @@ class TestCeleryQueueSensor(unittest.TestCase):
         }
         test_sensor = self.sensor(celery_queue='test_queue',
                                   task_id='test-task')
-        self.assertTrue(test_sensor.poke(None))
+        assert test_sensor.poke(None)
 
     @patch('celery.app.control.Inspect')
     def test_poke_fail(self, mock_inspect):
@@ -68,11 +68,11 @@ class TestCeleryQueueSensor(unittest.TestCase):
         }
         test_sensor = self.sensor(celery_queue='test_queue',
                                   task_id='test-task')
-        self.assertFalse(test_sensor.poke(None))
+        assert not test_sensor.poke(None)
 
     @patch('celery.app.control.Inspect')
     def test_poke_success_with_taskid(self, mock_inspect):
         test_sensor = self.sensor(celery_queue='test_queue',
                                   task_id='test-task',
                                   target_task_id='target-task')
-        self.assertTrue(test_sensor.poke(None))
+        assert test_sensor.poke(None)

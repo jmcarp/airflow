@@ -23,6 +23,7 @@ import mock
 from airflow.exceptions import AirflowException
 from airflow.providers.amazon.aws.hooks.sagemaker import SageMakerHook
 from airflow.providers.amazon.aws.operators.sagemaker_endpoint import SageMakerEndpointOperator
+import pytest
 
 role = 'arn:aws:iam:role/test-role'
 bucket = 'test-bucket'
@@ -80,8 +81,8 @@ class TestSageMakerEndpointOperator(unittest.TestCase):
     def test_parse_config_integers(self):
         self.sagemaker.parse_config_integers()
         for variant in self.sagemaker.config['EndpointConfig']['ProductionVariants']:
-            self.assertEqual(variant['InitialInstanceCount'],
-                             int(variant['InitialInstanceCount']))
+            assert variant['InitialInstanceCount'] == \
+                             int(variant['InitialInstanceCount'])
 
     @mock.patch.object(SageMakerHook, 'get_conn')
     @mock.patch.object(SageMakerHook, 'create_model')
@@ -110,7 +111,8 @@ class TestSageMakerEndpointOperator(unittest.TestCase):
         mock_endpoint.return_value = {'EndpointArn': 'testarn',
                                       'ResponseMetadata':
                                       {'HTTPStatusCode': 404}}
-        self.assertRaises(AirflowException, self.sagemaker.execute, None)
+        with pytest.raises(AirflowException):
+            self.sagemaker.execute(None)
 
 
 if __name__ == '__main__':

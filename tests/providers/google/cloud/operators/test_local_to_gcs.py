@@ -49,11 +49,11 @@ class TestFileToGcsOperator(unittest.TestCase):
             dag=self.dag,
             **self._config
         )
-        self.assertEqual(operator.src, self._config['src'])
-        self.assertEqual(operator.dst, self._config['dst'])
-        self.assertEqual(operator.bucket, self._config['bucket'])
-        self.assertEqual(operator.mime_type, self._config['mime_type'])
-        self.assertEqual(operator.gzip, self._config['gzip'])
+        assert operator.src == self._config['src']
+        assert operator.dst == self._config['dst']
+        assert operator.bucket == self._config['bucket']
+        assert operator.mime_type == self._config['mime_type']
+        assert operator.gzip == self._config['gzip']
 
     @mock.patch('airflow.providers.google.cloud.operators.local_to_gcs.GCSHook',
                 autospec=True)

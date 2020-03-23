@@ -24,6 +24,7 @@ from dateutil.tz import tzlocal
 
 from airflow.exceptions import AirflowException
 from airflow.providers.amazon.aws.sensors.emr_step import EmrStepSensor
+import pytest
 
 DESCRIBE_JOB_STEP_RUNNING_RETURN = {
     'ResponseMetadata': {
@@ -201,7 +202,7 @@ class TestEmrStepSensor(unittest.TestCase):
         with patch('boto3.session.Session', self.boto3_session_mock):
             self.sensor.execute(None)
 
-            self.assertEqual(self.emr_client_mock.describe_step.call_count, 2)
+            assert self.emr_client_mock.describe_step.call_count == 2
             calls = [
                 unittest.mock.call(ClusterId='j-8989898989', StepId='s-VK57YR1Z9Z5N'),
                 unittest.mock.call(ClusterId='j-8989898989', StepId='s-VK57YR1Z9Z5N')
@@ -215,7 +216,8 @@ class TestEmrStepSensor(unittest.TestCase):
         ]
 
         with patch('boto3.session.Session', self.boto3_session_mock):
-            self.assertRaises(AirflowException, self.sensor.execute, None)
+            with pytest.raises(AirflowException):
+                self.sensor.execute(None)
 
     def test_step_failed(self):
         self.emr_client_mock.describe_step.side_effect = [
@@ -224,7 +226,8 @@ class TestEmrStepSensor(unittest.TestCase):
         ]
 
         with patch('boto3.session.Session', self.boto3_session_mock):
-            self.assertRaises(AirflowException, self.sensor.execute, None)
+            with pytest.raises(AirflowException):
+                self.sensor.execute(None)
 
     def test_step_interrupted(self):
         self.emr_client_mock.describe_step.side_effect = [
@@ -233,7 +236,8 @@ class TestEmrStepSensor(unittest.TestCase):
         ]
 
         with patch('boto3.session.Session', self.boto3_session_mock):
-            self.assertRaises(AirflowException, self.sensor.execute, None)
+            with pytest.raises(AirflowException):
+                self.sensor.execute(None)
 
 
 if __name__ == '__main__':

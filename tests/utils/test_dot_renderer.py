@@ -44,11 +44,11 @@ class TestDotRenderer(unittest.TestCase):
         dot = dot_renderer.render_dag(dag)
         source = dot.source
         # Should render DAG title
-        self.assertIn("label=DAG_ID", source)
-        self.assertIn("first", source)
-        self.assertIn("second", source)
-        self.assertIn("third", source)
-        self.assertIn("first -> second", source)
-        self.assertIn("first -> third", source)
-        self.assertIn('fillcolor="#f0ede4"', source)
-        self.assertIn('fillcolor="#f0ede4"', source)
+        assert "label=DAG_ID" in source
+        assert "first" in source
+        assert "second" in source
+        assert "third" in source
+        assert "first -> second" in source
+        assert "first -> third" in source
+        assert 'fillcolor="#f0ede4"' in source
+        assert 'fillcolor="#f0ede4"' in source

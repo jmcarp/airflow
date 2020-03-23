@@ -60,14 +60,14 @@ class TestCliPools(unittest.TestCase):
         with redirect_stdout(stdout):
             pool_command.pool_list(self.parser.parse_args(['pools', 'list']))
 
-        self.assertIn('foo', stdout.getvalue())
+        assert 'foo' in stdout.getvalue()
 
     def test_pool_list_with_args(self):
         pool_command.pool_list(self.parser.parse_args(['pools', 'list', '--output', 'tsv']))
 
     def test_pool_create(self):
         pool_command.pool_set(self.parser.parse_args(['pools', 'set', 'foo', '1', 'test']))
-        self.assertEqual(self.session.query(Pool).count(), 2)
+        assert self.session.query(Pool).count() == 2
 
     def test_pool_get(self):
         pool_command.pool_set(self.parser.parse_args(['pools', 'set', 'foo', '1', 'test']))
@@ -76,7 +76,7 @@ class TestCliPools(unittest.TestCase):
     def test_pool_delete(self):
         pool_command.pool_set(self.parser.parse_args(['pools', 'set', 'foo', '1', 'test']))
         pool_command.pool_delete(self.parser.parse_args(['pools', 'delete', 'foo']))
-        self.assertEqual(self.session.query(Pool).count(), 1)
+        assert self.session.query(Pool).count() == 1
 
     def test_pool_import_export(self):
         # Create two pools first
@@ -105,9 +105,8 @@ class TestCliPools(unittest.TestCase):
 
         with open('pools_export.json', mode='r') as file:
             pool_config_output = json.load(file)
-            self.assertEqual(
-                pool_config_input,
-                pool_config_output,
-                "Input and output pool files are not same")
+            assert pool_config_input == \
+                pool_config_output, \
+                "Input and output pool files are not same"
         os.remove('pools_import.json')
         os.remove('pools_export.json')

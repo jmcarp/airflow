@@ -27,6 +27,7 @@ from airflow.models import DAG
 from airflow.providers.qubole.hooks.qubole import QuboleHook
 from airflow.providers.qubole.hooks.qubole_check import QuboleCheckHook
 from airflow.providers.qubole.operators.qubole_check import QuboleValueCheckOperator
+import pytest
 
 
 class TestQuboleValueCheckOperator(unittest.TestCase):
@@ -55,8 +56,8 @@ class TestQuboleValueCheckOperator(unittest.TestCase):
         operator = self.__construct_operator('select date from tab1;', "{{ ds }}")
         result = operator.render_template(operator.pass_value, {'ds': pass_value_str})
 
-        self.assertEqual(operator.task_id, self.task_id)
-        self.assertEqual(result, pass_value_str)
+        assert operator.task_id == self.task_id
+        assert result == pass_value_str
 
     @mock.patch.object(QuboleValueCheckOperator, 'get_hook')
     def test_execute_pass(self, mock_get_hook):
@@ -89,8 +90,7 @@ class TestQuboleValueCheckOperator(unittest.TestCase):
 
         operator = self.__construct_operator('select value from tab1 limit 1;', 5, 1)
 
-        with self.assertRaisesRegex(AirflowException,
-                                    'Qubole Command Id: ' + str(mock_cmd.id)):
+        with pytest.raises(AirflowException, match='Qubole Command Id: ' + str(mock_cmd.id)):
             operator.execute()
 
         mock_cmd.is_success.assert_called_once_with(mock_cmd.status)
@@ -111,10 +111,10 @@ class TestQuboleValueCheckOperator(unittest.TestCase):
 
         operator = self.__construct_operator('select value from tab1 limit 1;', 5, 1)
 
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             operator.execute()
 
-        self.assertNotIn('Qubole Command Id: ', str(cm.exception))
+        assert 'Qubole Command Id: ' not in str(cm.exception)
         mock_cmd.is_success.assert_called_once_with(mock_cmd.status)
 
     @mock.patch.object(QuboleCheckHook, 'get_query_results')

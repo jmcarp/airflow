@@ -22,6 +22,7 @@ import unittest
 import mock
 
 from airflow.exceptions import AirflowException
+import pytest
 
 try:
     from airflow.providers.docker.operators.docker import DockerOperator
@@ -151,7 +152,7 @@ class TestDockerOperator(unittest.TestCase):
 
         operator = DockerOperator(image='ubuntu', owner='unittest', task_id='unittest')
 
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             operator.execute(None)
 
     @staticmethod
@@ -194,10 +195,8 @@ class TestDockerOperator(unittest.TestCase):
         )
 
         operator.execute(None)
-        self.assertEqual(
-            operator.get_hook.call_count, 0,
+        assert operator.get_hook.call_count == 0, \
             'Hook called though no docker_conn_id configured'
-        )
 
     @mock.patch('airflow.providers.docker.operators.docker.DockerHook')
     @mock.patch('airflow.providers.docker.operators.docker.APIClient')
@@ -227,18 +226,12 @@ class TestDockerOperator(unittest.TestCase):
 
         operator.execute(None)
 
-        self.assertEqual(
-            operator_client_mock.call_count, 0,
+        assert operator_client_mock.call_count == 0, \
             'Client was called on the operator instead of the hook'
-        )
-        self.assertEqual(
-            operator_docker_hook.call_count, 1,
+        assert operator_docker_hook.call_count == 1, \
             'Hook was not called although docker_conn_id configured'
-        )
-        self.assertEqual(
-            client_mock.pull.call_count, 1,
+        assert client_mock.pull.call_count == 1, \
             'Image was not pulled using operator client'
-        )
 
     @mock.patch('airflow.providers.docker.operators.docker.TemporaryDirectory')
     @mock.patch('airflow.providers.docker.operators.docker.APIClient')
@@ -276,8 +269,8 @@ class TestDockerOperator(unittest.TestCase):
         xcom_push_result = xcom_push_operator.execute(None)
         no_xcom_push_result = no_xcom_push_operator.execute(None)
 
-        self.assertEqual(xcom_push_result, b'container log')
-        self.assertIs(no_xcom_push_result, None)
+        assert xcom_push_result == b'container log'
+        assert no_xcom_push_result is None
 
 
 if __name__ == "__main__":

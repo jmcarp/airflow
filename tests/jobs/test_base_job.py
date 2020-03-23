@@ -27,6 +27,7 @@ from airflow.jobs.base_job import BaseJob
 from airflow.utils import timezone
 from airflow.utils.session import create_session
 from airflow.utils.state import State
+import pytest
 
 
 class TestBaseJob(unittest.TestCase):
@@ -46,27 +47,27 @@ class TestBaseJob(unittest.TestCase):
         job = self.TestJob(lambda: True)
         job.run()
 
-        self.assertEqual(job.state, State.SUCCESS)
-        self.assertIsNotNone(job.end_date)
+        assert job.state == State.SUCCESS
+        assert job.end_date is not None
 
     def test_state_sysexit(self):
         import sys
         job = self.TestJob(lambda: sys.exit(0))
         job.run()
 
-        self.assertEqual(job.state, State.SUCCESS)
-        self.assertIsNotNone(job.end_date)
+        assert job.state == State.SUCCESS
+        assert job.end_date is not None
 
     def test_state_failed(self):
         def abort():
             raise RuntimeError("fail")
 
         job = self.TestJob(abort)
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError):
             job.run()
 
-        self.assertEqual(job.state, State.FAILED)
-        self.assertIsNotNone(job.end_date)
+        assert job.state == State.FAILED
+        assert job.end_date is not None
 
     def test_most_recent_job(self):
 
@@ -78,31 +79,29 @@ class TestBaseJob(unittest.TestCase):
             session.add(old_job)
             session.flush()
 
-            self.assertEqual(
-                self.TestJob.most_recent_job(session=session),
+            assert self.TestJob.most_recent_job(session=session) == \
                 job
-            )
 
             session.rollback()
 
     def test_is_alive(self):
         job = self.TestJob(None, heartrate=10, state=State.RUNNING)
-        self.assertTrue(job.is_alive())
+        assert job.is_alive()
 
         job.latest_heartbeat = timezone.utcnow() - datetime.timedelta(seconds=20)
-        self.assertTrue(job.is_alive())
+        assert job.is_alive()
 
         job.latest_heartbeat = timezone.utcnow() - datetime.timedelta(seconds=21)
-        self.assertFalse(job.is_alive())
+        assert not job.is_alive()
 
         # test because .seconds was used before instead of total_seconds
         # internal repr of datetime is (days, seconds)
         job.latest_heartbeat = timezone.utcnow() - datetime.timedelta(days=1)
-        self.assertFalse(job.is_alive())
+        assert not job.is_alive()
 
         job.state = State.SUCCESS
         job.latest_heartbeat = timezone.utcnow() - datetime.timedelta(seconds=10)
-        self.assertFalse(job.is_alive(), "Completed jobs even with recent heartbeat should not be alive")
+        assert not job.is_alive(), "Completed jobs even with recent heartbeat should not be alive"
 
     @patch('airflow.jobs.base_job.create_session')
     def test_heartbeat_failed(self, mock_create_session):
@@ -118,4 +117,4 @@ class TestBaseJob(unittest.TestCase):
 
             job.heartbeat()
 
-            self.assertEqual(job.latest_heartbeat, when, "attribute not updated when heartbeat fails")
+            assert job.latest_heartbeat == when, "attribute not updated when heartbeat fails"

@@ -33,7 +33,7 @@ class TestPrepareVirtualenv(unittest.TestCase):
             system_site_packages=False,
             requirements=[]
         )
-        self.assertEqual("/VENV/bin/python", python_bin)
+        assert "/VENV/bin/python" == python_bin
         mock_execute_in_subprocess.assert_called_once_with(['virtualenv', '/VENV', '--python=pythonVER'])
 
     @mock.patch('airflow.utils.python_virtualenv.execute_in_subprocess')
@@ -44,7 +44,7 @@ class TestPrepareVirtualenv(unittest.TestCase):
             system_site_packages=True,
             requirements=[]
         )
-        self.assertEqual("/VENV/bin/python", python_bin)
+        assert "/VENV/bin/python" == python_bin
         mock_execute_in_subprocess.assert_called_once_with(
             ['virtualenv', '/VENV', '--system-site-packages', '--python=pythonVER']
         )
@@ -57,7 +57,7 @@ class TestPrepareVirtualenv(unittest.TestCase):
             system_site_packages=False,
             requirements=['apache-beam[gcp]']
         )
-        self.assertEqual("/VENV/bin/python", python_bin)
+        assert "/VENV/bin/python" == python_bin
 
         mock_execute_in_subprocess.assert_any_call(
             ['virtualenv', '/VENV', '--python=pythonVER']

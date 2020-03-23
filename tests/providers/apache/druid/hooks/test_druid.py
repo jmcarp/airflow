@@ -25,6 +25,7 @@ import requests_mock
 
 from airflow.exceptions import AirflowException
 from airflow.providers.apache.druid.hooks.druid import DruidDbApiHook, DruidHook
+import pytest
 
 
 class TestDruidHook(unittest.TestCase):
@@ -53,11 +54,11 @@ class TestDruidHook(unittest.TestCase):
         )
 
         # The job failed for some reason
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             self.db_hook.submit_indexing_job('Long json file')
 
-        self.assertTrue(task_post.called_once)
-        self.assertTrue(status_check.called_once)
+        assert task_post.called_once
+        assert status_check.called_once
 
     @requests_mock.mock()
     def test_submit_ok(self, m):
@@ -74,8 +75,8 @@ class TestDruidHook(unittest.TestCase):
         # Exists just as it should
         self.db_hook.submit_indexing_job('Long json file')
 
-        self.assertTrue(task_post.called_once)
-        self.assertTrue(status_check.called_once)
+        assert task_post.called_once
+        assert status_check.called_once
 
     @requests_mock.mock()
     def test_submit_correct_json_body(self, m):
@@ -96,11 +97,11 @@ class TestDruidHook(unittest.TestCase):
         """
         self.db_hook.submit_indexing_job(json_ingestion_string)
 
-        self.assertTrue(task_post.called_once)
-        self.assertTrue(status_check.called_once)
+        assert task_post.called_once
+        assert status_check.called_once
         if task_post.called_once:
             req_body = task_post.request_history[0].json()
-            self.assertEqual(req_body['task'], "9f8a7359-77d4-4612-b0cd-cc2f6a3c28de")
+            assert req_body['task'] == "9f8a7359-77d4-4612-b0cd-cc2f6a3c28de"
 
     @requests_mock.mock()
     def test_submit_unknown_response(self, m):
@@ -115,11 +116,11 @@ class TestDruidHook(unittest.TestCase):
         )
 
         # An unknown error code
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             self.db_hook.submit_indexing_job('Long json file')
 
-        self.assertTrue(task_post.called_once)
-        self.assertTrue(status_check.called_once)
+        assert task_post.called_once
+        assert status_check.called_once
 
     @requests_mock.mock()
     def test_submit_timeout(self, m):
@@ -141,12 +142,12 @@ class TestDruidHook(unittest.TestCase):
         )
 
         # Because the jobs keeps running
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             self.db_hook.submit_indexing_job('Long json file')
 
-        self.assertTrue(task_post.called_once)
-        self.assertTrue(status_check.called)
-        self.assertTrue(shutdown_post.called_once)
+        assert task_post.called_once
+        assert status_check.called
+        assert shutdown_post.called_once
 
     @patch('airflow.providers.apache.druid.hooks.druid.DruidHook.get_connection')
     def test_get_conn_url(self, mock_get_connection):
@@ -157,7 +158,7 @@ class TestDruidHook(unittest.TestCase):
         get_conn_value.extra_dejson = {'endpoint': 'ingest'}
         mock_get_connection.return_value = get_conn_value
         hook = DruidHook(timeout=1, max_ingestion_time=5)
-        self.assertEqual(hook.get_conn_url(), 'https://test_host:1/ingest')
+        assert hook.get_conn_url() == 'https://test_host:1/ingest'
 
     @patch('airflow.providers.apache.druid.hooks.druid.DruidHook.get_connection')
     def test_get_auth(self, mock_get_connection):
@@ -166,7 +167,7 @@ class TestDruidHook(unittest.TestCase):
         get_conn_value.password = 'password'
         mock_get_connection.return_value = get_conn_value
         expected = requests.auth.HTTPBasicAuth('airflow', 'password')
-        self.assertEqual(self.db_hook.get_auth(), expected)
+        assert self.db_hook.get_auth() == expected
 
     @patch('airflow.providers.apache.druid.hooks.druid.DruidHook.get_connection')
     def test_get_auth_with_no_user(self, mock_get_connection):
@@ -174,7 +175,7 @@ class TestDruidHook(unittest.TestCase):
         get_conn_value.login = None
         get_conn_value.password = 'password'
         mock_get_connection.return_value = get_conn_value
-        self.assertEqual(self.db_hook.get_auth(), None)
+        assert self.db_hook.get_auth() == None
 
     @patch('airflow.providers.apache.druid.hooks.druid.DruidHook.get_connection')
     def test_get_auth_with_no_password(self, mock_get_connection):
@@ -182,7 +183,7 @@ class TestDruidHook(unittest.TestCase):
         get_conn_value.login = 'airflow'
         get_conn_value.password = None
         mock_get_connection.return_value = get_conn_value
-        self.assertEqual(self.db_hook.get_auth(), None)
+        assert self.db_hook.get_auth() == None
 
     @patch('airflow.providers.apache.druid.hooks.druid.DruidHook.get_connection')
     def test_get_auth_with_no_user_and_password(self, mock_get_connection):
@@ -190,7 +191,7 @@ class TestDruidHook(unittest.TestCase):
         get_conn_value.login = None
         get_conn_value.password = None
         mock_get_connection.return_value = get_conn_value
-        self.assertEqual(self.db_hook.get_auth(), None)
+        assert self.db_hook.get_auth() == None
 
 
 class TestDruidDbApiHook(unittest.TestCase):
@@ -216,14 +217,14 @@ class TestDruidDbApiHook(unittest.TestCase):
 
     def test_get_uri(self):
         db_hook = self.db_hook()
-        self.assertEqual('druid://host:1000/druid/v2/sql', db_hook.get_uri())
+        assert 'druid://host:1000/druid/v2/sql' == db_hook.get_uri()
 
     def test_get_first_record(self):
         statement = 'SQL'
         result_sets = [('row1',), ('row2',)]
         self.cur.fetchone.return_value = result_sets[0]
 
-        self.assertEqual(result_sets[0], self.db_hook().get_first(statement))
+        assert result_sets[0] == self.db_hook().get_first(statement)
         assert self.conn.close.call_count == 1
         assert self.cur.close.call_count == 1
         self.cur.execute.assert_called_once_with(statement)
@@ -233,7 +234,7 @@ class TestDruidDbApiHook(unittest.TestCase):
         result_sets = [('row1',), ('row2',)]
         self.cur.fetchall.return_value = result_sets
 
-        self.assertEqual(result_sets, self.db_hook().get_records(statement))
+        assert result_sets == self.db_hook().get_records(statement)
         assert self.conn.close.call_count == 1
         assert self.cur.close.call_count == 1
         self.cur.execute.assert_called_once_with(statement)
@@ -246,9 +247,9 @@ class TestDruidDbApiHook(unittest.TestCase):
         self.cur.fetchall.return_value = result_sets
         df = self.db_hook().get_pandas_df(statement)
 
-        self.assertEqual(column, df.columns[0])
+        assert column == df.columns[0]
         for i in range(len(result_sets)):  # pylint: disable=consider-using-enumerate
-            self.assertEqual(result_sets[i][0], df.values.tolist()[i][0])
+            assert result_sets[i][0] == df.values.tolist()[i][0]
         assert self.conn.close.call_count == 1
         assert self.cur.close.call_count == 1
         self.cur.execute.assert_called_once_with(statement)

@@ -23,6 +23,7 @@ from parameterized import parameterized
 
 from airflow.exceptions import AirflowException
 from airflow.providers.amazon.aws.sensors.s3_key import S3KeySensor
+import pytest
 
 
 class TestS3KeySensor(unittest.TestCase):
@@ -33,7 +34,7 @@ class TestS3KeySensor(unittest.TestCase):
         and bucket_key is provided as relative path rather than s3:// url.
         :return:
         """
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             S3KeySensor(
                 task_id='s3_key_sensor',
                 bucket_key="file_in_bucket")
@@ -44,7 +45,7 @@ class TestS3KeySensor(unittest.TestCase):
         while bucket_key is provided as a full s3:// url.
         :return:
         """
-        with self.assertRaises(AirflowException):
+        with pytest.raises(AirflowException):
             S3KeySensor(
                 task_id='s3_key_sensor',
                 bucket_key="s3://test_bucket/file",
@@ -60,8 +61,8 @@ class TestS3KeySensor(unittest.TestCase):
             bucket_key=key,
             bucket_name=bucket,
         )
-        self.assertEqual(op.bucket_key, parsed_key)
-        self.assertEqual(op.bucket_name, parsed_bucket)
+        assert op.bucket_key == parsed_key
+        assert op.bucket_name == parsed_bucket
 
     @mock.patch('airflow.providers.amazon.aws.hooks.s3.S3Hook')
     def test_poke(self, mock_hook):
@@ -71,11 +72,11 @@ class TestS3KeySensor(unittest.TestCase):
 
         mock_check_for_key = mock_hook.return_value.check_for_key
         mock_check_for_key.return_value = False
-        self.assertFalse(op.poke(None))
+        assert not op.poke(None)
         mock_check_for_key.assert_called_once_with(op.bucket_key, op.bucket_name)
 
         mock_hook.return_value.check_for_key.return_value = True
-        self.assertTrue(op.poke(None))
+        assert op.poke(None)
 
     @mock.patch('airflow.providers.amazon.aws.hooks.s3.S3Hook')
     def test_poke_wildcard(self, mock_hook):
@@ -86,8 +87,8 @@ class TestS3KeySensor(unittest.TestCase):
 
         mock_check_for_wildcard_key = mock_hook.return_value.check_for_wildcard_key
         mock_check_for_wildcard_key.return_value = False
-        self.assertFalse(op.poke(None))
+        assert not op.poke(None)
         mock_check_for_wildcard_key.assert_called_once_with(op.bucket_key, op.bucket_name)
 
         mock_check_for_wildcard_key.return_value = True
-        self.assertTrue(op.poke(None))
+        assert op.poke(None)

@@ -25,14 +25,11 @@ DEFAULT_DATE = datetime(2015, 1, 1)
 DEFAULT_DATE_ISO = DEFAULT_DATE.isoformat()
 DEFAULT_DATE_DS = DEFAULT_DATE_ISO[:10]
 
-
-class TestHiveEnvironment(TestCase):
-
-    def setUp(self):
-        args = {'owner': 'airflow', 'start_date': DEFAULT_DATE}
-        dag = DAG('test_dag_id', default_args=args)
-        self.dag = dag
-        self.hql = """
+def setUp(self):
+    args = {'owner': 'airflow', 'start_date': DEFAULT_DATE}
+    dag = DAG('test_dag_id', default_args=args)
+    self.dag = dag
+    self.hql = """
         USE airflow;
         DROP TABLE IF EXISTS static_babynames_partitioned;
         CREATE TABLE IF NOT EXISTS static_babynames_partitioned (

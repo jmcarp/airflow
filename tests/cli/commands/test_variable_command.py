@@ -66,22 +66,22 @@ class TestCliVariables(unittest.TestCase):
         variable_command.variables_import(self.parser.parse_args([
             'variables', 'import', 'variables1.json']))
 
-        self.assertEqual('original', Variable.get('bar'))
-        self.assertEqual('{\n  "foo": "bar"\n}', Variable.get('foo'))
+        assert 'original' == Variable.get('bar')
+        assert '{\n  "foo": "bar"\n}' == Variable.get('foo')
         # Second export
         variable_command.variables_export(self.parser.parse_args([
             'variables', 'export', 'variables2.json']))
 
         second_exp = open('variables2.json', 'r')
-        self.assertEqual(first_exp.read(), second_exp.read())
+        assert first_exp.read() == second_exp.read()
         second_exp.close()
         first_exp.close()
         # Second import
         variable_command.variables_import(self.parser.parse_args([
             'variables', 'import', 'variables2.json']))
 
-        self.assertEqual('original', Variable.get('bar'))
-        self.assertEqual('{\n  "foo": "bar"\n}', Variable.get('foo'))
+        assert 'original' == Variable.get('bar')
+        assert '{\n  "foo": "bar"\n}' == Variable.get('foo')
 
         # Set a dict
         variable_command.variables_set(self.parser.parse_args([
@@ -115,14 +115,14 @@ class TestCliVariables(unittest.TestCase):
             'variables', 'import', 'variables3.json']))
 
         # Assert value
-        self.assertEqual({'foo': 'oops'}, Variable.get('dict', deserialize_json=True))
-        self.assertEqual(['oops'], Variable.get('list', deserialize_json=True))
-        self.assertEqual('hello string', Variable.get('str'))  # cannot json.loads(str)
-        self.assertEqual(42, Variable.get('int', deserialize_json=True))
-        self.assertEqual(42.0, Variable.get('float', deserialize_json=True))
-        self.assertEqual(True, Variable.get('true', deserialize_json=True))
-        self.assertEqual(False, Variable.get('false', deserialize_json=True))
-        self.assertEqual(None, Variable.get('null', deserialize_json=True))
+        assert {'foo': 'oops'} == Variable.get('dict', deserialize_json=True)
+        assert ['oops'] == Variable.get('list', deserialize_json=True)
+        assert 'hello string' == Variable.get('str')  # cannot json.loads(str)
+        assert 42 == Variable.get('int', deserialize_json=True)
+        assert 42.0 == Variable.get('float', deserialize_json=True)
+        assert True == Variable.get('true', deserialize_json=True)
+        assert False == Variable.get('false', deserialize_json=True)
+        assert None == Variable.get('null', deserialize_json=True)
 
         os.remove('variables1.json')
         os.remove('variables2.json')

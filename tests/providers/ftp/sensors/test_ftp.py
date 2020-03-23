@@ -22,6 +22,7 @@ from unittest import mock
 
 from airflow.providers.ftp.hooks.ftp import FTPHook
 from airflow.providers.ftp.sensors.ftp import FTPSensor
+import pytest
 
 
 class TestFTPSensor(unittest.TestCase):
@@ -37,10 +38,10 @@ class TestFTPSensor(unittest.TestCase):
             error_perm("550 - Directory or file does not exist"), None
         ]
 
-        self.assertFalse(op.poke(None))
-        self.assertFalse(op.poke(None))
-        self.assertFalse(op.poke(None))
-        self.assertTrue(op.poke(None))
+        assert not op.poke(None)
+        assert not op.poke(None)
+        assert not op.poke(None)
+        assert op.poke(None)
 
     @mock.patch('airflow.providers.ftp.sensors.ftp.FTPHook', spec=FTPHook)
     def test_poke_fails_due_error(self, mock_hook):
@@ -50,10 +51,10 @@ class TestFTPSensor(unittest.TestCase):
         mock_hook.return_value.__enter__.return_value.get_mod_time.side_effect = \
             error_perm("530: Login authentication failed")
 
-        with self.assertRaises(error_perm) as context:
+        with pytest.raises(error_perm) as context:
             op.execute(None)
 
-        self.assertTrue("530" in str(context.exception))
+        assert "530" in str(context.exception)
 
     @mock.patch('airflow.providers.ftp.sensors.ftp.FTPHook', spec=FTPHook)
     def test_poke_fail_on_transient_error(self, mock_hook):
@@ -63,10 +64,10 @@ class TestFTPSensor(unittest.TestCase):
         mock_hook.return_value.__enter__.return_value\
             .get_mod_time.side_effect = error_perm("434: Host unavailable")
 
-        with self.assertRaises(error_perm) as context:
+        with pytest.raises(error_perm) as context:
             op.execute(None)
 
-        self.assertTrue("434" in str(context.exception))
+        assert "434" in str(context.exception)
 
     @mock.patch('airflow.providers.ftp.sensors.ftp.FTPHook', spec=FTPHook)
     def test_poke_ignore_transient_error(self, mock_hook):
@@ -77,8 +78,8 @@ class TestFTPSensor(unittest.TestCase):
             error_perm("434: Host unavailable"), None
         ]
 
-        self.assertFalse(op.poke(None))
-        self.assertTrue(op.poke(None))
+        assert not op.poke(None)
+        assert op.poke(None)
 
 
 if __name__ == '__main__':

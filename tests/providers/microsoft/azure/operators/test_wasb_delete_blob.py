@@ -46,11 +46,11 @@ class TestWasbDeleteBlobOperator(unittest.TestCase):
             dag=self.dag,
             **self._config
         )
-        self.assertEqual(operator.container_name,
-                         self._config['container_name'])
-        self.assertEqual(operator.blob_name, self._config['blob_name'])
-        self.assertEqual(operator.is_prefix, False)
-        self.assertEqual(operator.ignore_if_missing, False)
+        assert operator.container_name == \
+                         self._config['container_name']
+        assert operator.blob_name == self._config['blob_name']
+        assert operator.is_prefix == False
+        assert operator.ignore_if_missing == False
 
         operator = WasbDeleteBlobOperator(
             task_id='wasb_operator',
@@ -59,8 +59,8 @@ class TestWasbDeleteBlobOperator(unittest.TestCase):
             ignore_if_missing=True,
             **self._config
         )
-        self.assertEqual(operator.is_prefix, True)
-        self.assertEqual(operator.ignore_if_missing, True)
+        assert operator.is_prefix == True
+        assert operator.ignore_if_missing == True
 
     @mock.patch('airflow.providers.microsoft.azure.operators.wasb_delete_blob.WasbHook',
                 autospec=True)

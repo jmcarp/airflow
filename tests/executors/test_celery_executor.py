@@ -120,14 +120,14 @@ class TestCeleryExecutor(unittest.TestCase):
 
                 executor.end(synchronous=True)
 
-        self.assertEqual(executor.event_buffer[('success', 'fake_simple_ti', execute_date, 0)], State.SUCCESS)
-        self.assertEqual(executor.event_buffer[('fail', 'fake_simple_ti', execute_date, 0)], State.FAILED)
+        assert executor.event_buffer[('success', 'fake_simple_ti', execute_date, 0)] == State.SUCCESS
+        assert executor.event_buffer[('fail', 'fake_simple_ti', execute_date, 0)] == State.FAILED
 
-        self.assertNotIn('success', executor.tasks)
-        self.assertNotIn('fail', executor.tasks)
+        assert 'success' not in executor.tasks
+        assert 'fail' not in executor.tasks
 
-        self.assertNotIn('success', executor.last_state)
-        self.assertNotIn('fail', executor.last_state)
+        assert 'success' not in executor.last_state
+        assert 'fail' not in executor.last_state
 
     @pytest.mark.integration("redis")
     @pytest.mark.integration("rabbitmq")
@@ -151,8 +151,8 @@ class TestCeleryExecutor(unittest.TestCase):
             key = ('fail', 'fake_simple_ti', datetime.datetime.now(), 0)
             executor.queued_tasks[key] = value_tuple
             executor.heartbeat()
-        self.assertEqual(1, len(executor.queued_tasks))
-        self.assertEqual(executor.queued_tasks[key], value_tuple)
+        assert 1 == len(executor.queued_tasks)
+        assert executor.queued_tasks[key] == value_tuple
 
     def test_exception_propagation(self):
         with self._prepare_app() as app:
@@ -172,8 +172,8 @@ class TestCeleryExecutor(unittest.TestCase):
         # Result of queuing is not a celery task but a dict,
         # and it should raise AttributeError and then get propagated
         # to the error log.
-        self.assertIn(celery_executor.CELERY_FETCH_ERR_MSG_HEADER, args[0])
-        self.assertIn('AttributeError', args[1])
+        assert celery_executor.CELERY_FETCH_ERR_MSG_HEADER in args[0]
+        assert 'AttributeError' in args[1]
 
     @mock.patch('airflow.executors.celery_executor.CeleryExecutor.sync')
     @mock.patch('airflow.executors.celery_executor.CeleryExecutor.trigger_tasks')

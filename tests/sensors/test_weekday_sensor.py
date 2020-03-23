@@ -28,6 +28,7 @@ from airflow.models.dag import DAG
 from airflow.sensors.weekday_sensor import DayOfWeekSensor
 from airflow.settings import Session
 from airflow.utils.timezone import datetime
+import pytest
 
 DEFAULT_DATE = datetime(2018, 12, 10)
 WEEKDAY_DATE = datetime(2018, 12, 20)
@@ -74,7 +75,7 @@ class TestDayOfWeekSensor(unittest.TestCase):
             use_task_execution_day=True,
             dag=self.dag)
         op.run(start_date=WEEKDAY_DATE, end_date=WEEKDAY_DATE, ignore_ti_state=True)
-        self.assertEqual(op.week_day, week_day)
+        assert op.week_day == week_day
 
     def test_weekday_sensor_false(self):
         op = DayOfWeekSensor(
@@ -84,13 +85,12 @@ class TestDayOfWeekSensor(unittest.TestCase):
             week_day='Tuesday',
             use_task_execution_day=True,
             dag=self.dag)
-        with self.assertRaises(AirflowSensorTimeout):
+        with pytest.raises(AirflowSensorTimeout):
             op.run(start_date=WEEKDAY_DATE, end_date=WEEKDAY_DATE, ignore_ti_state=True)
 
     def test_invalid_weekday_number(self):
         invalid_week_day = 'Thsday'
-        with self.assertRaisesRegex(AttributeError,
-                                    'Invalid Week Day passed: "{}"'.format(invalid_week_day)):
+        with pytest.raises(AttributeError, match='Invalid Week Day passed: "{}"'.format(invalid_week_day)):
             DayOfWeekSensor(
                 task_id='weekday_sensor_invalid_weekday_num',
                 week_day=invalid_week_day,
@@ -99,11 +99,9 @@ class TestDayOfWeekSensor(unittest.TestCase):
 
     def test_weekday_sensor_with_invalid_type(self):
         invalid_week_day = ['Thsday']
-        with self.assertRaisesRegex(TypeError,
-                                    'Unsupported Type for week_day parameter:'
+        with pytest.raises(TypeError, match='Unsupported Type for week_day parameter:'
                                     ' {}. It should be one of str, set or '
-                                    'Weekday enum type'.format(type(invalid_week_day))
-                                    ):
+                                    'Weekday enum type'.format(type(invalid_week_day))):
             DayOfWeekSensor(
                 task_id='weekday_sensor_check_true',
                 week_day=invalid_week_day,
@@ -118,5 +116,5 @@ class TestDayOfWeekSensor(unittest.TestCase):
             week_day={WeekDay.MONDAY, WeekDay.TUESDAY},
             use_task_execution_day=True,
             dag=self.dag)
-        with self.assertRaises(AirflowSensorTimeout):
+        with pytest.raises(AirflowSensorTimeout):
             op.run(start_date=WEEKDAY_DATE, end_date=WEEKDAY_DATE, ignore_ti_state=True)

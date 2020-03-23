@@ -34,7 +34,7 @@ class TestAwsFirehoseHook(unittest.TestCase):
     def test_get_conn_returns_a_boto3_connection(self):
         hook = AwsFirehoseHook(aws_conn_id='aws_default',
                                delivery_stream="test_airflow", region_name="us-east-1")
-        self.assertIsNotNone(hook.get_conn())
+        assert hook.get_conn() is not None
 
     @unittest.skipIf(mock_kinesis is None, 'mock_kinesis package not present')
     @mock_kinesis
@@ -57,16 +57,15 @@ class TestAwsFirehoseHook(unittest.TestCase):
         )
 
         stream_arn = response['DeliveryStreamARN']
-        self.assertEqual(
-            stream_arn, "arn:aws:firehose:us-east-1:123456789012:deliverystream/test_airflow")
+        assert stream_arn == "arn:aws:firehose:us-east-1:123456789012:deliverystream/test_airflow"
 
         records = [{"Data": str(uuid.uuid4())}
                    for _ in range(100)]
 
         response = hook.put_records(records)
 
-        self.assertEqual(response['FailedPutCount'], 0)
-        self.assertEqual(response['ResponseMetadata']['HTTPStatusCode'], 200)
+        assert response['FailedPutCount'] == 0
+        assert response['ResponseMetadata']['HTTPStatusCode'] == 200
 
 
 if __name__ == '__main__':

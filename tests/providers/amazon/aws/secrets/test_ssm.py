@@ -20,45 +20,30 @@ from unittest import TestCase, mock
 from moto import mock_ssm
 
 from airflow.providers.amazon.aws.secrets.ssm import AwsSsmSecretsBackend
-
-
-class TestSsmSecrets(TestCase):
-    @mock.patch("airflow.providers.amazon.aws.secrets.ssm.AwsSsmSecretsBackend.get_conn_uri")
-    def test_aws_ssm_get_connections(self, mock_get_uri):
-        mock_get_uri.return_value = "scheme://user:pass@host:100"
-        conn_list = AwsSsmSecretsBackend().get_connections("fake_conn")
-        conn = conn_list[0]
-        assert conn.host == 'host'
+@mock.patch("airflow.providers.amazon.aws.secrets.ssm.AwsSsmSecretsBackend.get_conn_uri")
+deftest_aws_ssm_get_connections(self,mock_get_uri):
+    mock_get_uri.return_value = "scheme://user:pass@host:100"
+    conn_list = AwsSsmSecretsBackend().get_connections("fake_conn")
+    conn = conn_list[0]
+    assert conn.host == 'host'
 
     @mock_ssm
-    def test_get_conn_uri(self):
-        param = {
-            'Name': '/airflow/connections/test_postgres',
-            'Type': 'String',
-            'Value': 'postgresql://airflow:airflow@host:5432/airflow'
-        }
-
-        ssm_backend = AwsSsmSecretsBackend()
-        ssm_backend.client.put_parameter(**param)
-
-        returned_uri = ssm_backend.get_conn_uri(conn_id="test_postgres")
-        self.assertEqual('postgresql://airflow:airflow@host:5432/airflow', returned_uri)
+deftest_get_conn_uri(self):
+    param = {    'Name': '/airflow/connections/test_postgres',    'Type': 'String',    'Value': 'postgresql://airflow:airflow@host:5432/airflow'    }
+    ssm_backend = AwsSsmSecretsBackend()
+    ssm_backend.client.put_parameter(**param)
+    returned_uri = ssm_backend.get_conn_uri(conn_id="test_postgres")
+    assert 'postgresql://airflow:airflow@host:5432/airflow' == returned_uri
 
     @mock_ssm
-    def test_get_conn_uri_non_existent_key(self):
-        """
+deftest_get_conn_uri_non_existent_key(self):
+    """
         Test that if the key with connection ID is not present in SSM,
         AwsSsmSecretsBackend.get_connections should return None
         """
-        conn_id = "test_mysql"
-        param = {
-            'Name': '/airflow/connections/test_postgres',
-            'Type': 'String',
-            'Value': 'postgresql://airflow:airflow@host:5432/airflow'
-        }
-
-        ssm_backend = AwsSsmSecretsBackend()
-        ssm_backend.client.put_parameter(**param)
-
-        self.assertIsNone(ssm_backend.get_conn_uri(conn_id=conn_id))
-        self.assertEqual([], ssm_backend.get_connections(conn_id=conn_id))
+    conn_id = "test_mysql"
+    param = {    'Name': '/airflow/connections/test_postgres',    'Type': 'String',    'Value': 'postgresql://airflow:airflow@host:5432/airflow'    }
+    ssm_backend = AwsSsmSecretsBackend()
+    ssm_backend.client.put_parameter(**param)
+    assert ssm_backend.get_conn_uri(conn_id=conn_id) is None
+    assert [] == ssm_backend.get_connections(conn_id=conn_id)

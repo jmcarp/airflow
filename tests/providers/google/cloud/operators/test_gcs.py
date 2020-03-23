@@ -174,7 +174,7 @@ class TestGoogleCloudStorageListOperator(unittest.TestCase):
         mock_hook.return_value.list.assert_called_once_with(
             bucket_name=TEST_BUCKET, prefix=PREFIX, delimiter=DELIMITER
         )
-        self.assertEqual(sorted(files), sorted(MOCK_FILES))
+        assert sorted(files) == sorted(MOCK_FILES)
 
 
 class TestGcsFileTransformOperator(unittest.TestCase):

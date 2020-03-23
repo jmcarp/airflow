@@ -24,6 +24,7 @@ from airflow.configuration import load_test_config
 from airflow.models.xcom import MAX_XCOM_SIZE
 from airflow.providers.amazon.aws.operators.google_api_to_s3_transfer import GoogleApiToS3Transfer
 from airflow.utils import db
+import pytest
 
 
 class TestGoogleApiToS3Transfer(unittest.TestCase):
@@ -145,7 +146,8 @@ class TestGoogleApiToS3Transfer(unittest.TestCase):
         }
         context['task_instance'].xcom_pull.return_value = {}
 
-        self.assertRaises(RuntimeError, GoogleApiToS3Transfer(**self.kwargs, **xcom_kwargs).execute, context)
+        with pytest.raises(RuntimeError):
+            GoogleApiToS3Transfer(**self.kwargs, **xcom_kwargs).execute(context)
 
         mock_google_api_hook_query.assert_called_once_with(
             endpoint=self.kwargs['google_api_endpoint_path'],

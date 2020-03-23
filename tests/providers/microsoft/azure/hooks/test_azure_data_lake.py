@@ -46,9 +46,9 @@ class TestAzureDataLakeHook(unittest.TestCase):
         from airflow.providers.microsoft.azure.hooks.azure_data_lake import AzureDataLakeHook
         from azure.datalake.store import core
         hook = AzureDataLakeHook(azure_data_lake_conn_id='adl_test_key')
-        self.assertIsNone(hook._conn)
-        self.assertEqual(hook.conn_id, 'adl_test_key')
-        self.assertIsInstance(hook.get_conn(), core.AzureDLFileSystem)
+        assert hook._conn is None
+        assert hook.conn_id == 'adl_test_key'
+        assert isinstance(hook.get_conn(), core.AzureDLFileSystem)
         assert mock_lib.auth.called
 
     @mock.patch('airflow.providers.microsoft.azure.hooks.azure_data_lake.core.AzureDLFileSystem',

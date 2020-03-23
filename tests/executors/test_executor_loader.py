@@ -53,8 +53,8 @@ class TestExecutorLoader(unittest.TestCase):
             ("core", "executor"): executor_name
         }):
             executor = ExecutorLoader.get_default_executor()
-            self.assertIsNotNone(executor)
-            self.assertIn(executor_name, executor.__class__.__name__)
+            assert executor is not None
+            assert executor_name in executor.__class__.__name__
 
     def test_should_support_plugin(self):
         plugins_manager.plugins = [
@@ -66,8 +66,8 @@ class TestExecutorLoader(unittest.TestCase):
             ("core", "executor"): f"{TEST_PLUGIN_NAME}.FakeExecutor"
         }):
             executor = ExecutorLoader.get_default_executor()
-            self.assertIsNotNone(executor)
-            self.assertIn("FakeExecutor", executor.__class__.__name__)
+            assert executor is not None
+            assert "FakeExecutor" in executor.__class__.__name__
 
     def remove_executor_plugins(self):
         plugins_manager.executors_modules = None
@@ -78,5 +78,5 @@ class TestExecutorLoader(unittest.TestCase):
             ("core", "executor"): f"tests.executors.test_executor_loader.FakeExecutor"
         }):
             executor = ExecutorLoader.get_default_executor()
-            self.assertIsNotNone(executor)
-            self.assertIn("FakeExecutor", executor.__class__.__name__)
+            assert executor is not None
+            assert "FakeExecutor" in executor.__class__.__name__

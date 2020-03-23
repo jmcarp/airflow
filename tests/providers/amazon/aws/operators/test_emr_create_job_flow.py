@@ -73,9 +73,9 @@ class TestEmrCreateJobFlowOperator(unittest.TestCase):
         )
 
     def test_init(self):
-        self.assertEqual(self.operator.aws_conn_id, 'aws_default')
-        self.assertEqual(self.operator.emr_conn_id, 'emr_default')
-        self.assertEqual(self.operator.region_name, 'ap-southeast-2')
+        assert self.operator.aws_conn_id == 'aws_default'
+        assert self.operator.emr_conn_id == 'emr_default'
+        assert self.operator.region_name == 'ap-southeast-2'
 
     def test_render_template(self):
         ti = TaskInstance(self.operator, DEFAULT_DATE)
@@ -98,7 +98,7 @@ class TestEmrCreateJobFlowOperator(unittest.TestCase):
             }]
         }
 
-        self.assertDictEqual(self.operator.job_flow_overrides, expected_args)
+        assert self.operator.job_flow_overrides == expected_args
 
     def test_execute_returns_job_id(self):
         self.emr_client_mock.run_job_flow.return_value = RUN_JOB_FLOW_SUCCESS_RETURN
@@ -109,7 +109,7 @@ class TestEmrCreateJobFlowOperator(unittest.TestCase):
         boto3_session_mock = MagicMock(return_value=emr_session_mock)
 
         with patch('boto3.session.Session', boto3_session_mock):
-            self.assertEqual(self.operator.execute(None), 'j-8989898989')
+            assert self.operator.execute(None) == 'j-8989898989'
 
 
 if __name__ == '__main__':

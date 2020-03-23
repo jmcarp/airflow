@@ -22,6 +22,7 @@ import mock
 
 from airflow.exceptions import AirflowException
 from airflow.providers.slack.hooks.slack import SlackHook
+import pytest
 
 
 class TestSlackHook(unittest.TestCase):
@@ -29,7 +30,7 @@ class TestSlackHook(unittest.TestCase):
         test_token = 'test_token'
         slack_hook = SlackHook(token=test_token, slack_conn_id=None)
 
-        self.assertEqual(slack_hook.token, test_token)
+        assert slack_hook.token == test_token
 
     @mock.patch('airflow.providers.slack.hooks.slack.SlackHook.get_connection')
     def test_init_with_valid_slack_conn_id_only(self, get_connection_mock):
@@ -40,7 +41,7 @@ class TestSlackHook(unittest.TestCase):
         slack_hook = SlackHook(token=None, slack_conn_id=test_slack_conn_id)
 
         get_connection_mock.assert_called_once_with(test_slack_conn_id)
-        self.assertEqual(slack_hook.token, test_password)
+        assert slack_hook.token == test_password
 
     @mock.patch('airflow.providers.slack.hooks.slack.SlackHook.get_connection')
     def test_init_with_no_password_slack_conn_id_only(self, get_connection_mock):
@@ -49,24 +50,27 @@ class TestSlackHook(unittest.TestCase):
         get_connection_mock.return_value = conn
 
         test_slack_conn_id = 'test_slack_conn_id'
-        self.assertRaises(AirflowException, SlackHook, token=None, slack_conn_id=test_slack_conn_id)
+        with pytest.raises(AirflowException):
+            SlackHook(token=None, slack_conn_id=test_slack_conn_id)
 
     @mock.patch('airflow.providers.slack.hooks.slack.SlackHook.get_connection')
     def test_init_with_empty_password_slack_conn_id_only(self, get_connection_mock):
         get_connection_mock.return_value = mock.Mock(password=None)
 
         test_slack_conn_id = 'test_slack_conn_id'
-        self.assertRaises(AirflowException, SlackHook, token=None, slack_conn_id=test_slack_conn_id)
+        with pytest.raises(AirflowException):
+            SlackHook(token=None, slack_conn_id=test_slack_conn_id)
 
     def test_init_with_token_and_slack_conn_id(self):
         test_token = 'test_token'
         test_slack_conn_id = 'test_slack_conn_id'
         slack_hook = SlackHook(token=test_token, slack_conn_id=test_slack_conn_id)
 
-        self.assertEqual(slack_hook.token, test_token)
+        assert slack_hook.token == test_token
 
     def test_init_with_out_token_nor_slack_conn_id(self):
-        self.assertRaises(AirflowException, SlackHook, token=None, slack_conn_id=None)
+        with pytest.raises(AirflowException):
+            SlackHook(token=None, slack_conn_id=None)
 
     @mock.patch('airflow.providers.slack.hooks.slack.SlackClient')
     def test_call_with_success(self, slack_client_class_mock):
@@ -97,4 +101,5 @@ class TestSlackHook(unittest.TestCase):
         test_method = 'test_method'
         test_api_params = {'key1': 'value1', 'key2': 'value2'}
 
-        self.assertRaises(AirflowException, slack_hook.call, test_method, test_api_params)
+        with pytest.raises(AirflowException):
+            slack_hook.call(test_method, test_api_params)

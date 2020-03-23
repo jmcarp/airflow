@@ -27,6 +27,7 @@ from airflow.providers.apache.hive.operators.hive import HiveOperator
 from airflow.providers.apache.hive.sensors.named_hive_partition import NamedHivePartitionSensor
 from airflow.utils.timezone import datetime
 from tests.providers.apache.hive import TestHiveEnvironment
+import pytest
 
 DEFAULT_DATE = datetime(2015, 1, 1)
 DEFAULT_DATE_ISO = DEFAULT_DATE.isoformat()
@@ -84,13 +85,13 @@ class TestNamedHivePartitionSensor(unittest.TestCase):
         parsed_schema, parsed_table, parsed_partition = (
             NamedHivePartitionSensor.parse_partition_name(name)
         )
-        self.assertEqual(schema, parsed_schema)
-        self.assertEqual(table, parsed_table)
-        self.assertEqual(partition, parsed_partition)
+        assert schema == parsed_schema
+        assert table == parsed_table
+        assert partition == parsed_partition
 
     def test_parse_partition_name_incorrect(self):
         name = 'incorrect.name'
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             NamedHivePartitionSensor.parse_partition_name(name)
 
     def test_parse_partition_name_default(self):
@@ -101,9 +102,9 @@ class TestNamedHivePartitionSensor(unittest.TestCase):
         parsed_schema, parsed_table, parsed_partition = (
             NamedHivePartitionSensor.parse_partition_name(name)
         )
-        self.assertEqual('default', parsed_schema)
-        self.assertEqual(table, parsed_table)
-        self.assertEqual(partition, parsed_partition)
+        assert 'default' == parsed_schema
+        assert table == parsed_table
+        assert partition == parsed_partition
 
     def test_poke_existing(self):
         partitions = ["{}.{}/{}={}".format(self.database,
@@ -115,7 +116,7 @@ class TestNamedHivePartitionSensor(unittest.TestCase):
                                           poke_interval=1,
                                           hook=self.hook,
                                           dag=self.dag)
-        self.assertTrue(sensor.poke(None))
+        assert sensor.poke(None)
 
     def test_poke_non_existing(self):
         partitions = ["{}.{}/{}={}".format(self.database,
@@ -127,7 +128,7 @@ class TestNamedHivePartitionSensor(unittest.TestCase):
                                           poke_interval=1,
                                           hook=self.hook,
                                           dag=self.dag)
-        self.assertFalse(sensor.poke(None))
+        assert not sensor.poke(None)
 
 
 @unittest.skipIf(
@@ -159,12 +160,12 @@ class TestPartitions(TestHiveEnvironment):
     def test_parses_partitions_with_periods(self):
         name = NamedHivePartitionSensor.parse_partition_name(
             partition="schema.table/part1=this.can.be.an.issue/part2=ok")
-        self.assertEqual(name[0], "schema")
-        self.assertEqual(name[1], "table")
-        self.assertEqual(name[2], "part1=this.can.be.an.issue/part2=ok")
+        assert name[0] == "schema"
+        assert name[1] == "table"
+        assert name[2] == "part1=this.can.be.an.issue/part2=ok"
 
     def test_times_out_on_nonexistent_partition(self):
-        with self.assertRaises(AirflowSensorTimeout):
+        with pytest.raises(AirflowSensorTimeout):
             op = NamedHivePartitionSensor(
                 task_id='hive_partition_check',
                 partition_names=[

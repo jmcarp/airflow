@@ -50,12 +50,12 @@ class TestDingdingOperator(unittest.TestCase):
             **self._config
         )
 
-        self.assertIsNotNone(operator)
-        self.assertEqual(self._config['dingding_conn_id'], operator.dingding_conn_id)
-        self.assertEqual(self._config['message_type'], operator.message_type)
-        self.assertEqual(self._config['message'], operator.message)
-        self.assertEqual(self._config['at_mobiles'], operator.at_mobiles)
-        self.assertEqual(self._config['at_all'], operator.at_all)
+        assert operator is not None
+        assert self._config['dingding_conn_id'] == operator.dingding_conn_id
+        assert self._config['message_type'] == operator.message_type
+        assert self._config['message'] == operator.message
+        assert self._config['at_mobiles'] == operator.at_mobiles
+        assert self._config['at_all'] == operator.at_all
 
         operator.execute(None)
         mock_hook.assert_called_once_with(

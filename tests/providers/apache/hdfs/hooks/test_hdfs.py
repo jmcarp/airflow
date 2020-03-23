@@ -41,10 +41,10 @@ class TestHDFSHook(unittest.TestCase):
     })
     def test_get_client(self):
         client = HDFSHook(proxy_user='foo').get_conn()
-        self.assertIsInstance(client, snakebite.client.Client)
-        self.assertEqual('localhost', client.host)
-        self.assertEqual(8020, client.port)
-        self.assertEqual('foo', client.service.channel.effective_user)
+        assert isinstance(client, snakebite.client.Client)
+        assert 'localhost' == client.host
+        assert 8020 == client.port
+        assert 'foo' == client.service.channel.effective_user
 
     @mock.patch.dict('os.environ', {
         'AIRFLOW_CONN_HDFS_DEFAULT': 'hdfs://localhost:8020',
@@ -88,4 +88,4 @@ class TestHDFSHook(unittest.TestCase):
         )
         mock_get_connections.return_value = [conn_1, conn_2]
         client = HDFSHook().get_conn()
-        self.assertIsInstance(client, snakebite.client.HAClient)
+        assert isinstance(client, snakebite.client.HAClient)

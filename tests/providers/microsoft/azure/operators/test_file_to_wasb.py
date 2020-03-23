@@ -49,13 +49,13 @@ class TestFileToWasbOperator(unittest.TestCase):
             dag=self.dag,
             **self._config
         )
-        self.assertEqual(operator.file_path, self._config['file_path'])
-        self.assertEqual(operator.container_name,
-                         self._config['container_name'])
-        self.assertEqual(operator.blob_name, self._config['blob_name'])
-        self.assertEqual(operator.wasb_conn_id, self._config['wasb_conn_id'])
-        self.assertEqual(operator.load_options, {})
-        self.assertEqual(operator.retries, self._config['retries'])
+        assert operator.file_path == self._config['file_path']
+        assert operator.container_name == \
+                         self._config['container_name']
+        assert operator.blob_name == self._config['blob_name']
+        assert operator.wasb_conn_id == self._config['wasb_conn_id']
+        assert operator.load_options == {}
+        assert operator.retries == self._config['retries']
 
         operator = FileToWasbOperator(
             task_id='wasb_operator',
@@ -63,7 +63,7 @@ class TestFileToWasbOperator(unittest.TestCase):
             load_options={'timeout': 2},
             **self._config
         )
-        self.assertEqual(operator.load_options, {'timeout': 2})
+        assert operator.load_options == {'timeout': 2}
 
     @mock.patch('airflow.providers.microsoft.azure.operators.file_to_wasb.WasbHook',
                 autospec=True)

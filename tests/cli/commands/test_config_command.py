@@ -41,5 +41,5 @@ class TestCliConfig(unittest.TestCase):
     def test_cli_show_config_should_display_key(self):
         with contextlib.redirect_stdout(io.StringIO()) as temp_stdout:
             config_command.show_config(self.parser.parse_args(['config']))
-        self.assertIn('[core]', temp_stdout.getvalue())
-        self.assertIn('testkey = test_value', temp_stdout.getvalue())
+        assert '[core]' in temp_stdout.getvalue()
+        assert 'testkey = test_value' in temp_stdout.getvalue()

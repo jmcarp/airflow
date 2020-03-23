@@ -29,6 +29,7 @@ from airflow.providers.google.cloud.operators.functions import (
     CloudFunctionInvokeFunctionOperator,
 )
 from airflow.version import version
+import pytest
 
 EMPTY_CONTENT = b''
 MOCK_RESP_404 = type('', (object,), {"status": 404})()
@@ -73,7 +74,7 @@ class TestGcfFunctionDeploy(unittest.TestCase):
     @mock.patch('airflow.providers.google.cloud.operators.functions.CloudFunctionsHook')
     def test_body_empty_or_missing_fields(self, body, message, mock_hook):
         mock_hook.return_value.upload_function_zip.return_value = 'https://uploadUrl'
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             op = CloudFunctionDeployFunctionOperator(
                 project_id="test_project_id",
                 location="test_region",
@@ -82,7 +83,7 @@ class TestGcfFunctionDeploy(unittest.TestCase):
             )
             op.execute(None)
         err = cm.exception
-        self.assertIn(message, str(err))
+        assert message in str(err)
 
     @mock.patch('airflow.providers.google.cloud.operators.functions.CloudFunctionsHook')
     def test_deploy_execute(self, mock_hook):
@@ -158,7 +159,7 @@ class TestGcfFunctionDeploy(unittest.TestCase):
 
     @mock.patch('airflow.providers.google.cloud.operators.functions.CloudFunctionsHook')
     def test_empty_location(self, mock_hook):
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             CloudFunctionDeployFunctionOperator(
                 project_id="test_project_id",
                 location="",
@@ -166,11 +167,11 @@ class TestGcfFunctionDeploy(unittest.TestCase):
                 task_id="id"
             )
         err = cm.exception
-        self.assertIn("The required parameter 'location' is missing", str(err))
+        assert "The required parameter 'location' is missing" in str(err)
 
     @mock.patch('airflow.providers.google.cloud.operators.functions.CloudFunctionsHook')
     def test_empty_body(self, mock_hook):
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             CloudFunctionDeployFunctionOperator(
                 project_id="test_project_id",
                 location="test_region",
@@ -178,7 +179,7 @@ class TestGcfFunctionDeploy(unittest.TestCase):
                 task_id="id"
             )
         err = cm.exception
-        self.assertIn("The required parameter 'body' is missing", str(err))
+        assert "The required parameter 'body' is missing" in str(err)
 
     @parameterized.expand([
         (runtime,) for runtime in VALID_RUNTIMES
@@ -270,7 +271,7 @@ class TestGcfFunctionDeploy(unittest.TestCase):
         mock_hook.return_value.create_new_function.return_value = True
         body = deepcopy(VALID_BODY)
         body['name'] = ''
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             op = CloudFunctionDeployFunctionOperator(
                 project_id="test_project_id",
                 location="test_region",
@@ -279,8 +280,8 @@ class TestGcfFunctionDeploy(unittest.TestCase):
             )
             op.execute(None)
         err = cm.exception
-        self.assertIn("The body field 'name' of value '' does not match",
-                      str(err))
+        assert "The body field 'name' of value '' does not match" in \
+                      str(err)
         mock_hook.assert_called_once_with(api_version='v1',
                                           gcp_conn_id='google_cloud_default')
         mock_hook.reset_mock()
@@ -306,7 +307,7 @@ class TestGcfFunctionDeploy(unittest.TestCase):
         mock_hook.return_value.create_new_function.return_value = True
         body = deepcopy(VALID_BODY)
         body[key] = value
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             op = CloudFunctionDeployFunctionOperator(
                 project_id="test_project_id",
                 location="test_region",
@@ -315,7 +316,7 @@ class TestGcfFunctionDeploy(unittest.TestCase):
             )
             op.execute(None)
         err = cm.exception
-        self.assertIn(message, str(err))
+        assert message in str(err)
         mock_hook.assert_called_once_with(api_version='v1',
                                           gcp_conn_id='google_cloud_default')
         mock_hook.reset_mock()
@@ -360,7 +361,7 @@ class TestGcfFunctionDeploy(unittest.TestCase):
         body.pop('sourceArchiveUrl', None)
         zip_path = source_code.pop('zip_path', None)
         body.update(source_code)
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             op = CloudFunctionDeployFunctionOperator(
                 project_id="test_project_id",
                 location="test_region",
@@ -370,7 +371,7 @@ class TestGcfFunctionDeploy(unittest.TestCase):
             )
             op.execute(None)
         err = cm.exception
-        self.assertIn(message, str(err))
+        assert message in str(err)
 
     @parameterized.expand([
         ({'sourceArchiveUrl': 'gs://url'}, 'test_project_id'),
@@ -457,7 +458,7 @@ class TestGcfFunctionDeploy(unittest.TestCase):
         body.pop('httpsTrigger', None)
         body.pop('eventTrigger', None)
         body.update(trigger)
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             op = CloudFunctionDeployFunctionOperator(
                 project_id="test_project_id",
                 location="test_region",
@@ -466,7 +467,7 @@ class TestGcfFunctionDeploy(unittest.TestCase):
             )
             op.execute(None)
         err = cm.exception
-        self.assertIn(message, str(err))
+        assert message in str(err)
         mock_hook.assert_called_once_with(api_version='v1',
                                           gcp_conn_id='google_cloud_default')
         mock_hook.reset_mock()
@@ -562,7 +563,7 @@ class TestGcfFunctionDelete(unittest.TestCase):
         mock_hook.return_value.delete_function.assert_called_once_with(
             'projects/project_name/locations/project_location/functions/function_name'
         )
-        self.assertEqual(result['name'], self._FUNCTION_NAME)
+        assert result['name'] == self._FUNCTION_NAME
 
     @mock.patch('airflow.providers.google.cloud.operators.functions.CloudFunctionsHook')
     def test_correct_name(self, mock_hook):
@@ -577,28 +578,28 @@ class TestGcfFunctionDelete(unittest.TestCase):
 
     @mock.patch('airflow.providers.google.cloud.operators.functions.CloudFunctionsHook')
     def test_invalid_name(self, mock_hook):
-        with self.assertRaises(AttributeError) as cm:
+        with pytest.raises(AttributeError) as cm:
             op = CloudFunctionDeleteFunctionOperator(
                 name="invalid_name",
                 task_id="id"
             )
             op.execute(None)
         err = cm.exception
-        self.assertEqual(str(err), 'Parameter name must match pattern: {}'.format(
-            FUNCTION_NAME_PATTERN))
+        assert str(err) == 'Parameter name must match pattern: {}'.format(
+            FUNCTION_NAME_PATTERN)
         mock_hook.assert_not_called()
 
     @mock.patch('airflow.providers.google.cloud.operators.functions.CloudFunctionsHook')
     def test_empty_name(self, mock_hook):
         mock_hook.return_value.delete_function.return_value = \
             self._DELETE_FUNCTION_EXPECTED
-        with self.assertRaises(AttributeError) as cm:
+        with pytest.raises(AttributeError) as cm:
             CloudFunctionDeleteFunctionOperator(
                 name="",
                 task_id="id"
             )
         err = cm.exception
-        self.assertEqual(str(err), 'Empty parameter: name')
+        assert str(err) == 'Empty parameter: name'
         mock_hook.assert_not_called()
 
     @mock.patch('airflow.providers.google.cloud.operators.functions.CloudFunctionsHook')
@@ -626,7 +627,7 @@ class TestGcfFunctionDelete(unittest.TestCase):
         mock_hook.return_value.delete_function.side_effect = mock.Mock(
             side_effect=HttpError(resp=resp, content=b'error'))
 
-        with self.assertRaises(HttpError):
+        with pytest.raises(HttpError):
             op.execute(None)
 
         mock_hook.assert_called_once_with(api_version='v1',

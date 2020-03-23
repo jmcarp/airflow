@@ -102,11 +102,9 @@ class TestSparkSqlHook(unittest.TestCase):
                 )
 
         # Then
-        self.assertEqual(
-            mock_popen.mock_calls[0],
+        assert mock_popen.mock_calls[0] == \
             call(['spark-sql', '-e', 'SELECT 1', '--master', 'yarn', '--name', 'default-name', '--verbose',
                   '--queue', 'default'], stderr=-2, stdout=-1)
-        )
 
     @patch('airflow.providers.apache.spark.hooks.spark_sql.subprocess.Popen')
     def test_spark_process_runcmd_with_str(self, mock_popen):
@@ -121,11 +119,9 @@ class TestSparkSqlHook(unittest.TestCase):
         hook.run_query('--deploy-mode cluster')
 
         # Then
-        self.assertEqual(
-            mock_popen.mock_calls[0],
+        assert mock_popen.mock_calls[0] == \
             call(['spark-sql', '-e', 'SELECT 1', '--master', 'yarn', '--name', 'default-name', '--verbose',
                   '--queue', 'default', '--deploy-mode', 'cluster'], stderr=-2, stdout=-1)
-        )
 
     @patch('airflow.providers.apache.spark.hooks.spark_sql.subprocess.Popen')
     def test_spark_process_runcmd_with_list(self, mock_popen):
@@ -140,11 +136,9 @@ class TestSparkSqlHook(unittest.TestCase):
         hook.run_query(['--deploy-mode', 'cluster'])
 
         # Then
-        self.assertEqual(
-            mock_popen.mock_calls[0],
+        assert mock_popen.mock_calls[0] == \
             call(['spark-sql', '-e', 'SELECT 1', '--master', 'yarn', '--name', 'default-name', '--verbose',
                   '--queue', 'default', '--deploy-mode', 'cluster'], stderr=-2, stdout=-1)
-        )
 
 
 if __name__ == '__main__':

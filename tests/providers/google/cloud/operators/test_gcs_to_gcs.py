@@ -25,6 +25,7 @@ from airflow.exceptions import AirflowException
 from airflow.providers.google.cloud.operators.gcs_to_gcs import (
     WILDCARD, GCSSynchronizeBuckets, GCSToGCSOperator,
 )
+import pytest
 
 TASK_ID = 'test-gcs-to-gcs-operator'
 TEST_BUCKET = 'test-bucket'
@@ -343,7 +344,7 @@ class TestGoogleCloudStorageToCloudStorageOperator(unittest.TestCase):
         error_msg = "Only one wildcard '[*]' is allowed in source_object parameter. " \
                     "Found {}".format(total_wildcards)
 
-        with self.assertRaisesRegex(AirflowException, error_msg):
+        with pytest.raises(AirflowException, match=error_msg):
             operator.execute(None)
 
     @mock.patch('airflow.providers.google.cloud.operators.gcs_to_gcs.GCSHook')
@@ -361,7 +362,7 @@ class TestGoogleCloudStorageToCloudStorageOperator(unittest.TestCase):
                 'destination_bucket is None. Defaulting it to source_bucket (%s)',
                 TEST_BUCKET
             )
-            self.assertEqual(operator.destination_bucket, operator.source_bucket)
+            assert operator.destination_bucket == operator.source_bucket
 
     # Tests the use of delimiter and source object as list
     @mock.patch('airflow.providers.google.cloud.operators.gcs_to_gcs.GCSHook')
@@ -382,8 +383,7 @@ class TestGoogleCloudStorageToCloudStorageOperator(unittest.TestCase):
             task_id=TASK_ID, source_bucket=TEST_BUCKET,
             source_objects=SOURCE_OBJECTS_TWO_EMPTY_STRING)
 
-        with self.assertRaisesRegex(AirflowException,
-                                    "You can't have two empty strings inside source_object"):
+        with pytest.raises(AirflowException, match="You can't have two empty strings inside source_object"):
             operator.execute(None)
 
     @mock.patch('airflow.providers.google.cloud.operators.gcs_to_gcs.GCSHook')

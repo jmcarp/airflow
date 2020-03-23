@@ -54,8 +54,8 @@ class TestCliSyncPerm(unittest.TestCase):
 
         assert self.appbuilder.sm.sync_roles.call_count == 1
 
-        self.assertEqual(2,
-                         len(self.appbuilder.sm.sync_perm_for_dag.mock_calls))
+        assert 2 == \
+                         len(self.appbuilder.sm.sync_perm_for_dag.mock_calls)
         self.appbuilder.sm.sync_perm_for_dag.assert_any_call(
             'has_access_control',
             {'Public': {'can_dag_read'}}

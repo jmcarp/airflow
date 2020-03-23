@@ -70,7 +70,7 @@ class TestAzureContainerInstanceHook(unittest.TestCase):
 
         logs = self.hook.get_logs('resource_group', 'name', 'name')
 
-        self.assertSequenceEqual(logs, expected_messages)
+        assert logs == expected_messages
 
     @patch('azure.mgmt.containerinstance.operations.ContainerGroupsOperations.delete')
     def test_delete(self, delete_mock):
@@ -83,7 +83,7 @@ class TestAzureContainerInstanceHook(unittest.TestCase):
                                                  containers=[Container(name='test1',
                                                                        image='hello-world',
                                                                        resources=self.resources)])]
-        self.assertFalse(self.hook.exists('test', 'test1'))
+        assert not self.hook.exists('test', 'test1')
 
     @patch('azure.mgmt.containerinstance.operations.ContainerGroupsOperations.list_by_resource_group')
     def test_exists_with_not_existing(self, list_mock):
@@ -91,4 +91,4 @@ class TestAzureContainerInstanceHook(unittest.TestCase):
                                                  containers=[Container(name='test1',
                                                                        image='hello-world',
                                                                        resources=self.resources)])]
-        self.assertFalse(self.hook.exists('test', 'not found'))
+        assert not self.hook.exists('test', 'not found')

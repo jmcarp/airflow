@@ -23,6 +23,7 @@ import mock
 from parameterized import parameterized
 
 from tests.test_utils.config import conf_vars
+import pytest
 
 try:
     from airflow.executors.kubernetes_executor import AirflowKubernetesScheduler
@@ -110,10 +111,8 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         volume_mounts = worker_config._get_volume_mounts()
         for volume_or_mount in volumes + volume_mounts:
             if volume_or_mount.name not in ['airflow-config', 'airflow-local-settings']:
-                self.assertNotIn(
-                    'subPath', self.api_client.sanitize_for_serialization(volume_or_mount),
+                assert 'subPath' not in self.api_client.sanitize_for_serialization(volume_or_mount), \
                     "subPath shouldn't be defined"
-                )
 
     @conf_vars({
         ('kubernetes', 'git_ssh_known_hosts_configmap_name'): 'airflow-configmap',
@@ -127,8 +126,7 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         ('kubernetes', 'kube_client_request_args'): '{"_request_timeout" : [60,360]}',
     })
     def test_worker_configuration_auth_both_ssh_and_user(self):
-        with self.assertRaisesRegex(AirflowConfigException,
-                                    'either `git_user` and `git_password`.*'
+        with pytest.raises(AirflowConfigException, match='either `git_user` and `git_password`.*'
                                     'or `git_ssh_key_secret_name`.*'
                                     'but not both$'):
             KubeConfig()
@@ -141,7 +139,7 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         with conf_vars({
             ('kubernetes', 'delete_option_kwargs'): config,
         }):
-            self.assertEqual(KubeConfig().delete_option_kwargs, expected_value)
+            assert KubeConfig().delete_option_kwargs == expected_value
 
     def test_worker_with_subpaths(self):
         self.kube_config.dags_volume_subpath = 'dags'
@@ -153,17 +151,13 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         volume_mounts = worker_config._get_volume_mounts()
 
         for volume in volumes:
-            self.assertNotIn(
-                'subPath', self.api_client.sanitize_for_serialization(volume),
+            assert 'subPath' not in self.api_client.sanitize_for_serialization(volume), \
                 "subPath isn't valid configuration for a volume"
-            )
 
         for volume_mount in volume_mounts:
             if volume_mount.name != 'airflow-config':
-                self.assertIn(
-                    'subPath', self.api_client.sanitize_for_serialization(volume_mount),
+                assert 'subPath' in self.api_client.sanitize_for_serialization(volume_mount), \
                     "subPath should've been passed to volumeMount configuration"
-                )
 
     def test_worker_generate_dag_volume_mount_path(self):
         self.kube_config.git_dags_folder_mount_point = '/root/airflow/git/dags'
@@ -173,18 +167,18 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         self.kube_config.dags_volume_claim = 'airflow-dags'
         self.kube_config.dags_volume_host = ''
         dag_volume_mount_path = worker_config.generate_dag_volume_mount_path()
-        self.assertEqual(dag_volume_mount_path, self.kube_config.dags_folder)
+        assert dag_volume_mount_path == self.kube_config.dags_folder
 
         self.kube_config.dags_volume_claim = ''
         self.kube_config.dags_volume_host = '/host/airflow/dags'
         dag_volume_mount_path = worker_config.generate_dag_volume_mount_path()
-        self.assertEqual(dag_volume_mount_path, self.kube_config.dags_folder)
+        assert dag_volume_mount_path == self.kube_config.dags_folder
 
         self.kube_config.dags_volume_claim = ''
         self.kube_config.dags_volume_host = ''
         dag_volume_mount_path = worker_config.generate_dag_volume_mount_path()
-        self.assertEqual(dag_volume_mount_path,
-                         self.kube_config.git_dags_folder_mount_point)
+        assert dag_volume_mount_path == \
+                         self.kube_config.git_dags_folder_mount_point
 
     def test_worker_environment_no_dags_folder(self):
         self.kube_config.airflow_configmap = ''
@@ -193,7 +187,7 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         worker_config = WorkerConfiguration(self.kube_config)
         env = worker_config._get_environment()
 
-        self.assertNotIn('AIRFLOW__CORE__DAGS_FOLDER', env)
+        assert 'AIRFLOW__CORE__DAGS_FOLDER' not in env
 
     def test_worker_environment_when_dags_folder_specified(self):
         self.kube_config.airflow_configmap = 'airflow-configmap'
@@ -204,7 +198,7 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         worker_config = WorkerConfiguration(self.kube_config)
         env = worker_config._get_environment()
 
-        self.assertEqual(dags_folder, env['AIRFLOW__CORE__DAGS_FOLDER'])
+        assert dags_folder == env['AIRFLOW__CORE__DAGS_FOLDER']
 
     def test_worker_environment_dags_folder_using_git_sync(self):
         self.kube_config.airflow_configmap = 'airflow-configmap'
@@ -219,7 +213,7 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         worker_config = WorkerConfiguration(self.kube_config)
         env = worker_config._get_environment()
 
-        self.assertEqual(dags_folder, env['AIRFLOW__CORE__DAGS_FOLDER'])
+        assert dags_folder == env['AIRFLOW__CORE__DAGS_FOLDER']
 
     def test_init_environment_using_git_sync_ssh_without_known_hosts(self):
         # Tests the init environment created with git-sync SSH authentication option is correct
@@ -234,12 +228,12 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         worker_config = WorkerConfiguration(self.kube_config)
         init_containers = worker_config._get_init_containers()
 
-        self.assertTrue(init_containers)  # check not empty
+        assert init_containers  # check not empty
         env = init_containers[0].env
 
-        self.assertIn(k8s.V1EnvVar(name='GIT_SSH_KEY_FILE', value='/etc/git-secret/ssh'), env)
-        self.assertIn(k8s.V1EnvVar(name='GIT_KNOWN_HOSTS', value='false'), env)
-        self.assertIn(k8s.V1EnvVar(name='GIT_SYNC_SSH', value='true'), env)
+        assert k8s.V1EnvVar(name='GIT_SSH_KEY_FILE', value='/etc/git-secret/ssh') in env
+        assert k8s.V1EnvVar(name='GIT_KNOWN_HOSTS', value='false') in env
+        assert k8s.V1EnvVar(name='GIT_SYNC_SSH', value='true') in env
 
     def test_init_environment_using_git_sync_ssh_with_known_hosts(self):
         # Tests the init environment created with git-sync SSH authentication option is correct
@@ -254,16 +248,16 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         worker_config = WorkerConfiguration(self.kube_config)
         init_containers = worker_config._get_init_containers()
 
-        self.assertTrue(init_containers)  # check not empty
+        assert init_containers  # check not empty
         env = init_containers[0].env
 
-        self.assertIn(k8s.V1EnvVar(name='GIT_SSH_KEY_FILE', value='/etc/git-secret/ssh'), env)
-        self.assertIn(k8s.V1EnvVar(name='GIT_KNOWN_HOSTS', value='true'), env)
-        self.assertIn(k8s.V1EnvVar(
+        assert k8s.V1EnvVar(name='GIT_SSH_KEY_FILE', value='/etc/git-secret/ssh') in env
+        assert k8s.V1EnvVar(name='GIT_KNOWN_HOSTS', value='true') in env
+        assert k8s.V1EnvVar(
             name='GIT_SSH_KNOWN_HOSTS_FILE',
             value='/etc/git-secret/known_hosts'
-        ), env)
-        self.assertIn(k8s.V1EnvVar(name='GIT_SYNC_SSH', value='true'), env)
+        ) in env
+        assert k8s.V1EnvVar(name='GIT_SYNC_SSH', value='true') in env
 
     def test_init_environment_using_git_sync_user_without_known_hosts(self):
         # Tests the init environment created with git-sync User authentication option is correct
@@ -280,18 +274,18 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         worker_config = WorkerConfiguration(self.kube_config)
         init_containers = worker_config._get_init_containers()
 
-        self.assertTrue(init_containers)  # check not empty
+        assert init_containers  # check not empty
         env = init_containers[0].env
 
-        self.assertNotIn(k8s.V1EnvVar(name='GIT_SSH_KEY_FILE', value='/etc/git-secret/ssh'), env)
-        self.assertIn(k8s.V1EnvVar(name='GIT_SYNC_USERNAME', value='git_user'), env)
-        self.assertIn(k8s.V1EnvVar(name='GIT_SYNC_PASSWORD', value='git_password'), env)
-        self.assertIn(k8s.V1EnvVar(name='GIT_KNOWN_HOSTS', value='false'), env)
-        self.assertNotIn(k8s.V1EnvVar(
+        assert k8s.V1EnvVar(name='GIT_SSH_KEY_FILE', value='/etc/git-secret/ssh') not in env
+        assert k8s.V1EnvVar(name='GIT_SYNC_USERNAME', value='git_user') in env
+        assert k8s.V1EnvVar(name='GIT_SYNC_PASSWORD', value='git_password') in env
+        assert k8s.V1EnvVar(name='GIT_KNOWN_HOSTS', value='false') in env
+        assert k8s.V1EnvVar(
             name='GIT_SSH_KNOWN_HOSTS_FILE',
             value='/etc/git-secret/known_hosts'
-        ), env)
-        self.assertNotIn(k8s.V1EnvVar(name='GIT_SYNC_SSH', value='true'), env)
+        ) not in env
+        assert k8s.V1EnvVar(name='GIT_SYNC_SSH', value='true') not in env
 
     def test_init_environment_using_git_sync_user_with_known_hosts(self):
         # Tests the init environment created with git-sync User authentication option is correct
@@ -308,18 +302,18 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         worker_config = WorkerConfiguration(self.kube_config)
         init_containers = worker_config._get_init_containers()
 
-        self.assertTrue(init_containers)  # check not empty
+        assert init_containers  # check not empty
         env = init_containers[0].env
 
-        self.assertNotIn(k8s.V1EnvVar(name='GIT_SSH_KEY_FILE', value='/etc/git-secret/ssh'), env)
-        self.assertIn(k8s.V1EnvVar(name='GIT_SYNC_USERNAME', value='git_user'), env)
-        self.assertIn(k8s.V1EnvVar(name='GIT_SYNC_PASSWORD', value='git_password'), env)
-        self.assertIn(k8s.V1EnvVar(name='GIT_KNOWN_HOSTS', value='true'), env)
-        self.assertIn(k8s.V1EnvVar(
+        assert k8s.V1EnvVar(name='GIT_SSH_KEY_FILE', value='/etc/git-secret/ssh') not in env
+        assert k8s.V1EnvVar(name='GIT_SYNC_USERNAME', value='git_user') in env
+        assert k8s.V1EnvVar(name='GIT_SYNC_PASSWORD', value='git_password') in env
+        assert k8s.V1EnvVar(name='GIT_KNOWN_HOSTS', value='true') in env
+        assert k8s.V1EnvVar(
             name='GIT_SSH_KNOWN_HOSTS_FILE',
             value='/etc/git-secret/known_hosts'
-        ), env)
-        self.assertNotIn(k8s.V1EnvVar(name='GIT_SYNC_SSH', value='true'), env)
+        ) in env
+        assert k8s.V1EnvVar(name='GIT_SYNC_SSH', value='true') not in env
 
     def test_init_environment_using_git_sync_run_as_user_empty(self):
         # Tests if git_syn_run_as_user is none, then no securityContext created in init container
@@ -331,9 +325,9 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
 
         worker_config = WorkerConfiguration(self.kube_config)
         init_containers = worker_config._get_init_containers()
-        self.assertTrue(init_containers)  # check not empty
+        assert init_containers  # check not empty
 
-        self.assertIsNone(init_containers[0].security_context)
+        assert init_containers[0].security_context is None
 
     def test_init_environment_using_git_sync_run_as_user_root(self):
         # Tests if git_syn_run_as_user is '0', securityContext is created with
@@ -346,9 +340,9 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
 
         worker_config = WorkerConfiguration(self.kube_config)
         init_containers = worker_config._get_init_containers()
-        self.assertTrue(init_containers)  # check not empty
+        assert init_containers  # check not empty
 
-        self.assertEqual(0, init_containers[0].security_context.run_as_user)
+        assert 0 == init_containers[0].security_context.run_as_user
 
     def test_make_pod_run_as_user_0(self):
         # Tests the pod created with run-as-user 0 actually gets that in it's config
@@ -364,7 +358,7 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         worker_config = WorkerConfiguration(self.kube_config)
         pod = worker_config.as_pod()
 
-        self.assertEqual(0, pod.spec.security_context.run_as_user)
+        assert 0 == pod.spec.security_context.run_as_user
 
     def test_make_pod_assert_labels(self):
         # Tests the pod created has all the expected labels set
@@ -392,7 +386,7 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
             'task_id': 'test_task_id',
             'try_number': '1'
         }
-        self.assertEqual(pod.metadata.labels, expected_labels)
+        assert pod.metadata.labels == expected_labels
 
     def test_make_pod_git_sync_ssh_without_known_hosts(self):
         # Tests the pod created with git-sync SSH authentication option is correct without known hosts
@@ -416,13 +410,13 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         volume_mount_ssh_key = next((x.mount_path for x in init_containers[0].volume_mounts
                                     if x.name == worker_config.git_sync_ssh_secret_volume_name),
                                     None)
-        self.assertTrue(git_ssh_key_file)
-        self.assertTrue(volume_mount_ssh_key)
-        self.assertEqual(65533, pod.spec.security_context.fs_group)
-        self.assertEqual(git_ssh_key_file,
-                         volume_mount_ssh_key,
-                         'The location where the git ssh secret is mounted'
-                         ' needs to be the same as the GIT_SSH_KEY_FILE path')
+        assert git_ssh_key_file
+        assert volume_mount_ssh_key
+        assert 65533 == pod.spec.security_context.fs_group
+        assert git_ssh_key_file == \
+                         volume_mount_ssh_key, \
+                         'The location where the git ssh secret is mounted' \
+                         ' needs to be the same as the GIT_SSH_KEY_FILE path'
 
     def test_make_pod_git_sync_credentials_secret(self):
         # Tests the pod created with git_sync_credentials_secret will get into the init container
@@ -456,11 +450,11 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
             )
         )
 
-        self.assertIn(username_env, pod.spec.init_containers[0].env,
-                      'The username env for git credentials did not get into the init container')
+        assert username_env in pod.spec.init_containers[0].env, \
+                      'The username env for git credentials did not get into the init container'
 
-        self.assertIn(password_env, pod.spec.init_containers[0].env,
-                      'The password env for git credentials did not get into the init container')
+        assert password_env in pod.spec.init_containers[0].env, \
+                      'The password env for git credentials did not get into the init container'
 
     def test_make_pod_git_sync_rev(self):
         # Tests the pod created with git_sync_credentials_secret will get into the init container
@@ -482,8 +476,8 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
             value=self.kube_config.git_sync_rev,
         )
 
-        self.assertIn(rev_env, pod.spec.init_containers[0].env,
-                      'The git_sync_rev env did not get into the init container')
+        assert rev_env in pod.spec.init_containers[0].env, \
+                      'The git_sync_rev env did not get into the init container'
 
     def test_make_pod_git_sync_ssh_with_known_hosts(self):
         # Tests the pod created with git-sync SSH authentication option is correct with known hosts
@@ -503,12 +497,12 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
             (x.mount_path for x in init_containers[0].volume_mounts
              if x.name == worker_config.git_sync_ssh_known_hosts_volume_name),
             None)
-        self.assertTrue(git_ssh_known_hosts_file)
-        self.assertTrue(volume_mount_ssh_known_hosts_file)
-        self.assertEqual(git_ssh_known_hosts_file,
-                         volume_mount_ssh_known_hosts_file,
-                         'The location where the git known hosts file is mounted'
-                         ' needs to be the same as the GIT_SSH_KNOWN_HOSTS_FILE path')
+        assert git_ssh_known_hosts_file
+        assert volume_mount_ssh_known_hosts_file
+        assert git_ssh_known_hosts_file == \
+                         volume_mount_ssh_known_hosts_file, \
+                         'The location where the git known hosts file is mounted' \
+                         ' needs to be the same as the GIT_SSH_KNOWN_HOSTS_FILE path'
 
     def test_make_pod_with_empty_executor_config(self):
         self.kube_config.kube_affinity = self.affinity_config
@@ -518,18 +512,18 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         worker_config = WorkerConfiguration(self.kube_config)
         pod = worker_config.as_pod()
 
-        self.assertTrue(pod.spec.affinity['podAntiAffinity'] is not None)
-        self.assertEqual('app',
-                         pod.spec.affinity['podAntiAffinity']
-                         ['requiredDuringSchedulingIgnoredDuringExecution'][0]
-                         ['labelSelector']
-                         ['matchExpressions'][0]
-                         ['key'])
+        assert pod.spec.affinity['podAntiAffinity'] is not None
+        assert 'app' == \
+                         pod.spec.affinity['podAntiAffinity'] \
+                         ['requiredDuringSchedulingIgnoredDuringExecution'][0] \
+                         ['labelSelector'] \
+                         ['matchExpressions'][0] \
+                         ['key']
 
-        self.assertEqual(2, len(pod.spec.tolerations))
-        self.assertEqual('prod', pod.spec.tolerations[1]['key'])
-        self.assertEqual('role-arn', pod.metadata.annotations['iam.amazonaws.com/role'])
-        self.assertEqual('value', pod.metadata.annotations['other/annotation'])
+        assert 2 == len(pod.spec.tolerations)
+        assert 'prod' == pod.spec.tolerations[1]['key']
+        assert 'role-arn' == pod.metadata.annotations['iam.amazonaws.com/role']
+        assert 'value' == pod.metadata.annotations['other/annotation']
 
     def test_make_pod_with_executor_config(self):
         self.kube_config.dags_folder = 'dags'
@@ -544,16 +538,16 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
 
         result = PodGenerator.reconcile_pods(pod, config_pod)
 
-        self.assertTrue(result.spec.affinity['podAntiAffinity'] is not None)
-        self.assertEqual('app',
-                         result.spec.affinity['podAntiAffinity']
-                         ['requiredDuringSchedulingIgnoredDuringExecution'][0]
-                         ['labelSelector']
-                         ['matchExpressions'][0]
-                         ['key'])
+        assert result.spec.affinity['podAntiAffinity'] is not None
+        assert 'app' == \
+                         result.spec.affinity['podAntiAffinity'] \
+                         ['requiredDuringSchedulingIgnoredDuringExecution'][0] \
+                         ['labelSelector'] \
+                         ['matchExpressions'][0] \
+                         ['key']
 
-        self.assertEqual(2, len(result.spec.tolerations))
-        self.assertEqual('prod', result.spec.tolerations[1]['key'])
+        assert 2 == len(result.spec.tolerations)
+        assert 'prod' == result.spec.tolerations[1]['key']
 
     def test_worker_pvc_dags(self):
         # Tests persistence volume config created when `dags_volume_claim` is set
@@ -568,10 +562,10 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         dag_volume = [volume for volume in volumes if volume.name == 'airflow-dags']
         dag_volume_mount = [mount for mount in volume_mounts if mount.name == 'airflow-dags']
 
-        self.assertEqual('airflow-dags', dag_volume[0].persistent_volume_claim.claim_name)
-        self.assertEqual(1, len(dag_volume_mount))
-        self.assertTrue(dag_volume_mount[0].read_only)
-        self.assertEqual(0, len(init_containers))
+        assert 'airflow-dags' == dag_volume[0].persistent_volume_claim.claim_name
+        assert 1 == len(dag_volume_mount)
+        assert dag_volume_mount[0].read_only
+        assert 0 == len(init_containers)
 
     def test_worker_git_dags(self):
         # Tests persistence volume config created when `git_repo` is set
@@ -596,19 +590,19 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         dag_volume = [volume for volume in volumes if volume.name == 'airflow-dags']
         dag_volume_mount = [mount for mount in volume_mounts if mount.name == 'airflow-dags']
 
-        self.assertIsNotNone(dag_volume[0].empty_dir)
-        self.assertEqual(self.kube_config.git_dags_folder_mount_point, dag_volume_mount[0].mount_path)
-        self.assertTrue(dag_volume_mount[0].read_only)
+        assert dag_volume[0].empty_dir is not None
+        assert self.kube_config.git_dags_folder_mount_point == dag_volume_mount[0].mount_path
+        assert dag_volume_mount[0].read_only
 
         init_container = worker_config._get_init_containers()[0]
         init_container_volume_mount = [mount for mount in init_container.volume_mounts
                                        if mount.name == 'airflow-dags']
 
-        self.assertEqual('git-sync-clone', init_container.name)
-        self.assertEqual('gcr.io/google-containers/git-sync-amd64:v2.0.5', init_container.image)
-        self.assertEqual(1, len(init_container_volume_mount))
-        self.assertFalse(init_container_volume_mount[0].read_only)
-        self.assertEqual(65533, init_container.security_context.run_as_user)
+        assert 'git-sync-clone' == init_container.name
+        assert 'gcr.io/google-containers/git-sync-amd64:v2.0.5' == init_container.image
+        assert 1 == len(init_container_volume_mount)
+        assert not init_container_volume_mount[0].read_only
+        assert 65533 == init_container.security_context.run_as_user
 
     def test_worker_container_dags(self):
         # Tests that the 'airflow-dags' persistence volume is NOT created when `dags_in_image` is set
@@ -623,9 +617,9 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
 
         init_containers = worker_config._get_init_containers()
 
-        self.assertEqual(0, len(dag_volume))
-        self.assertEqual(0, len(dag_volume_mount))
-        self.assertEqual(0, len(init_containers))
+        assert 0 == len(dag_volume)
+        assert 0 == len(dag_volume_mount)
+        assert 0 == len(init_containers)
 
     def test_set_airflow_config_configmap(self):
         """
@@ -646,13 +640,11 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
             volume for volume in pod_spec_dict['volumes'] if volume["name"] == 'airflow-config'
         ]
         # Test that volume_name is found
-        self.assertEqual(1, len(airflow_config_volume))
+        assert 1 == len(airflow_config_volume)
 
         # Test that config map exists
-        self.assertEqual(
-            {'default_mode': None, 'items': None, 'name': 'airflow-configmap', 'optional': None},
+        assert {'default_mode': None, 'items': None, 'name': 'airflow-configmap', 'optional': None} == \
             airflow_config_volume[0]['config_map']
-        )
 
         # Test that only 1 Volume Mounts exists with 'airflow-config' name
         # One for airflow.cfg
@@ -661,8 +653,7 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
             if volume_mount['name'] == 'airflow-config'
         ]
 
-        self.assertEqual(
-            [
+        assert [
                 {
                     'mount_path': '/usr/local/airflow/airflow.cfg',
                     'mount_propagation': None,
@@ -671,9 +662,8 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
                     'sub_path': 'airflow.cfg',
                     'sub_path_expr': None
                 }
-            ],
+            ] == \
             volume_mounts
-        )
 
     def test_set_airflow_local_settings_configmap(self):
         """
@@ -694,13 +684,11 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
             volume for volume in pod_spec_dict['volumes'] if volume["name"] == 'airflow-config'
         ]
         # Test that volume_name is found
-        self.assertEqual(1, len(airflow_config_volume))
+        assert 1 == len(airflow_config_volume)
 
         # Test that config map exists
-        self.assertEqual(
-            {'default_mode': None, 'items': None, 'name': 'airflow-configmap', 'optional': None},
+        assert {'default_mode': None, 'items': None, 'name': 'airflow-configmap', 'optional': None} == \
             airflow_config_volume[0]['config_map']
-        )
 
         # Test that 2 Volume Mounts exists and has 2 different mount-paths
         # One for airflow.cfg
@@ -709,10 +697,9 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
             volume_mount for volume_mount in pod_spec_dict['containers'][0]['volume_mounts']
             if volume_mount['name'] == 'airflow-config'
         ]
-        self.assertEqual(2, len(volume_mounts))
+        assert 2 == len(volume_mounts)
 
-        self.assertEqual(
-            [
+        assert [
                 {
                     'mount_path': '/usr/local/airflow/airflow.cfg',
                     'mount_propagation': None,
@@ -729,9 +716,8 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
                     'sub_path': 'airflow_local_settings.py',
                     'sub_path_expr': None
                 }
-            ],
+            ] == \
             volume_mounts
-        )
 
     def test_set_airflow_configmap_different_for_local_setting(self):
         """
@@ -753,13 +739,11 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
             volume for volume in pod_spec_dict['volumes'] if volume["name"] == 'airflow-local-settings'
         ]
         # Test that volume_name is found
-        self.assertEqual(1, len(airflow_local_settings_volume))
+        assert 1 == len(airflow_local_settings_volume)
 
         # Test that config map exists
-        self.assertEqual(
-            {'default_mode': None, 'items': None, 'name': 'airflow-ls-configmap', 'optional': None},
+        assert {'default_mode': None, 'items': None, 'name': 'airflow-ls-configmap', 'optional': None} == \
             airflow_local_settings_volume[0]['config_map']
-        )
 
         # Test that 2 Volume Mounts exists and has 2 different mount-paths
         # One for airflow.cfg
@@ -773,11 +757,10 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
             volume_mount for volume_mount in pod_spec_dict['containers'][0]['volume_mounts']
             if volume_mount['name'] == 'airflow-local-settings'
         ]
-        self.assertEqual(1, len(airflow_cfg_volume_mount))
-        self.assertEqual(1, len(local_setting_volume_mount))
+        assert 1 == len(airflow_cfg_volume_mount)
+        assert 1 == len(local_setting_volume_mount)
 
-        self.assertEqual(
-            [
+        assert [
                 {
                     'mount_path': '/usr/local/airflow/config/airflow_local_settings.py',
                     'mount_propagation': None,
@@ -786,12 +769,10 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
                     'sub_path': 'airflow_local_settings.py',
                     'sub_path_expr': None
                 }
-            ],
+            ] == \
             local_setting_volume_mount
-        )
 
-        self.assertEqual(
-            [
+        assert [
                 {
                     'mount_path': '/usr/local/airflow/airflow.cfg',
                     'mount_propagation': None,
@@ -800,9 +781,8 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
                     'sub_path': 'airflow.cfg',
                     'sub_path_expr': None
                 }
-            ],
+            ] == \
             airflow_cfg_volume_mount
-        )
 
     def test_kubernetes_environment_variables(self):
         # Tests the kubernetes environment variables get copied into the worker pods
@@ -814,8 +794,8 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         worker_config = WorkerConfiguration(self.kube_config)
         env = worker_config._get_environment()
         for key in input_environment:
-            self.assertIn(key, env)
-            self.assertIn(input_environment[key], env.values())
+            assert key in env
+            assert input_environment[key] in env.values()
 
         core_executor = 'AIRFLOW__CORE__EXECUTOR'
         input_environment = {
@@ -824,7 +804,7 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         self.kube_config.kube_env_vars = input_environment
         worker_config = WorkerConfiguration(self.kube_config)
         env = worker_config._get_environment()
-        self.assertEqual(env[core_executor], 'LocalExecutor')
+        assert env[core_executor] == 'LocalExecutor'
 
     def test_get_secrets(self):
         # Test when secretRef is None and kube_secrets is not empty
@@ -840,7 +820,7 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
             Secret('env', 'AWS_SECRET_KEY', 'airflow-secret', 'aws_secret_key'),
             Secret('env', 'POSTGRES_PASSWORD', 'airflow-secret', 'postgres_credentials')
         ]
-        self.assertListEqual(expected, secrets)
+        assert expected == secrets
 
         # Test when secret is not empty and kube_secrets is empty dict
         self.kube_config.kube_secrets = {}
@@ -848,26 +828,26 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         worker_config = WorkerConfiguration(self.kube_config)
         secrets = worker_config._get_secrets()
         expected = [Secret('env', None, 'secret_a'), Secret('env', None, 'secret_b')]
-        self.assertListEqual(expected, secrets)
+        assert expected == secrets
 
     def test_get_env_from(self):
         # Test when configmap is empty
         self.kube_config.env_from_configmap_ref = ''
         worker_config = WorkerConfiguration(self.kube_config)
         configmaps = worker_config._get_env_from()
-        self.assertListEqual([], configmaps)
+        assert [] == configmaps
 
         # test when configmap is not empty
         self.kube_config.env_from_configmap_ref = 'configmap_a,configmap_b'
         self.kube_config.env_from_secret_ref = 'secretref_a,secretref_b'
         worker_config = WorkerConfiguration(self.kube_config)
         configmaps = worker_config._get_env_from()
-        self.assertListEqual([
+        assert [
             k8s.V1EnvFromSource(config_map_ref=k8s.V1ConfigMapEnvSource(name='configmap_a')),
             k8s.V1EnvFromSource(config_map_ref=k8s.V1ConfigMapEnvSource(name='configmap_b')),
             k8s.V1EnvFromSource(secret_ref=k8s.V1SecretEnvSource(name='secretref_a')),
             k8s.V1EnvFromSource(secret_ref=k8s.V1SecretEnvSource(name='secretref_b'))
-        ], configmaps)
+        ] == configmaps
 
     def test_pod_template_file(self):
         fixture = 'tests/kubernetes/pod.yaml'
@@ -876,18 +856,18 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         result = worker_config.as_pod()
         expected = PodGenerator.deserialize_model_file(fixture)
         expected.metadata.name = ANY
-        self.assertEqual(expected, result)
+        assert expected == result
 
     def test_get_labels(self):
         worker_config = WorkerConfiguration(self.kube_config)
         labels = worker_config._get_labels({'my_kube_executor_label': 'kubernetes'}, {
             'dag_id': 'override_dag_id',
         })
-        self.assertEqual({
+        assert {
             'my_label': 'label_id',
             'dag_id': 'override_dag_id',
             'my_kube_executor_label': 'kubernetes',
-        }, labels)
+        } == labels
 
     def test_make_pod_with_image_pull_secrets(self):
         # Tests the pod created with image_pull_secrets actually gets that in it's config
@@ -902,4 +882,4 @@ class TestKubernetesWorkerConfiguration(unittest.TestCase):
         worker_config = WorkerConfiguration(self.kube_config)
         pod = worker_config.as_pod()
 
-        self.assertEqual(2, len(pod.spec.image_pull_secrets))
+        assert 2 == len(pod.spec.image_pull_secrets)

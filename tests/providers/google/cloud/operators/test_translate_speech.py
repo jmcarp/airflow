@@ -25,6 +25,7 @@ from google.cloud.speech_v1.proto.cloud_speech_pb2 import (
 
 from airflow.exceptions import AirflowException
 from airflow.providers.google.cloud.operators.translate_speech import GcpTranslateSpeechOperator
+import pytest
 
 GCP_CONN_ID = 'google_cloud_default'
 
@@ -76,17 +77,15 @@ class TestCloudTranslateSpeech(unittest.TestCase):
             source_language=None,
             model='base',
         )
-        self.assertEqual(
-            [
+        assert [
                 {
                     'translatedText': 'sprawdzić wynik rozpoznawania mowy',
                     'detectedSourceLanguage': 'en',
                     'model': 'base',
                     'input': 'test speech recognition result',
                 }
-            ],
-            return_value,
-        )
+            ] == \
+            return_value
 
     @mock.patch('airflow.providers.google.cloud.operators.translate_speech.CloudSpeechToTextHook')
     @mock.patch('airflow.providers.google.cloud.operators.translate_speech.CloudTranslateHook')
@@ -104,10 +103,10 @@ class TestCloudTranslateSpeech(unittest.TestCase):
             gcp_conn_id=GCP_CONN_ID,
             task_id='id',
         )
-        with self.assertRaises(AirflowException) as cm:
+        with pytest.raises(AirflowException) as cm:
             op.execute(context=None)
         err = cm.exception
-        self.assertIn("it should contain 'alternatives' field", str(err))
+        assert "it should contain 'alternatives' field" in str(err)
 
         mock_speech_hook.assert_called_once_with(gcp_conn_id=GCP_CONN_ID)
         mock_translate_hook.assert_called_once_with(gcp_conn_id=GCP_CONN_ID)

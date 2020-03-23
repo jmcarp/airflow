@@ -54,10 +54,10 @@ class TestDagBag(unittest.TestCase):
         for dag_id in some_expected_dag_ids:
             dag = dagbag.get_dag(dag_id)
 
-            self.assertIsNotNone(dag)
-            self.assertEqual(dag_id, dag.dag_id)
+            assert dag is not None
+            assert dag_id == dag.dag_id
 
-        self.assertGreaterEqual(dagbag.size(), 7)
+        assert dagbag.size() >= 7
 
     def test_get_non_existing_dag(self):
         """
@@ -66,7 +66,7 @@ class TestDagBag(unittest.TestCase):
         dagbag = models.DagBag(dag_folder=self.empty_dir, include_examples=False)
 
         non_existing_dag_id = "non_existing_dag_id"
-        self.assertIsNone(dagbag.get_dag(non_existing_dag_id))
+        assert dagbag.get_dag(non_existing_dag_id) is None
 
     def test_dont_load_example(self):
         """
@@ -74,7 +74,7 @@ class TestDagBag(unittest.TestCase):
         """
         dagbag = models.DagBag(dag_folder=self.empty_dir, include_examples=False)
 
-        self.assertEqual(dagbag.size(), 0)
+        assert dagbag.size() == 0
 
     def test_safe_mode_heuristic_match(self):
         """With safe mode enabled, a file matching the discovery heuristics
@@ -88,10 +88,9 @@ class TestDagBag(unittest.TestCase):
             with conf_vars({('core', 'dags_folder'): self.empty_dir}):
                 dagbag = models.DagBag(include_examples=False, safe_mode=True)
 
-            self.assertEqual(len(dagbag.dagbag_stats), 1)
-            self.assertEqual(
-                dagbag.dagbag_stats[0].file,
-                "/{}".format(os.path.basename(f.name)))
+            assert len(dagbag.dagbag_stats) == 1
+            assert dagbag.dagbag_stats[0].file == \
+                "/{}".format(os.path.basename(f.name))
 
     def test_safe_mode_heuristic_mismatch(self):
         """With safe mode enabled, a file not matching the discovery heuristics
@@ -100,7 +99,7 @@ class TestDagBag(unittest.TestCase):
         with NamedTemporaryFile(dir=self.empty_dir, suffix=".py"):
             with conf_vars({('core', 'dags_folder'): self.empty_dir}):
                 dagbag = models.DagBag(include_examples=False, safe_mode=True)
-            self.assertEqual(len(dagbag.dagbag_stats), 0)
+            assert len(dagbag.dagbag_stats) == 0
 
     def test_safe_mode_disabled(self):
         """With safe mode disabled, an empty python file should be discovered.
@@ -108,10 +107,9 @@ class TestDagBag(unittest.TestCase):
         with NamedTemporaryFile(dir=self.empty_dir, suffix=".py") as f:
             with conf_vars({('core', 'dags_folder'): self.empty_dir}):
                 dagbag = models.DagBag(include_examples=False, safe_mode=False)
-            self.assertEqual(len(dagbag.dagbag_stats), 1)
-            self.assertEqual(
-                dagbag.dagbag_stats[0].file,
-                "/{}".format(os.path.basename(f.name)))
+            assert len(dagbag.dagbag_stats) == 1
+            assert dagbag.dagbag_stats[0].file == \
+                "/{}".format(os.path.basename(f.name))
 
     def test_process_file_that_contains_multi_bytes_char(self):
         """
@@ -122,7 +120,7 @@ class TestDagBag(unittest.TestCase):
         f.flush()
 
         dagbag = models.DagBag(dag_folder=self.empty_dir, include_examples=False)
-        self.assertEqual([], dagbag.process_file(f.name))
+        assert [] == dagbag.process_file(f.name)
 
     def test_zip_skip_log(self):
         """
@@ -135,7 +133,7 @@ class TestDagBag(unittest.TestCase):
             test_zip_path = os.path.join(TEST_DAGS_FOLDER, "test_zip.zip")
             dagbag = models.DagBag(dag_folder=test_zip_path, include_examples=False)
 
-            self.assertTrue(dagbag.has_logged)
+            assert dagbag.has_logged
             log_mock.info.assert_any_call("File %s assumed to contain no DAGs. Skipping.",
                                           test_zip_path)
 
@@ -145,7 +143,7 @@ class TestDagBag(unittest.TestCase):
         """
         dagbag = models.DagBag(dag_folder=self.empty_dir, include_examples=False)
         dagbag.process_file(os.path.join(TEST_DAGS_FOLDER, "test_zip.zip"))
-        self.assertTrue(dagbag.get_dag("test_zip_dag"))
+        assert dagbag.get_dag("test_zip_dag")
 
     def test_process_file_cron_validity_check(self):
         """
@@ -155,10 +153,10 @@ class TestDagBag(unittest.TestCase):
         invalid_dag_files = ["test_invalid_cron.py", "test_zip_invalid_cron.zip"]
         dagbag = models.DagBag(dag_folder=self.empty_dir, include_examples=False)
 
-        self.assertEqual(len(dagbag.import_errors), 0)
+        assert len(dagbag.import_errors) == 0
         for file in invalid_dag_files:
             dagbag.process_file(os.path.join(TEST_DAGS_FOLDER, file))
-        self.assertEqual(len(dagbag.import_errors), len(invalid_dag_files))
+        assert len(dagbag.import_errors) == len(invalid_dag_files)
 
     @patch.object(DagModel, 'get_current')
     def test_get_dag_without_refresh(self, mock_dagmodel):
@@ -184,9 +182,9 @@ class TestDagBag(unittest.TestCase):
         dagbag.process_file_calls
 
         # Should not call process_file again, since it's already loaded during init.
-        self.assertEqual(1, dagbag.process_file_calls)
-        self.assertIsNotNone(dagbag.get_dag(dag_id))
-        self.assertEqual(1, dagbag.process_file_calls)
+        assert 1 == dagbag.process_file_calls
+        assert dagbag.get_dag(dag_id) is not None
+        assert 1 == dagbag.process_file_calls
 
     def test_get_dag_fileloc(self):
         """
@@ -205,7 +203,7 @@ class TestDagBag(unittest.TestCase):
 
         for dag_id, path in expected.items():
             dag = dagbag.get_dag(dag_id)
-            self.assertTrue(dag.fileloc.endswith(path))
+            assert dag.fileloc.endswith(path)
 
     @patch.object(DagModel, "get_current")
     def test_refresh_py_dag(self, mock_dagmodel):
@@ -235,11 +233,11 @@ class TestDagBag(unittest.TestCase):
 
         dagbag = _TestDagBag(dag_folder=self.empty_dir, include_examples=True)
 
-        self.assertEqual(1, dagbag.process_file_calls)
+        assert 1 == dagbag.process_file_calls
         dag = dagbag.get_dag(dag_id)
-        self.assertIsNotNone(dag)
-        self.assertEqual(dag_id, dag.dag_id)
-        self.assertEqual(2, dagbag.process_file_calls)
+        assert dag is not None
+        assert dag_id == dag.dag_id
+        assert 2 == dagbag.process_file_calls
 
     @patch.object(DagModel, "get_current")
     def test_refresh_packaged_dag(self, mock_dagmodel):
@@ -267,11 +265,11 @@ class TestDagBag(unittest.TestCase):
 
         dagbag = _TestDagBag(dag_folder=os.path.realpath(TEST_DAGS_FOLDER), include_examples=False)
 
-        self.assertEqual(1, dagbag.process_file_calls)
+        assert 1 == dagbag.process_file_calls
         dag = dagbag.get_dag(dag_id)
-        self.assertIsNotNone(dag)
-        self.assertEqual(dag_id, dag.dag_id)
-        self.assertEqual(2, dagbag.process_file_calls)
+        assert dag is not None
+        assert dag_id == dag.dag_id
+        assert 2 == dagbag.process_file_calls
 
     def process_dag(self, create_dag):
         """
@@ -297,16 +295,12 @@ class TestDagBag(unittest.TestCase):
 
         for dag_id in expected_dag_ids:
             actual_dagbag.log.info('validating %s' % dag_id)
-            self.assertEqual(
-                dag_id in actual_found_dag_ids, should_be_found,
-                'dag "%s" should %shave been found after processing dag "%s"' %
+            assert (dag_id in actual_found_dag_ids) == should_be_found, \
+                'dag "%s" should %shave been found after processing dag "%s"' % \
                 (dag_id, '' if should_be_found else 'not ', expected_parent_dag.dag_id)
-            )
-            self.assertEqual(
-                dag_id in actual_dagbag.dags, should_be_found,
-                'dag "%s" should %sbe in dagbag.dags after processing dag "%s"' %
+            assert (dag_id in actual_dagbag.dags) == should_be_found, \
+                'dag "%s" should %sbe in dagbag.dags after processing dag "%s"' % \
                 (dag_id, '' if should_be_found else 'not ', expected_parent_dag.dag_id)
-            )
 
     def test_load_subdags(self):
         # Define Dag to load
@@ -355,7 +349,7 @@ class TestDagBag(unittest.TestCase):
 
         test_dag = standard_subdag()
         # sanity check to make sure DAG.subdag is still functioning properly
-        self.assertEqual(len(test_dag.subdags), 2)
+        assert len(test_dag.subdags) == 2
 
         # Perform processing dag
         dagbag, found_dags, _ = self.process_dag(standard_subdag)
@@ -447,7 +441,7 @@ class TestDagBag(unittest.TestCase):
 
         test_dag = nested_subdags()
         # sanity check to make sure DAG.subdag is still functioning properly
-        self.assertEqual(len(test_dag.subdags), 6)
+        assert len(test_dag.subdags) == 6
 
         # Perform processing dag
         dagbag, found_dags, _ = self.process_dag(nested_subdags)
@@ -485,7 +479,7 @@ class TestDagBag(unittest.TestCase):
 
         test_dag = basic_cycle()
         # sanity check to make sure DAG.subdag is still functioning properly
-        self.assertEqual(len(test_dag.subdags), 0)
+        assert len(test_dag.subdags) == 0
 
         # Perform processing dag
         dagbag, found_dags, file_path = self.process_dag(basic_cycle)
@@ -493,7 +487,7 @@ class TestDagBag(unittest.TestCase):
         # #Validate correctness
         # None of the dags should be found
         self.validate_dags(test_dag, found_dags, dagbag, should_be_found=False)
-        self.assertIn(file_path, dagbag.import_errors)
+        assert file_path in dagbag.import_errors
 
         # Define Dag to load
         def nested_subdag_cycle():
@@ -581,7 +575,7 @@ class TestDagBag(unittest.TestCase):
 
         test_dag = nested_subdag_cycle()
         # sanity check to make sure DAG.subdag is still functioning properly
-        self.assertEqual(len(test_dag.subdags), 6)
+        assert len(test_dag.subdags) == 6
 
         # Perform processing dag
         dagbag, found_dags, file_path = self.process_dag(nested_subdag_cycle)
@@ -589,7 +583,7 @@ class TestDagBag(unittest.TestCase):
         # Validate correctness
         # None of the dags should be found
         self.validate_dags(test_dag, found_dags, dagbag, should_be_found=False)
-        self.assertIn(file_path, dagbag.import_errors)
+        assert file_path in dagbag.import_errors
 
     def test_process_file_with_none(self):
         """
@@ -597,7 +591,7 @@ class TestDagBag(unittest.TestCase):
         """
         dagbag = models.DagBag(dag_folder=self.empty_dir, include_examples=False)
 
-        self.assertEqual([], dagbag.process_file(None))
+        assert [] == dagbag.process_file(None)
 
     def test_deactivate_unknown_dags(self):
         """
@@ -615,8 +609,8 @@ class TestDagBag(unittest.TestCase):
         models.DAG.deactivate_unknown_dags(expected_active_dags)
 
         after_model = DagModel.get_dagmodel(dag_id)
-        self.assertTrue(model_before.is_active)
-        self.assertFalse(after_model.is_active)
+        assert model_before.is_active
+        assert not after_model.is_active
 
         # clean up
         with create_session() as session:

@@ -24,6 +24,7 @@ from airflow.api.common.experimental.trigger_dag import _trigger_dag
 from airflow.exceptions import AirflowException
 from airflow.models import DAG, DagRun
 from airflow.utils import timezone
+import pytest
 
 
 class TestTriggerDag(unittest.TestCase):
@@ -32,17 +33,14 @@ class TestTriggerDag(unittest.TestCase):
     @mock.patch('airflow.models.DagBag')
     def test_trigger_dag_dag_not_found(self, dag_bag_mock, dag_run_mock):
         dag_bag_mock.dags = []
-        self.assertRaises(
-            AirflowException,
-            _trigger_dag,
-            'dag_not_found',
+        with pytest.raises(AirflowException):
+            _trigger_dag('dag_not_found',
             dag_bag_mock,
             dag_run_mock,
             run_id=None,
             conf=None,
             execution_date=None,
-            replace_microseconds=True,
-        )
+            replace_microseconds=True,)
 
     @mock.patch('airflow.models.DagRun')
     @mock.patch('airflow.models.DagBag')
@@ -52,17 +50,14 @@ class TestTriggerDag(unittest.TestCase):
         dag_bag_mock.dags = [dag_id]
         dag_bag_mock.get_dag.return_value = dag
         dag_run_mock.find.return_value = DagRun()
-        self.assertRaises(
-            AirflowException,
-            _trigger_dag,
-            dag_id,
+        with pytest.raises(AirflowException):
+            _trigger_dag(dag_id,
             dag_bag_mock,
             dag_run_mock,
             run_id=None,
             conf=None,
             execution_date=None,
-            replace_microseconds=True,
-        )
+            replace_microseconds=True,)
 
     @mock.patch('airflow.models.DAG')
     @mock.patch('airflow.models.DagRun')
@@ -87,7 +82,7 @@ class TestTriggerDag(unittest.TestCase):
             execution_date=None,
             replace_microseconds=True)
 
-        self.assertEqual(3, len(triggers))
+        assert 3 == len(triggers)
 
     @mock.patch('airflow.models.DagBag')
     def test_trigger_dag_with_str_conf(self, dag_bag_mock):
@@ -106,7 +101,7 @@ class TestTriggerDag(unittest.TestCase):
             execution_date=None,
             replace_microseconds=True)
 
-        self.assertEqual(triggers[0].conf, json.loads(conf))
+        assert triggers[0].conf == json.loads(conf)
 
     @mock.patch('airflow.models.DagBag')
     def test_trigger_dag_with_too_early_start_date(self, dag_bag_mock):
@@ -116,17 +111,14 @@ class TestTriggerDag(unittest.TestCase):
         dag_bag_mock.get_dag.return_value = dag
         dag_run = DagRun()
 
-        self.assertRaises(
-            ValueError,
-            _trigger_dag,
-            dag_id,
+        with pytest.raises(ValueError):
+            _trigger_dag(dag_id,
             dag_bag_mock,
             dag_run,
             run_id=None,
             conf=None,
             execution_date=timezone.datetime(2015, 7, 5, 10, 10, 0),
-            replace_microseconds=True,
-        )
+            replace_microseconds=True,)
 
     @mock.patch('airflow.models.DagBag')
     def test_trigger_dag_with_valid_start_date(self, dag_bag_mock):
@@ -165,7 +157,7 @@ class TestTriggerDag(unittest.TestCase):
             execution_date=None,
             replace_microseconds=True)
 
-        self.assertEqual(triggers[0].conf, conf)
+        assert triggers[0].conf == conf
 
 
 if __name__ == '__main__':
